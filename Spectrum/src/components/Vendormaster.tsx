@@ -1,4 +1,4 @@
-// Vendormaster.tsx  vendor update is not working  
+// Vendormaster.tsx  vendor update is not working
 
 import React, { useState, useEffect } from "react";
 import "./Vendormaster.css";
@@ -61,22 +61,45 @@ function Vendormaster() {
         }
       }
 
-      const normalized = (Array.isArray(data) ? data : []).map((item: any) => ({
-        vendorId: item.vendorId || item.VendorId || item.id || item.Id || 0,
-        vendorCode: item.vendorCode || item.VendorCode || "",
-        vendorName: item.vendorName || item.VendorName || "",
-        vendorMobile: item.vendorMobile || item.VendorMobile || "",
-        idProofType: item.idProofType || item.IdProofType || "",
-        idProof: item.idProof || item.IdProof || "",
-        vendorAddress: item.vendorAddress || item.VendorAddress || "",
-        company: item.company || item.Company || "",
-        isActive:
-          item.isActive !== undefined
-            ? item.isActive
-            : item.IsActive !== undefined
-            ? item.IsActive
-            : true,
-      }));
+      const normalized = (Array.isArray(data) ? data : []).map(
+        (item: any, index: number) => {
+          console.log(`Item ${index}:`, item);
+
+          // Try multiple possible field names for vendorId
+          const vendorId =
+            item.vendorId ||
+            item.VendorId ||
+            item.id ||
+            item.Id ||
+            item.vendorID ||
+            item.VendorID ||
+            item.vendor_id ||
+            item.VENDOR_ID ||
+            0;
+
+          console.log(`Extracted vendorId for item ${index}:`, vendorId);
+
+          const normalizedItem = {
+            vendorId: vendorId,
+            vendorCode: item.vendorCode || item.VendorCode || "",
+            vendorName: item.vendorName || item.VendorName || "",
+            vendorMobile: item.vendorMobile || item.VendorMobile || "",
+            idProofType: item.idProofType || item.IdProofType || "",
+            idProof: item.idProof || item.IdProof || "",
+            vendorAddress: item.vendorAddress || item.VendorAddress || "",
+            company: item.company || item.Company || "",
+            isActive:
+              item.isActive !== undefined
+                ? item.isActive
+                : item.IsActive !== undefined
+                ? item.IsActive
+                : true,
+          };
+
+          console.log(`Normalized item ${index}:`, normalizedItem);
+          return normalizedItem;
+        }
+      );
 
       console.log("Normalized vendors:", normalized);
       setVendors(normalized);
@@ -144,6 +167,7 @@ function Vendormaster() {
 
   const handleEdit = (vendor: Vendor) => {
     console.log("Editing vendor:", vendor);
+    console.log("Vendor ID being set for editing:", vendor.vendorId);
     setFormData({
       vendorCode: vendor.vendorCode,
       vendorName: vendor.vendorName,
@@ -157,6 +181,7 @@ function Vendormaster() {
     setEditingId(vendor.vendorId);
     setShowForm(true);
     setError("");
+    console.log("Editing ID set to:", vendor.vendorId);
   };
 
   const handleDelete = async (vendorId: number) => {
