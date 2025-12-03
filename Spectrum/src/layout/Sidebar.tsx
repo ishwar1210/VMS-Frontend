@@ -94,30 +94,98 @@ function Sidebar({ onNavigate }: SidebarProps) {
                     className="dropdown-item"
                     onClick={() => handleNavigate("rolemaster")}
                   >
+                    {/* Roles icon */}
+                    <svg
+                      className="item-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
                     Roles
                   </div>
                   <div
                     className="dropdown-item"
                     onClick={() => handleNavigate("departmentmaster")}
                   >
+                    {/* Departments icon */}
+                    <svg
+                      className="item-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M3 21h18"></path>
+                      <path d="M5 21V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14"></path>
+                      <path d="M12 3v4"></path>
+                    </svg>
                     Departments
                   </div>
                   <div
                     className="dropdown-item"
                     onClick={() => handleNavigate("usermaster")}
                   >
-                    Users
+                    {/* Employees icon */}
+                    <svg
+                      className="item-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M4 21v-2a4 4 0 0 1 3-3.87"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Employees
                   </div>
                   <div
                     className="dropdown-item"
                     onClick={() => handleNavigate("vendormaster")}
                   >
+                    {/* Vendors icon */}
+                    <svg
+                      className="item-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M3 7h18"></path>
+                      <path d="M5 7l1.5 9.5A2 2 0 0 0 8.5 19h7a2 2 0 0 0 2-2l1.5-9.5"></path>
+                      <path d="M16 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM8 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>
+                    </svg>
                     Vendors
                   </div>
                   <div
                     className="dropdown-item"
                     onClick={() => handleNavigate("locationmaster")}
                   >
+                    {/* Locations icon */}
+                    <svg
+                      className="item-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
                     Locations
                   </div>
                 </div>

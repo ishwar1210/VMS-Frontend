@@ -307,3 +307,16 @@
     display: none;
   }
 }
+
+.dropdown-item .item-icon {
+  flex-shrink: 0;
+  margin-right: 10px;
+  stroke: currentColor;
+  opacity: 0.95;
+}
+
+/* ensure icon color matches hover/active states */
+.dropdown-item:hover .item-icon,
+.nav-item-dropdown .item-icon {
+  opacity: 1;
+}
