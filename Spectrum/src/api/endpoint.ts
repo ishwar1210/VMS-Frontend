@@ -48,13 +48,21 @@ const location = {
   delete: (locationId: number) => api.delete(`/api/location/${locationId}`),
 };
 
+// visitor entry endpoints
+const visitorEntry = {
+  getAll: () => api.get("/api/visitorentry"),
+  update: (id: number, payload: any) =>
+    api.put(`/api/visitorentry/${id}`, payload),
+};
+
 const endpoints = {
   auth,
   role,
   department,
   user,
   vendor,
-  location, // <- added
+  location,
+  visitorEntry, // <- added
 };
 
 export default auth;

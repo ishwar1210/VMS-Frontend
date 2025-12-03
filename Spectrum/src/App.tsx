@@ -6,6 +6,7 @@ import Deparmentmaster from "./components/Deparmentmaster";
 import Usermaster from "./components/Usermaster";
 import Vendormaster from "./components/Vendormaster";
 import Locationmaster from "./components/Locationmaster";
+import Visitorentryapproval from "./components/Visitorentryapproval";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
@@ -29,7 +30,9 @@ function App() {
       case "vendormaster":
         return <Vendormaster />;
       case "locationmaster":
-        return < Locationmaster />;
+        return <Locationmaster />;
+      case "visitorentryapproval":
+        return <Visitorentryapproval />;
       case "dashboard":
         return (
           <div style={{ padding: 24, color: "var(--text-primary)" }}>

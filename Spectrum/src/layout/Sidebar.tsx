@@ -255,9 +255,9 @@ function Sidebar({ onNavigate }: SidebarProps) {
                 <div className="dropdown-menu">
                   <div
                     className={`dropdown-item ${
-                      selectedItem === "approvallist" ? "active" : ""
+                      selectedItem === "visitorentryapproval" ? "active" : ""
                     }`}
-                    onClick={() => handleNavigate("approvallist")}
+                    onClick={() => handleNavigate("visitorentryapproval")}
                   >
                     {/* Approval List icon */}
                     <svg
