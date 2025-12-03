@@ -16,6 +16,7 @@ function Deparmentmaster() {
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [rawResponse, setRawResponse] = useState<any>(null);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     fetchDepartments();
@@ -121,6 +122,7 @@ function Deparmentmaster() {
       }
       setDepartmentName("");
       setEditingId(null);
+      setShowForm(false);
       await fetchDepartments();
     } catch (err: any) {
       console.error("Error saving department:", err);
@@ -131,6 +133,7 @@ function Deparmentmaster() {
   const handleEdit = (dept: Department) => {
     setDepartmentName(dept.departmentName);
     setEditingId(dept.departmentId);
+    setShowForm(true);
   };
 
   const handleDelete = async (departmentId: number) => {
@@ -149,6 +152,7 @@ function Deparmentmaster() {
   const handleCancelEdit = () => {
     setDepartmentName("");
     setEditingId(null);
+    setShowForm(false);
   };
 
   const filtered = departments.filter((d) =>
@@ -159,154 +163,180 @@ function Deparmentmaster() {
 
   return (
     <div className="departmentmaster-container">
-      <h1 className="departmentmaster-title">Add Department</h1>
+      <div className="departmentmaster-header">
+        <h1 className="departmentmaster-title">Departments</h1>
+        <button
+          className="add-department-btn"
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? "View All Departments" : "+ Add Department"}
+        </button>
+      </div>
 
-      <div className="departmentmaster-content">
-        <div className="department-form-section">
-          <h2 className="department-form-title">Department</h2>
-          <form className="department-form" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              className="department-input"
-              placeholder="Department Name *"
-              value={departmentName}
-              onChange={(e) => setDepartmentName(e.target.value)}
-              required
-            />
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                type="submit"
-                className="department-save-btn"
-                disabled={loading || !departmentName.trim()}
-              >
-                {loading ? "Saving..." : editingId ? "Update" : "Save"}
+      {showForm && (
+        <div className="modal-overlay" onClick={handleCancelEdit}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">
+                {editingId ? "Edit Department" : "Add New Department"}
+              </h2>
+              <button className="modal-close" onClick={handleCancelEdit}>
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
-              {editingId && (
+            </div>
+            <form className="modal-form" onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="departmentName">Department Name *</label>
+                <input
+                  id="departmentName"
+                  type="text"
+                  className="department-input"
+                  placeholder="Enter department name"
+                  value={departmentName}
+                  onChange={(e) => setDepartmentName(e.target.value)}
+                  required
+                />
+              </div>
+              {error && <div className="error-message">{error}</div>}
+              <div className="modal-actions">
                 <button
                   type="button"
-                  className="department-save-btn"
+                  className="btn-cancel"
                   onClick={handleCancelEdit}
-                  style={{ background: "#64748b" }}
                 >
                   Cancel
                 </button>
-              )}
-            </div>
-            {error && <div className="error-message">{error}</div>}
-          </form>
+                <button
+                  type="submit"
+                  className="btn-submit"
+                  disabled={loading || !departmentName.trim()}
+                >
+                  {loading ? "Saving..." : editingId ? "Update" : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="department-table-section-full">
+        <div className="table-controls">
+          <div className="show-entries">
+            <span>Show</span>
+            <select
+              className="entries-select"
+              value={entriesPerPage}
+              onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>entries</span>
+          </div>
+
+          <div className="search-box">
+            <span>Search:</span>
+            <input
+              type="text"
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search departments..."
+            />
+          </div>
         </div>
 
-        <div className="department-table-section">
-          <div className="table-controls">
-            <div className="show-entries">
-              <span>Show</span>
-              <select
-                className="entries-select"
-                value={entriesPerPage}
-                onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-              <span>entries</span>
+        <div className="department-table-wrapper">
+          {loading ? (
+            <div className="loading-state">Loading departments...</div>
+          ) : filtered.length === 0 ? (
+            <div className="empty-state">
+              {searchTerm ? "No departments found" : "No departments added yet"}
+              {rawResponse && (
+                <pre
+                  style={{
+                    textAlign: "left",
+                    marginTop: 12,
+                    maxHeight: 240,
+                    overflow: "auto",
+                    background: "rgba(0,0,0,0.04)",
+                    padding: 12,
+                    borderRadius: 8,
+                  }}
+                >
+                  {JSON.stringify(rawResponse, null, 2)}
+                </pre>
+              )}
             </div>
-
-            <div className="search-box">
-              <span>Search:</span>
-              <input
-                type="text"
-                className="search-input"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search departments..."
-              />
-            </div>
-          </div>
-
-          <div className="department-table-wrapper">
-            {loading ? (
-              <div className="loading-state">Loading departments...</div>
-            ) : filtered.length === 0 ? (
-              <div className="empty-state">
-                {searchTerm
-                  ? "No departments found"
-                  : "No departments added yet"}
-                {rawResponse && (
-                  <pre
-                    style={{
-                      textAlign: "left",
-                      marginTop: 12,
-                      maxHeight: 240,
-                      overflow: "auto",
-                      background: "rgba(0,0,0,0.04)",
-                      padding: 12,
-                      borderRadius: 8,
-                    }}
-                  >
-                    {JSON.stringify(rawResponse, null, 2)}
-                  </pre>
-                )}
-              </div>
-            ) : (
-              <table className="department-table">
-                <thead>
-                  <tr>
-                    <th className="sortable">Sr.No.</th>
-                    <th className="sortable">Department</th>
-                    <th>Action</th>
+          ) : (
+            <table className="department-table">
+              <thead>
+                <tr>
+                  <th className="sortable">Sr.No.</th>
+                  <th className="sortable">Department</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayed.map((d, index) => (
+                  <tr key={d.departmentId}>
+                    <td>{index + 1}</td>
+                    <td>{d.departmentName}</td>
+                    <td>
+                      <div className="action-buttons">
+                        <button
+                          className="action-btn edit-btn"
+                          onClick={() => handleEdit(d)}
+                          title="Edit"
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={() => handleDelete(d.departmentId)}
+                          title="Delete"
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {displayed.map((d, index) => (
-                    <tr key={d.departmentId}>
-                      <td>{index + 1}</td>
-                      <td>{d.departmentName}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn edit-btn"
-                            onClick={() => handleEdit(d)}
-                            title="Edit"
-                          >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </button>
-                          <button
-                            className="action-btn delete-btn"
-                            onClick={() => handleDelete(d.departmentId)}
-                            title="Delete"
-                          >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
