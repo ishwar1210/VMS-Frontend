@@ -31,11 +31,20 @@ const user = {
   delete: (userId: number) => api.delete(`/api/auth/${userId}`),
 };
 
+const vendor = {
+  getAll: () => api.get("/api/vendor"),
+  create: (payload: any) => api.post("/api/vendor", payload),
+  update: (vendorId: number, payload: any) =>
+    api.put(`/api/vendor/update/${vendorId}`, payload),
+  delete: (vendorId: number) => api.delete(`/api/vendor/${vendorId}`),
+};
+
 const endpoints = {
   auth,
   role,
   department,
   user,
+  vendor,
 };
 
 export default auth;

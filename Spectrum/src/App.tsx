@@ -4,6 +4,7 @@ import Sidebar from "./layout/Sidebar";
 import Rolemaster from "./components/Rolemaster";
 import Deparmentmaster from "./components/Deparmentmaster";
 import Usermaster from "./components/Usermaster";
+import Vendormaster from "./components/Vendormaster";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
@@ -24,6 +25,8 @@ function App() {
         return <Deparmentmaster />;
       case "usermaster":
         return <Usermaster />;
+      case "vendormaster":
+        return <Vendormaster />;
       case "dashboard":
         return (
           <div style={{ padding: 24, color: "var(--text-primary)" }}>

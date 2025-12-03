@@ -94,28 +94,24 @@ function Sidebar({ onNavigate }: SidebarProps) {
                     className="dropdown-item"
                     onClick={() => handleNavigate("rolemaster")}
                   >
-                    <span className="dropdown-bullet"></span>
                     Roles
                   </div>
                   <div
                     className="dropdown-item"
                     onClick={() => handleNavigate("departmentmaster")}
                   >
-                    <span className="dropdown-bullet"></span>
                     Departments
                   </div>
                   <div
                     className="dropdown-item"
                     onClick={() => handleNavigate("usermaster")}
                   >
-                    <span className="dropdown-bullet"></span>
                     Users
                   </div>
                   <div
                     className="dropdown-item"
                     onClick={() => handleNavigate("vendormaster")}
                   >
-                    <span className="dropdown-bullet"></span>
                     Vendors
                   </div>
                 </div>
