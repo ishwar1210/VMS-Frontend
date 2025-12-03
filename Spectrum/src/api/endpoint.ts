@@ -39,12 +39,22 @@ const vendor = {
   delete: (vendorId: number) => api.delete(`/api/vendor/${vendorId}`),
 };
 
+// new location endpoints
+const location = {
+  getAll: () => api.get("/api/location"),
+  create: (payload: any) => api.post("/api/location", payload),
+  update: (locationId: number, payload: any) =>
+    api.put(`/api/location/${locationId}`, payload),
+  delete: (locationId: number) => api.delete(`/api/location/${locationId}`),
+};
+
 const endpoints = {
   auth,
   role,
   department,
   user,
   vendor,
+  location, // <- added
 };
 
 export default auth;

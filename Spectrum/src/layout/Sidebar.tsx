@@ -114,6 +114,12 @@ function Sidebar({ onNavigate }: SidebarProps) {
                   >
                     Vendors
                   </div>
+                  <div
+                    className="dropdown-item"
+                    onClick={() => handleNavigate("locationmaster")}
+                  >
+                    Locations
+                  </div>
                 </div>
               )}
             </div>
