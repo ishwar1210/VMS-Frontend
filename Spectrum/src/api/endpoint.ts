@@ -58,6 +58,7 @@ const visitorEntry = {
 const visitor = {
   getAll: () => api.get("/api/visitor"),
   getById: (id: number) => api.get(`/api/visitor/${id}`),
+  update: (id: number, payload: any) => api.put(`/api/visitor/${id}`, payload),
 };
 
 const endpoints = {

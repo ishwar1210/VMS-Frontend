@@ -275,6 +275,28 @@ function Sidebar({ onNavigate }: SidebarProps) {
                     </svg>
                     Approval List
                   </div>
+                  <div
+                    className={`dropdown-item ${
+                      selectedItem === "visitor" ? "active" : ""
+                    }`}
+                    onClick={() => handleNavigate("visitor")}
+                  >
+                    {/* Visitor list icon */}
+                    <svg
+                      className="item-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      style={{ marginRight: 8 }}
+                    >
+                      <circle cx="12" cy="7" r="4"></circle>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    </svg>
+                    Visitors
+                  </div>
                 </div>
               )}
             </div>
