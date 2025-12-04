@@ -13,10 +13,22 @@ interface VisitorEntry {
   visitorEntry_Userid: number;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
+  visitorEntry_isApproval?: boolean;
+  visitorEntry_visitorName?: string;
+  // include any unknown keys
+  [key: string]: any;
+}
+
+interface Visitor {
+  visitor_Id: number;
+  visitor_Name: string;
+  visitor_Email?: string;
+  visitor_Mobile?: string;
 }
 
 function Visitorentryapproval() {
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -25,7 +37,11 @@ function Visitorentryapproval() {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [formData, setFormData] = useState({
+  const [historySearchTerm, setHistorySearchTerm] = useState("");
+  const [historyEntriesPerPage, setHistoryEntriesPerPage] = useState(10);
+  const [historyCurrentPage, setHistoryCurrentPage] = useState(1);
+
+  const [formData, setFormData] = useState<any>({
     visitorEntry_visitorId: 0,
     visitorEntry_Gatepass: "",
     visitorEntry_Vehicletype: "",
@@ -35,110 +51,268 @@ function Visitorentryapproval() {
     visitorEntry_Userid: 0,
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
+    visitorEntry_isApproval: false,
+    visitorEntry_visitorName: "",
   });
 
   useEffect(() => {
-    fetchEntries();
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchEntries = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError("");
-      const res = await endpoints.visitorEntry.getAll();
-      let data: any = res.data;
 
-      if (data && typeof data === "object") {
-        if (Array.isArray(data.data)) data = data.data;
-        else if (Array.isArray(data.$values)) data = data.$values;
-        else if (Array.isArray(data.visitorEntries)) data = data.visitorEntries;
+      // --- Fetch visitors ---
+      const visitorRes = await endpoints.visitor.getAll();
+      let visitorData: any = visitorRes?.data;
+      if (visitorData && typeof visitorData === "object") {
+        if (Array.isArray(visitorData.data)) visitorData = visitorData.data;
+        else if (Array.isArray(visitorData.$values))
+          visitorData = visitorData.$values;
+        else if (Array.isArray(visitorData.visitors))
+          visitorData = visitorData.visitors;
+      }
+      const normalizedVisitors = (
+        Array.isArray(visitorData) ? visitorData : []
+      ).map((v: any) => ({
+        visitor_Id: v.visitor_Id ?? v.visitorId ?? v.id ?? v.Id ?? 0,
+        visitor_Name:
+          v.visitor_Name ??
+          v.visitorName ??
+          v.name ??
+          v.Name ??
+          v.fullName ??
+          (`${v.firstName ?? ""} ${v.lastName ?? ""}`.trim() || "Unknown"),
+        visitor_Email: v.visitor_Email ?? v.email ?? "",
+        visitor_Mobile: v.visitor_Mobile ?? v.mobile ?? v.phone ?? "",
+      }));
+      setVisitors(normalizedVisitors);
+
+      // --- Fetch visitor entries ---
+      const entryRes = await endpoints.visitorEntry.getAll();
+      let entryData: any = entryRes?.data;
+      if (entryData && typeof entryData === "object") {
+        if (Array.isArray(entryData.data)) entryData = entryData.data;
+        else if (Array.isArray(entryData.$values))
+          entryData = entryData.$values;
+        else if (Array.isArray(entryData.visitorEntries))
+          entryData = entryData.visitorEntries;
       }
 
-      const normalized = (Array.isArray(data) ? data : []).map((it: any) => ({
-        visitorEntry_Id: it.visitorEntry_Id ?? it.id ?? it.Id ?? 0,
-        visitorEntry_visitorId: it.visitorEntry_visitorId ?? it.visitorId ?? 0,
-        visitorEntry_Gatepass: it.visitorEntry_Gatepass ?? it.gatepass ?? "",
-        visitorEntry_Vehicletype:
-          it.visitorEntry_Vehicletype ?? it.vehicletype ?? "",
-        visitorEntry_Vehicleno: it.visitorEntry_Vehicleno ?? it.vehicleno ?? "",
-        visitorEntry_Date: it.visitorEntry_Date ?? it.date ?? "",
-        visitorEntry_Intime: it.visitorEntry_Intime ?? it.intime ?? "",
-        visitorEntry_Userid: it.visitorEntry_Userid ?? it.userid ?? 0,
-        visitorEntry_isCanteen:
-          it.visitorEntry_isCanteen ?? it.isCanteen ?? false,
-        visitorEntry_isStay: it.visitorEntry_isStay ?? it.isStay ?? false,
-      }));
+      // robust normalization with many fallbacks for id fields
+      const normalizedEntries = (Array.isArray(entryData) ? entryData : []).map(
+        (it: any) => {
+          // possible id field names (add more if your backend uses different names)
+          const idCandidates = [
+            it.visitorEntry_Id,
+            it.visitorEntryId,
+            it.visitorentryId,
+            it.visitorEntryid,
+            it.id,
+            it.Id,
+            it.visitorEntryID,
+            it.VisitorEntryId,
+          ];
 
-      // Sort by ID descending (newest first)
-      normalized.sort(
-        (a: VisitorEntry, b: VisitorEntry) =>
-          b.visitorEntry_Id - a.visitorEntry_Id
+          // find first non-null/undefined numeric-like id
+          let resolvedId = 0;
+          for (const c of idCandidates) {
+            if (c !== undefined && c !== null && c !== "") {
+              const n = Number(c);
+              if (!isNaN(n) && n !== 0) {
+                resolvedId = n;
+                break;
+              }
+              // allow zero only as last resort
+              if (!isNaN(n) && resolvedId === 0) resolvedId = n;
+            }
+          }
+
+          const visitorIdCandidates = [
+            it.visitorEntry_visitorId,
+            it.visitorId,
+            it.VisitorId,
+            it.visitor_id,
+            it.visitorid,
+            it.visitorID,
+          ];
+          let resolvedVisitorId = 0;
+          for (const c of visitorIdCandidates) {
+            if (c !== undefined && c !== null && c !== "") {
+              const n = Number(c);
+              if (!isNaN(n)) {
+                resolvedVisitorId = n;
+                break;
+              }
+            }
+          }
+
+          const visitor = normalizedVisitors.find(
+            (v: Visitor) => v.visitor_Id === resolvedVisitorId
+          );
+          const visitorName = visitor
+            ? visitor.visitor_Name
+            : it.visitorEntry_visitorName ??
+              it.visitorName ??
+              `Visitor ID: ${resolvedVisitorId}`;
+
+          return {
+            // ensure numeric id
+            visitorEntry_Id: resolvedId,
+            visitorEntry_visitorId: resolvedVisitorId,
+            visitorEntry_Gatepass:
+              it.visitorEntry_Gatepass ?? it.gatepass ?? it.Gatepass ?? "",
+            visitorEntry_Vehicletype:
+              it.visitorEntry_Vehicletype ??
+              it.vehicletype ??
+              it.VehicleType ??
+              "",
+            visitorEntry_Vehicleno:
+              it.visitorEntry_Vehicleno ?? it.vehicleno ?? it.VehicleNo ?? "",
+            visitorEntry_Date: it.visitorEntry_Date ?? it.date ?? it.Date ?? "",
+            visitorEntry_Intime:
+              it.visitorEntry_Intime ?? it.intime ?? it.Intime ?? "",
+            visitorEntry_Userid:
+              it.visitorEntry_Userid ?? it.userid ?? it.Userid ?? 0,
+            visitorEntry_isCanteen:
+              it.visitorEntry_isCanteen ??
+              it.isCanteen ??
+              it.IsCanteen ??
+              false,
+            visitorEntry_isStay:
+              it.visitorEntry_isStay ?? it.isStay ?? it.IsStay ?? false,
+            visitorEntry_isApproval:
+              it.visitorEntry_isApproval ??
+              it.isApproval ??
+              it.IsApproval ??
+              false,
+            visitorEntry_visitorName: visitorName,
+            // keep raw object for debugging if needed
+            __raw: it,
+          } as VisitorEntry;
+        }
       );
 
-      setEntries(normalized);
+      // debug log: check resolved ids
+      console.log("Raw entries from API:", entryData);
+      console.log("Normalized entries (with resolved ids):", normalizedEntries);
+
+      // sort newest first by id (higher id first)
+      normalizedEntries.sort(
+        (a, b) => (b.visitorEntry_Id || 0) - (a.visitorEntry_Id || 0)
+      );
+
+      setEntries(normalizedEntries);
     } catch (err: any) {
-      console.error(err);
-      setError("Failed to fetch visitor entries");
+      console.error("fetchData error:", err);
+      setError("Failed to fetch data");
       setEntries([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // handleEdit uses resolved id
+  const handleEdit = (entry: VisitorEntry) => {
+    console.log("handleEdit entry clicked:", entry);
+    setFormData({
+      visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
+      visitorEntry_Gatepass: entry.visitorEntry_Gatepass ?? "",
+      visitorEntry_Vehicletype: entry.visitorEntry_Vehicletype ?? "",
+      visitorEntry_Vehicleno: entry.visitorEntry_Vehicleno ?? "",
+      visitorEntry_Date: entry.visitorEntry_Date ?? "",
+      visitorEntry_Intime: entry.visitorEntry_Intime ?? "",
+      visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
+      visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
+      visitorEntry_isStay: !!entry.visitorEntry_isStay,
+      visitorEntry_isApproval: !!entry.visitorEntry_isApproval,
+      visitorEntry_visitorName: entry.visitorEntry_visitorName ?? "",
+    });
+    // set editingId from resolved field
+    setEditingId(Number(entry.visitorEntry_Id ?? entry.id ?? entry.Id ?? 0));
+    setShowForm(true);
+    setError("");
+  };
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const target = e.target as HTMLInputElement;
+    const name = target.name;
+    if (target.type === "checkbox") {
+      setFormData((s: any) => ({
+        ...s,
+        [name]: (target as HTMLInputElement).checked,
+      }));
+      return;
+    }
+    if (target.type === "number") {
+      const val = target.value === "" ? "" : Number(target.value);
+      setFormData((s: any) => ({ ...s, [name]: val }));
+      return;
+    }
+    setFormData((s: any) => ({ ...s, [name]: target.value }));
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     try {
       setLoading(true);
       setError("");
 
-      const payload = {
-        visitorEntry_visitorId: formData.visitorEntry_visitorId,
-        visitorEntry_Gatepass: formData.visitorEntry_Gatepass.trim(),
-        visitorEntry_Vehicletype: formData.visitorEntry_Vehicletype.trim(),
-        visitorEntry_Vehicleno: formData.visitorEntry_Vehicleno.trim(),
-        visitorEntry_Date: formData.visitorEntry_Date,
-        visitorEntry_Intime: formData.visitorEntry_Intime,
-        visitorEntry_Userid: formData.visitorEntry_Userid,
-        visitorEntry_isCanteen: formData.visitorEntry_isCanteen,
-        visitorEntry_isStay: formData.visitorEntry_isStay,
-      };
-
-      if (editingId) {
-        await endpoints.visitorEntry.update(editingId, payload);
-        alert("Visitor entry updated");
+      if (editingId === null) {
+        setError("No entry selected for update.");
+        setLoading(false);
+        return;
       }
 
+      const payload: any = {
+        visitorEntry_Id: Number(editingId),
+        visitorEntry_visitorId: Number(formData.visitorEntry_visitorId ?? 0),
+        visitorEntry_Gatepass: String(
+          formData.visitorEntry_Gatepass ?? ""
+        ).trim(),
+        visitorEntry_Vehicletype: String(
+          formData.visitorEntry_Vehicletype ?? ""
+        ).trim(),
+        visitorEntry_Vehicleno: String(
+          formData.visitorEntry_Vehicleno ?? ""
+        ).trim(),
+        visitorEntry_Date: formData.visitorEntry_Date ?? "",
+        visitorEntry_Intime: formData.visitorEntry_Intime ?? "",
+        visitorEntry_Userid: Number(formData.visitorEntry_Userid ?? 0),
+        visitorEntry_isCanteen: !!formData.visitorEntry_isCanteen,
+        visitorEntry_isStay: !!formData.visitorEntry_isStay,
+        visitorEntry_isApproval: !!formData.visitorEntry_isApproval,
+      };
+
+      console.log("Submitting update. id:", editingId, "payload:", payload);
+
+      // send PUT with id in route and body
+      await endpoints.visitorEntry.update(editingId, payload);
+
+      alert("Visitor entry updated successfully!");
       resetForm();
-      await fetchEntries();
+      await fetchData();
     } catch (err: any) {
-      console.error(err);
-      setError("Failed to save visitor entry");
+      console.error("handleSubmit error:", err);
+      const backendMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to save visitor entry";
+      setError(String(backendMsg));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (entry: VisitorEntry) => {
-    setFormData({
-      visitorEntry_visitorId: entry.visitorEntry_visitorId,
-      visitorEntry_Gatepass: entry.visitorEntry_Gatepass,
-      visitorEntry_Vehicletype: entry.visitorEntry_Vehicletype,
-      visitorEntry_Vehicleno: entry.visitorEntry_Vehicleno,
-      visitorEntry_Date: entry.visitorEntry_Date,
-      visitorEntry_Intime: entry.visitorEntry_Intime,
-      visitorEntry_Userid: entry.visitorEntry_Userid,
-      visitorEntry_isCanteen: entry.visitorEntry_isCanteen,
-      visitorEntry_isStay: entry.visitorEntry_isStay,
-    });
-    setEditingId(entry.visitorEntry_Id);
-    setShowForm(true);
-    setError("");
-  };
-
   const resetForm = () => {
     setFormData({
       visitorEntry_visitorId: 0,
+      visitorEntry_visitorName: "",
       visitorEntry_Gatepass: "",
       visitorEntry_Vehicletype: "",
       visitorEntry_Vehicleno: "",
@@ -147,40 +321,109 @@ function Visitorentryapproval() {
       visitorEntry_Userid: 0,
       visitorEntry_isCanteen: false,
       visitorEntry_isStay: false,
+      visitorEntry_isApproval: false,
     });
     setEditingId(null);
     setShowForm(false);
     setError("");
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = e.target;
-    setFormData((s) => ({
-      ...s,
-      [name]:
-        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }));
+  // derived lists
+  // Helper: classify entries. Use Intime only; if absent, treat as current.
+  const getEntryTimeMs = (e: VisitorEntry) => {
+    const ts = e.visitorEntry_Intime || "";
+    if (!ts) return null;
+    const d = new Date(ts);
+    return isNaN(d.getTime()) ? null : d.getTime();
   };
 
-  const filtered = entries.filter(
-    (e) =>
-      e.visitorEntry_Gatepass
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      e.visitorEntry_Vehicleno.toLowerCase().includes(searchTerm.toLowerCase())
+  // Format a datetime string (ISO or other parseable) for display; returns
+  // empty string for falsy values and falls back to the raw input when parsing fails.
+  const formatDateTime = (ts?: string | null) => {
+    if (!ts) return "";
+    try {
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return String(ts);
+      // Use locale string for readable display; adjust options if you need a specific format
+      return d.toLocaleString();
+    } catch {
+      return String(ts);
+    }
+  };
+
+  const nowMs = Date.now();
+  const historyEntries = entries.filter((e) => {
+    const t = getEntryTimeMs(e);
+    return t !== null && t < nowMs;
+  });
+  const currentEntries = entries.filter((e) => {
+    const t = getEntryTimeMs(e);
+    return t === null || t >= nowMs;
+  });
+
+  // Use currentEntries for the first table instead of all filtered
+  const currentFiltered = currentEntries.filter((e) =>
+    (
+      (e.visitorEntry_Gatepass ?? "") +
+      " " +
+      (e.visitorEntry_Vehicleno ?? "") +
+      " " +
+      (e.visitorEntry_visitorName ?? "")
+    )
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+  const currentTotalPages = Math.max(
+    1,
+    Math.ceil(currentFiltered.length / entriesPerPage)
+  );
+  const currentStartIndex = (currentPage - 1) * entriesPerPage;
+  const currentDisplayed = currentFiltered.slice(
+    currentStartIndex,
+    currentStartIndex + entriesPerPage
   );
 
-  const totalPages = Math.ceil(filtered.length / entriesPerPage);
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const displayed = filtered.slice(startIndex, startIndex + entriesPerPage);
+  // Clamp current pagination when list size changes
+  React.useEffect(() => {
+    if (currentPage > currentTotalPages) {
+      setCurrentPage(currentTotalPages);
+    }
+    if (currentPage < 1 && currentTotalPages >= 1) {
+      setCurrentPage(1);
+    }
+  }, [currentTotalPages]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const formatDateTime = (dateStr: string) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleString();
-  };
+  // History table filtering/pagination
+  const historyFiltered = historyEntries.filter((e) =>
+    (
+      (e.visitorEntry_Gatepass ?? "") +
+      " " +
+      (e.visitorEntry_Vehicleno ?? "") +
+      " " +
+      (e.visitorEntry_visitorName ?? "")
+    )
+      .toLowerCase()
+      .includes(historySearchTerm.toLowerCase())
+  );
+  const historyTotalPages = Math.max(
+    1,
+    Math.ceil(historyFiltered.length / historyEntriesPerPage)
+  );
+  const historyStartIndex = (historyCurrentPage - 1) * historyEntriesPerPage;
+  const historyDisplayed = historyFiltered.slice(
+    historyStartIndex,
+    historyStartIndex + historyEntriesPerPage
+  );
+
+  // Clamp history pagination when list size changes
+  React.useEffect(() => {
+    if (historyCurrentPage > historyTotalPages) {
+      setHistoryCurrentPage(historyTotalPages);
+    }
+    if (historyCurrentPage < 1 && historyTotalPages >= 1) {
+      setHistoryCurrentPage(1);
+    }
+  }, [historyTotalPages]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="rolemaster-container">
@@ -197,7 +440,17 @@ function Visitorentryapproval() {
                 ×
               </button>
             </div>
-            <form className="modal-form" onSubmit={handleSubmit}>
+            <form className="modal-form" onSubmit={(e) => handleSubmit(e)}>
+              <div className="form-group">
+                <label>Visitor Name</label>
+                <input
+                  name="visitorEntry_visitorName"
+                  value={formData.visitorEntry_visitorName}
+                  className="role-input"
+                  disabled
+                  style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
+                />
+              </div>
               <div className="form-group">
                 <label>Visitor ID</label>
                 <input
@@ -207,6 +460,8 @@ function Visitorentryapproval() {
                   onChange={handleInputChange}
                   className="role-input"
                   required
+                  disabled
+                  style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
                 />
               </div>
               <div className="form-group">
@@ -229,6 +484,7 @@ function Visitorentryapproval() {
                   <option value="">Select Type</option>
                   <option value="Car">Car</option>
                   <option value="Bike">Bike</option>
+                  <option value="Two Wheeler">Two Wheeler</option>
                   <option value="Truck">Truck</option>
                   <option value="Other">Other</option>
                 </select>
@@ -277,10 +533,21 @@ function Visitorentryapproval() {
                   <input
                     name="visitorEntry_isCanteen"
                     type="checkbox"
-                    checked={formData.visitorEntry_isCanteen}
+                    checked={!!formData.visitorEntry_isCanteen}
                     onChange={handleInputChange}
-                  />
+                  />{" "}
                   <span>Canteen Access</span>
+                </label>
+              </div>
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    name="visitorEntry_isApproval"
+                    type="checkbox"
+                    checked={!!formData.visitorEntry_isApproval}
+                    onChange={handleInputChange}
+                  />{" "}
+                  <span>Approved</span>
                 </label>
               </div>
               <div className="form-group">
@@ -288,13 +555,15 @@ function Visitorentryapproval() {
                   <input
                     name="visitorEntry_isStay"
                     type="checkbox"
-                    checked={formData.visitorEntry_isStay}
+                    checked={!!formData.visitorEntry_isStay}
                     onChange={handleInputChange}
-                  />
+                  />{" "}
                   <span>Stay</span>
                 </label>
               </div>
+
               {error && <div className="error-message">{error}</div>}
+
               <div className="modal-actions">
                 <button
                   type="button"
@@ -313,6 +582,7 @@ function Visitorentryapproval() {
       )}
 
       <div className="role-table-section-full">
+        {/* Current entries controls */}
         <div className="table-controls">
           <div className="show-entries">
             <span>Show</span>
@@ -340,7 +610,7 @@ function Visitorentryapproval() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Search by gatepass or vehicle..."
+              placeholder="Search by name, gatepass or vehicle..."
             />
           </div>
         </div>
@@ -348,9 +618,11 @@ function Visitorentryapproval() {
         <div className="role-table-wrapper">
           {loading ? (
             <div className="loading-state">Loading...</div>
-          ) : filtered.length === 0 ? (
+          ) : currentFiltered.length === 0 ? (
             <div className="empty-state">
-              {searchTerm ? "No entries found" : "No visitor entries yet"}
+              {searchTerm
+                ? "No current entries found"
+                : "No current visitor entries"}
             </div>
           ) : (
             <>
@@ -359,26 +631,48 @@ function Visitorentryapproval() {
                   <tr>
                     <th>Sr.No.</th>
                     <th>Gatepass</th>
-                    <th>Visitor ID</th>
+                    <th>Visitor Name</th>
                     <th>Vehicle Type</th>
                     <th>Vehicle No</th>
                     <th>Date</th>
                     <th>In Time</th>
+                    <th>Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {displayed.map((entry, idx) => (
-                    <tr key={entry.visitorEntry_Id}>
-                      <td>{startIndex + idx + 1}</td>
+                  {currentDisplayed.map((entry, idx) => (
+                    <tr
+                      key={
+                        entry.visitorEntry_Id
+                          ? `cur-${entry.visitorEntry_Id}`
+                          : `cur-${entry.visitorEntry_Gatepass || "gp"}-${
+                              currentStartIndex + idx
+                            }`
+                      }
+                    >
+                      <td>{currentStartIndex + idx + 1}</td>
                       <td>{entry.visitorEntry_Gatepass}</td>
-                      <td>{entry.visitorEntry_visitorId}</td>
+                      <td>
+                        <strong>{entry.visitorEntry_visitorName}</strong>
+                      </td>
                       <td>{entry.visitorEntry_Vehicletype}</td>
                       <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateTime(entry.visitorEntry_Date)}</td>
                       <td>{formatDateTime(entry.visitorEntry_Intime)}</td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            entry.visitorEntry_isApproval
+                              ? "active"
+                              : "inactive"
+                          }`}
+                        >
+                          {entry.visitorEntry_isApproval ? "Yes" : "No"}
+                        </span>
+                      </td>
                       <td>
                         <span
                           className={`status-badge ${
@@ -424,7 +718,7 @@ function Visitorentryapproval() {
                 </tbody>
               </table>
 
-              {totalPages > 1 && (
+              {currentTotalPages > 1 && (
                 <div className="pagination">
                   <button
                     className="pagination-btn"
@@ -434,14 +728,168 @@ function Visitorentryapproval() {
                     Previous
                   </button>
                   <span className="pagination-info">
-                    Page {currentPage} of {totalPages}
+                    Page {currentPage} of {currentTotalPages}
                   </span>
                   <button
                     className="pagination-btn"
                     onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      setCurrentPage((p) => Math.min(currentTotalPages, p + 1))
                     }
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === currentTotalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* History section (read-only, no edit/update) */}
+      <div className="role-table-section-full" style={{ marginTop: 24 }}>
+        <div
+          className="rolemaster-header"
+          style={{ paddingLeft: 0, paddingRight: 0 }}
+        >
+          <h2 className="rolemaster-title">Visitor Entry Approval History</h2>
+        </div>
+
+        <div className="table-controls">
+          <div className="show-entries">
+            <span>Show</span>
+            <select
+              className="entries-select"
+              value={historyEntriesPerPage}
+              onChange={(e) => {
+                setHistoryEntriesPerPage(Number(e.target.value));
+                setHistoryCurrentPage(1);
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>entries</span>
+          </div>
+          <div className="search-box">
+            <span>Search:</span>
+            <input
+              className="search-input"
+              value={historySearchTerm}
+              onChange={(e) => {
+                setHistorySearchTerm(e.target.value);
+                setHistoryCurrentPage(1);
+              }}
+              placeholder="Search history by name, gatepass or vehicle..."
+            />
+          </div>
+        </div>
+
+        <div className="role-table-wrapper">
+          {loading ? (
+            <div className="loading-state">Loading...</div>
+          ) : historyFiltered.length === 0 ? (
+            <div className="empty-state">
+              {historySearchTerm
+                ? "No history entries found"
+                : "No visitor entry history"}
+            </div>
+          ) : (
+            <>
+              <table className="role-table">
+                <thead>
+                  <tr>
+                    <th>Sr.No.</th>
+                    <th>Gatepass</th>
+                    <th>Visitor Name</th>
+                    <th>Vehicle Type</th>
+                    <th>Vehicle No</th>
+                    <th>Date</th>
+                    <th>In Time</th>
+                    <th>Approved</th>
+                    <th>Canteen</th>
+                    <th>Stay</th>
+                    {/* No Action column */}
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyDisplayed.map((entry, idx) => (
+                    <tr
+                      key={
+                        entry.visitorEntry_Id
+                          ? `hist-${entry.visitorEntry_Id}`
+                          : `hist-${entry.visitorEntry_Gatepass || "gp"}-${
+                              historyStartIndex + idx
+                            }`
+                      }
+                    >
+                      <td>{historyStartIndex + idx + 1}</td>
+                      <td>{entry.visitorEntry_Gatepass}</td>
+                      <td>
+                        <strong>{entry.visitorEntry_visitorName}</strong>
+                      </td>
+                      <td>{entry.visitorEntry_Vehicletype}</td>
+                      <td>{entry.visitorEntry_Vehicleno}</td>
+                      <td>{formatDateTime(entry.visitorEntry_Date)}</td>
+                      <td>{formatDateTime(entry.visitorEntry_Intime)}</td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            entry.visitorEntry_isApproval
+                              ? "active"
+                              : "inactive"
+                          }`}
+                        >
+                          {entry.visitorEntry_isApproval ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            entry.visitorEntry_isCanteen ? "active" : "inactive"
+                          }`}
+                        >
+                          {entry.visitorEntry_isCanteen ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            entry.visitorEntry_isStay ? "active" : "inactive"
+                          }`}
+                        >
+                          {entry.visitorEntry_isStay ? "Yes" : "No"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {historyTotalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    className="pagination-btn"
+                    onClick={() =>
+                      setHistoryCurrentPage((p) => Math.max(1, p - 1))
+                    }
+                    disabled={historyCurrentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span className="pagination-info">
+                    Page {historyCurrentPage} of {historyTotalPages}
+                  </span>
+                  <button
+                    className="pagination-btn"
+                    onClick={() =>
+                      setHistoryCurrentPage((p) =>
+                        Math.min(historyTotalPages, p + 1)
+                      )
+                    }
+                    disabled={historyCurrentPage === historyTotalPages}
                   >
                     Next
                   </button>

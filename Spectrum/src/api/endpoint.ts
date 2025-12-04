@@ -55,6 +55,11 @@ const visitorEntry = {
     api.put(`/api/visitorentry/${id}`, payload),
 };
 
+const visitor = {
+  getAll: () => api.get("/api/visitor"),
+  getById: (id: number) => api.get(`/api/visitor/${id}`),
+};
+
 const endpoints = {
   auth,
   role,
@@ -62,7 +67,8 @@ const endpoints = {
   user,
   vendor,
   location,
-  visitorEntry, // <- added
+  visitorEntry, // <- existing
+  visitor, // <- added
 };
 
 export default auth;
