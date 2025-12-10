@@ -308,7 +308,7 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
 
   const handleAddVisitor = () => {
     if (setCurrentView) {
-      setCurrentView("preappointment");
+      setCurrentView("securityappointment");
     }
   };
 
@@ -341,7 +341,6 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
 
       <div className="cards-row">
         <div className="card card-visitors">
-          
           <div className="card-icon">
             <svg
               width="28"

@@ -103,6 +103,41 @@
   overflow: hidden;
 }
 
+/* Small trend badge (percent up/down) shown on cards */
+.card-trend {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-secondary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+.card-trend.purple {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+.card-trend.red {
+  background: rgba(254, 202, 202, 0.12);
+  color: #ef4444;
+}
+.card-trend.green {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+.card-trend.orange {
+  background: rgba(255, 237, 213, 0.12);
+  color: #d97706;
+}
+
+/* Align card icon a little lower to avoid overlaying the trend badge */
+.card-icon {
+  margin-top: 12px;
+}
+
 .card::before {
   content: "";
   position: absolute;

@@ -12,6 +12,7 @@ import Preappointment from "./components/Preappointment";
 import Securityappointment from "./components/Securityappointment";
 import Securityapprovalview from "./components/Securityapprovalview";
 import Admindashbord from "./components/Admindashbord";
+import Securitydashborad from "./components/Securitydashborad";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
@@ -51,6 +52,8 @@ function App() {
         // show admin dashboard for admin role, otherwise a simple welcome
         if (userRole === "admin")
           return <Admindashbord setCurrentView={setCurrentView} />;
+        if (userRole === "security")
+          return <Securitydashborad setCurrentView={setCurrentView} />;
         return (
           <div style={{ padding: 24, color: "var(--text-primary)" }}>
             <h2>Welcome to Visitor Management System</h2>
