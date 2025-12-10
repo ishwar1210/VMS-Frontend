@@ -28,7 +28,7 @@ interface Visitor {
 
 function Securityapprovalview() {
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
-  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -205,25 +205,6 @@ function Securityapprovalview() {
     }
   };
 
-  const handleEdit = (entry: VisitorEntry) => {
-    setFormData({
-      visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
-      visitorEntry_Gatepass: entry.visitorEntry_Gatepass ?? "",
-      visitorEntry_Vehicletype: entry.visitorEntry_Vehicletype ?? "",
-      visitorEntry_Vehicleno: entry.visitorEntry_Vehicleno ?? "",
-      visitorEntry_Date: entry.visitorEntry_Date ?? "",
-      visitorEntry_Intime: entry.visitorEntry_Intime ?? "",
-      visitorEntry_Outtime: entry.visitorEntry_Outtime ?? "",
-      visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
-      visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
-      visitorEntry_isStay: !!entry.visitorEntry_isStay,
-      visitorEntry_isApproval: !!entry.visitorEntry_isApproval,
-      visitorEntry_visitorName: entry.visitorEntry_visitorName ?? "",
-    });
-    setEditingId(Number(entry.visitorEntry_Id ?? entry.id ?? entry.Id ?? 0));
-    setShowForm(true);
-    setError("");
-  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -487,12 +468,6 @@ function Securityapprovalview() {
     setError("");
   };
 
-  const getEntryTimeMs = (e: VisitorEntry) => {
-    const ts = e.visitorEntry_Intime || "";
-    if (!ts) return null;
-    const d = new Date(ts);
-    return isNaN(d.getTime()) ? null : d.getTime();
-  };
 
   const getOutTimeMs = (e: VisitorEntry) => {
     const ts = e.visitorEntry_Outtime || "";

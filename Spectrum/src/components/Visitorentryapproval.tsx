@@ -29,7 +29,7 @@ interface Visitor {
 
 function Visitorentryapproval() {
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
-  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);

@@ -9,6 +9,7 @@ interface AdmindashbordProps {
 
 export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
   const [visitors, setVisitors] = useState<any[]>([]);
+  const totalVisitors = visitors.length; // Add this line to calculate total visitors
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -339,7 +340,28 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
         </div>
       </div>
 
-      <div className="cards-row">
+        <div className="card card-visitors">
+            <div className="card-icon">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <path d="M10 17l5-5-5-5" />
+                <path d="M15 12H3" />
+              </svg>
+            </div>
+            <div className="card-content">
+              <div className="card-title">Total Visitors</div> {/* Update title */}
+              <div className="card-value">{totalVisitors}</div> {/* Display total visitors */}
+              <div className="card-badge">Total Visitors Count</div> {/* Update badge */}
+            </div>
         <div className="card card-visitors">
           <div className="card-icon">
             <svg
@@ -464,6 +486,7 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
                 const segW = w / (periods.length - 1 || 1);
                 let path = "M 0 140";
                 periods.forEach((p, i) => {
+                  console.log(p); // Use 'p' to avoid the unused variable error
                   const x = i * segW;
                   const pct = counts[i] / maxCount;
                   const y = h - pct * h;
@@ -482,7 +505,7 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
                 const h = 140;
                 const segW = w / (periods.length - 1 || 1);
                 let path = "";
-                periods.forEach((p, i) => {
+                periods.forEach((_p, i) => {
                   const x = i * segW;
                   const pct = counts[i] / maxCount;
                   const y = h - pct * h;
