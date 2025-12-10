@@ -43,6 +43,7 @@ function initialsFromName(name: string | null) {
 const Topbar: React.FC = () => {
   const { token, clearAuth } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
   const name =
     getNameFromToken(token) || localStorage.getItem("userName") || "admin";
   const dept = getDeptFromToken(token) || localStorage.getItem("userDept");
@@ -106,7 +107,10 @@ const Topbar: React.FC = () => {
             )}
           </button>
 
-          <button className="logout-topbar" onClick={clearAuth}>
+          <button
+            className="logout-topbar"
+            onClick={() => setShowLogoutConfirm(true)}
+          >
             <svg
               width="16"
               height="16"
@@ -126,6 +130,39 @@ const Topbar: React.FC = () => {
           </button>
         </div>
       </div>
+      {showLogoutConfirm && (
+        <div
+          className="logout-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-title"
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div className="logout-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="logout-modal-icon">!</div>
+            <h2 id="logout-title" className="logout-modal-title">
+              Are you sure?
+            </h2>
+            <div className="logout-modal-actions">
+              <button
+                className="confirm-logout-btn"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  clearAuth();
+                }}
+              >
+                Yes, log out!
+              </button>
+              <button
+                className="cancel-logout-btn"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

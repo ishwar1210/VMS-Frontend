@@ -9,12 +9,14 @@ import Locationmaster from "./components/Locationmaster";
 import Visitorentryapproval from "./components/Visitorentryapproval";
 import Visitor from "./components/Visitor";
 import Preappointment from "./components/Preappointment";
+import Admindashbord from "./components/Admindashbord";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
 
 function App() {
   const { isAuthenticated } = useAuth();
+  const { userRole } = useAuth();
   const [currentView, setCurrentView] = useState("dashboard");
 
   const handleNavigate = (component: string) => {
@@ -40,6 +42,9 @@ function App() {
       case "preappointment":
         return <Preappointment />;
       case "dashboard":
+        // show admin dashboard for admin role, otherwise a simple welcome
+        if (userRole === "admin")
+          return <Admindashbord setCurrentView={setCurrentView} />;
         return (
           <div style={{ padding: 24, color: "var(--text-primary)" }}>
             <h2>Welcome to Visitor Management System</h2>
