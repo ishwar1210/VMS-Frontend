@@ -16,7 +16,6 @@ interface VisitorEntry {
   visitorEntry_isStay: boolean;
   visitorEntry_isApproval?: boolean;
   visitorEntry_visitorName?: string;
-  // include any unknown keys
   [key: string]: any;
 }
 
@@ -27,7 +26,7 @@ interface Visitor {
   visitor_Mobile?: string;
 }
 
-function Visitorentryapproval() {
+function Securityapprovalview() {
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,7 +66,6 @@ function Visitorentryapproval() {
       setLoading(true);
       setError("");
 
-      // --- Fetch visitors ---
       const visitorRes = await endpoints.visitor.getAll();
       let visitorData: any = visitorRes?.data;
       if (visitorData && typeof visitorData === "object") {
@@ -93,7 +91,6 @@ function Visitorentryapproval() {
       }));
       setVisitors(normalizedVisitors);
 
-      // --- Fetch visitor entries ---
       const entryRes = await endpoints.visitorEntry.getAll();
       let entryData: any = entryRes?.data;
       if (entryData && typeof entryData === "object") {
@@ -104,10 +101,8 @@ function Visitorentryapproval() {
           entryData = entryData.visitorEntries;
       }
 
-      // robust normalization with many fallbacks for id fields
       const normalizedEntries = (Array.isArray(entryData) ? entryData : []).map(
         (it: any) => {
-          // possible id field names (add more if your backend uses different names)
           const idCandidates = [
             it.visitorEntry_Id,
             it.visitorEntryId,
@@ -119,7 +114,6 @@ function Visitorentryapproval() {
             it.VisitorEntryId,
           ];
 
-          // find first non-null/undefined numeric-like id
           let resolvedId = 0;
           for (const c of idCandidates) {
             if (c !== undefined && c !== null && c !== "") {
@@ -128,7 +122,6 @@ function Visitorentryapproval() {
                 resolvedId = n;
                 break;
               }
-              // allow zero only as last resort
               if (!isNaN(n) && resolvedId === 0) resolvedId = n;
             }
           }
@@ -162,7 +155,6 @@ function Visitorentryapproval() {
               `Visitor ID: ${resolvedVisitorId}`;
 
           return {
-            // ensure numeric id
             visitorEntry_Id: resolvedId,
             visitorEntry_visitorId: resolvedVisitorId,
             visitorEntry_Gatepass:
@@ -194,17 +186,11 @@ function Visitorentryapproval() {
               it.IsApproval ??
               false,
             visitorEntry_visitorName: visitorName,
-            // keep raw object for debugging if needed
             __raw: it,
           } as VisitorEntry;
         }
       );
 
-      // debug log: check resolved ids
-      console.log("Raw entries from API:", entryData);
-      console.log("Normalized entries (with resolved ids):", normalizedEntries);
-
-      // sort newest first by id (higher id first)
       normalizedEntries.sort(
         (a, b) => (b.visitorEntry_Id || 0) - (a.visitorEntry_Id || 0)
       );
@@ -219,9 +205,7 @@ function Visitorentryapproval() {
     }
   };
 
-  // handleEdit uses resolved id
   const handleEdit = (entry: VisitorEntry) => {
-    console.log("handleEdit entry clicked:", entry);
     setFormData({
       visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
       visitorEntry_Gatepass: entry.visitorEntry_Gatepass ?? "",
@@ -236,7 +220,6 @@ function Visitorentryapproval() {
       visitorEntry_isApproval: !!entry.visitorEntry_isApproval,
       visitorEntry_visitorName: entry.visitorEntry_visitorName ?? "",
     });
-    // set editingId from resolved field
     setEditingId(Number(entry.visitorEntry_Id ?? entry.id ?? entry.Id ?? 0));
     setShowForm(true);
     setError("");
@@ -262,6 +245,160 @@ function Visitorentryapproval() {
     setFormData((s: any) => ({ ...s, [name]: target.value }));
   };
 
+  // Set the In Time field to current local datetime (suitable for datetime-local input)
+  const setCurrentInTime = () => {
+    const now = new Date();
+    // Adjust for timezone offset so datetime-local shows local time
+    const tzOffsetMs = now.getTimezoneOffset() * 60000;
+    const local = new Date(now.getTime() - tzOffsetMs);
+    const formatted = local.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+    setFormData((s: any) => ({ ...s, visitorEntry_Intime: formatted }));
+  };
+
+  // Set the In Time for a specific entry immediately (from the table row)
+  const setEntryCurrentInTime = async (entry: VisitorEntry) => {
+    try {
+      setLoading(true);
+      setError("");
+      const id = Number(entry.visitorEntry_Id ?? entry.id ?? 0);
+      if (!id) {
+        setError("Invalid entry id");
+        return;
+      }
+
+      const original = entries.find((it) => Number(it.visitorEntry_Id) === id);
+      const original_isCanteen = original
+        ? !!original.visitorEntry_isCanteen
+        : !!entry.visitorEntry_isCanteen;
+      const original_isStay = original
+        ? !!original.visitorEntry_isStay
+        : !!entry.visitorEntry_isStay;
+      const original_isApproval = original
+        ? !!original.visitorEntry_isApproval
+        : !!entry.visitorEntry_isApproval;
+
+      const now = new Date();
+      // produce a local ISO string with timezone offset (eg. 2025-12-10T16:55:00+05:30)
+      const toLocalIsoWithOffset = (d: Date) => {
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const year = d.getFullYear();
+        const month = pad(d.getMonth() + 1);
+        const day = pad(d.getDate());
+        const hours = pad(d.getHours());
+        const minutes = pad(d.getMinutes());
+        const seconds = pad(d.getSeconds());
+        const offsetMin = -d.getTimezoneOffset();
+        const sign = offsetMin >= 0 ? "+" : "-";
+        const offH = pad(Math.floor(Math.abs(offsetMin) / 60));
+        const offM = pad(Math.abs(offsetMin) % 60);
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offH}:${offM}`;
+      };
+      const nowIso = toLocalIsoWithOffset(now);
+
+      const payload: any = {
+        visitorEntry_Id: id,
+        visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
+        visitorEntry_Gatepass: String(entry.visitorEntry_Gatepass ?? "").trim(),
+        visitorEntry_Vehicletype: String(
+          entry.visitorEntry_Vehicletype ?? ""
+        ).trim(),
+        visitorEntry_Vehicleno: String(
+          entry.visitorEntry_Vehicleno ?? ""
+        ).trim(),
+        visitorEntry_Date: entry.visitorEntry_Date ?? "",
+        visitorEntry_Intime: nowIso,
+        visitorEntry_Outtime: entry.visitorEntry_Outtime?.trim() || null,
+        visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
+        visitorEntry_isCanteen: original_isCanteen,
+        visitorEntry_isStay: original_isStay,
+        visitorEntry_isApproval: original_isApproval,
+      };
+
+      await endpoints.visitorEntry.update(id, payload);
+      await fetchData();
+    } catch (err: any) {
+      console.error("setEntryCurrentInTime error:", err);
+      setError(
+        err?.response?.data?.message || err?.message || "Failed to set In Time"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Set the Out Time for a specific entry immediately (from the table row)
+  const setEntryCurrentOutTime = async (entry: VisitorEntry) => {
+    try {
+      setLoading(true);
+      setError("");
+      const id = Number(entry.visitorEntry_Id ?? entry.id ?? 0);
+      if (!id) {
+        setError("Invalid entry id");
+        return;
+      }
+
+      const original = entries.find((it) => Number(it.visitorEntry_Id) === id);
+      const original_isCanteen = original
+        ? !!original.visitorEntry_isCanteen
+        : !!entry.visitorEntry_isCanteen;
+      const original_isStay = original
+        ? !!original.visitorEntry_isStay
+        : !!entry.visitorEntry_isStay;
+      const original_isApproval = original
+        ? !!original.visitorEntry_isApproval
+        : !!entry.visitorEntry_isApproval;
+
+      const now = new Date();
+      const toLocalIsoWithOffset = (d: Date) => {
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const year = d.getFullYear();
+        const month = pad(d.getMonth() + 1);
+        const day = pad(d.getDate());
+        const hours = pad(d.getHours());
+        const minutes = pad(d.getMinutes());
+        const seconds = pad(d.getSeconds());
+        const offsetMin = -d.getTimezoneOffset();
+        const sign = offsetMin >= 0 ? "+" : "-";
+        const offH = pad(Math.floor(Math.abs(offsetMin) / 60));
+        const offM = pad(Math.abs(offsetMin) % 60);
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offH}:${offM}`;
+      };
+      const nowIso = toLocalIsoWithOffset(now);
+
+      const payload: any = {
+        visitorEntry_Id: id,
+        visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
+        visitorEntry_Gatepass: String(entry.visitorEntry_Gatepass ?? "").trim(),
+        visitorEntry_Vehicletype: String(
+          entry.visitorEntry_Vehicletype ?? ""
+        ).trim(),
+        visitorEntry_Vehicleno: String(
+          entry.visitorEntry_Vehicleno ?? ""
+        ).trim(),
+        visitorEntry_Date: entry.visitorEntry_Date ?? "",
+        visitorEntry_Intime:
+          (entry.visitorEntry_Intime &&
+            String(entry.visitorEntry_Intime).trim()) ||
+          null,
+        visitorEntry_Outtime: nowIso,
+        visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
+        visitorEntry_isCanteen: original_isCanteen,
+        visitorEntry_isStay: original_isStay,
+        visitorEntry_isApproval: original_isApproval,
+      };
+
+      await endpoints.visitorEntry.update(id, payload);
+      await fetchData();
+    } catch (err: any) {
+      console.error("setEntryCurrentOutTime error:", err);
+      setError(
+        err?.response?.data?.message || err?.message || "Failed to set Out Time"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     try {
@@ -273,6 +410,21 @@ function Visitorentryapproval() {
         setLoading(false);
         return;
       }
+
+      // For security users: do not allow changing approval/canteen/stay flags.
+      // Use original entry values for these fields to enforce immutability on client.
+      const original = entries.find(
+        (it) => Number(it.visitorEntry_Id) === Number(editingId)
+      );
+      const original_isCanteen = original
+        ? !!original.visitorEntry_isCanteen
+        : !!formData.visitorEntry_isCanteen;
+      const original_isStay = original
+        ? !!original.visitorEntry_isStay
+        : !!formData.visitorEntry_isStay;
+      const original_isApproval = original
+        ? !!original.visitorEntry_isApproval
+        : !!formData.visitorEntry_isApproval;
 
       const payload: any = {
         visitorEntry_Id: Number(editingId),
@@ -293,17 +445,14 @@ function Visitorentryapproval() {
           null,
         visitorEntry_Outtime: formData.visitorEntry_Outtime?.trim() || null,
         visitorEntry_Userid: Number(formData.visitorEntry_Userid ?? 0),
-        visitorEntry_isCanteen: !!formData.visitorEntry_isCanteen,
-        visitorEntry_isStay: !!formData.visitorEntry_isStay,
-        visitorEntry_isApproval: !!formData.visitorEntry_isApproval,
+        visitorEntry_isCanteen: original_isCanteen,
+        visitorEntry_isStay: original_isStay,
+        visitorEntry_isApproval: original_isApproval,
       };
 
-      console.log("Submitting update. id:", editingId, "payload:", payload);
-
-      // send PUT with id in route and body
       await endpoints.visitorEntry.update(editingId, payload);
 
-      alert("Visitor entry updated successfully!");
+      alert("Visitor entry updated successfully (Security)!");
       resetForm();
       await fetchData();
     } catch (err: any) {
@@ -338,8 +487,6 @@ function Visitorentryapproval() {
     setError("");
   };
 
-  // derived lists
-  // Helper: classify entries. Use Intime only; if absent, treat as current.
   const getEntryTimeMs = (e: VisitorEntry) => {
     const ts = e.visitorEntry_Intime || "";
     if (!ts) return null;
@@ -347,14 +494,18 @@ function Visitorentryapproval() {
     return isNaN(d.getTime()) ? null : d.getTime();
   };
 
-  // Format a datetime string (ISO or other parseable) for display; returns
-  // empty string for falsy values and falls back to the raw input when parsing fails.
+  const getOutTimeMs = (e: VisitorEntry) => {
+    const ts = e.visitorEntry_Outtime || "";
+    if (!ts) return null;
+    const d = new Date(ts);
+    return isNaN(d.getTime()) ? null : d.getTime();
+  };
+
   const formatDateTime = (ts?: string | null) => {
     if (!ts) return "";
     try {
       const d = new Date(ts);
       if (isNaN(d.getTime())) return String(ts);
-      // Use locale string for readable display; adjust options if you need a specific format
       return d.toLocaleString();
     } catch {
       return String(ts);
@@ -362,16 +513,18 @@ function Visitorentryapproval() {
   };
 
   const nowMs = Date.now();
+  // Treat an entry as history only if it has an Out Time set (and that out time is in the past).
+  // Until Out Time is set, keep it in current entries even if In Time is past.
   const historyEntries = entries.filter((e) => {
-    const t = getEntryTimeMs(e);
-    return t !== null && t < nowMs;
+    const outMs = getOutTimeMs(e);
+    return outMs !== null && outMs < nowMs;
   });
   const currentEntries = entries.filter((e) => {
-    const t = getEntryTimeMs(e);
-    return t === null || t >= nowMs;
+    const outMs = getOutTimeMs(e);
+    // If out time is not set, it's current. If set and in future, still current.
+    return outMs === null || outMs >= nowMs;
   });
 
-  // Use currentEntries for the first table instead of all filtered
   const currentFiltered = currentEntries.filter((e) =>
     (
       (e.visitorEntry_Gatepass ?? "") +
@@ -393,17 +546,11 @@ function Visitorentryapproval() {
     currentStartIndex + entriesPerPage
   );
 
-  // Clamp current pagination when list size changes
   React.useEffect(() => {
-    if (currentPage > currentTotalPages) {
-      setCurrentPage(currentTotalPages);
-    }
-    if (currentPage < 1 && currentTotalPages >= 1) {
-      setCurrentPage(1);
-    }
-  }, [currentTotalPages]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (currentPage > currentTotalPages) setCurrentPage(currentTotalPages);
+    if (currentPage < 1 && currentTotalPages >= 1) setCurrentPage(1);
+  }, [currentTotalPages]);
 
-  // History table filtering/pagination
   const historyFiltered = historyEntries.filter((e) =>
     (
       (e.visitorEntry_Gatepass ?? "") +
@@ -425,27 +572,24 @@ function Visitorentryapproval() {
     historyStartIndex + historyEntriesPerPage
   );
 
-  // Clamp history pagination when list size changes
   React.useEffect(() => {
-    if (historyCurrentPage > historyTotalPages) {
+    if (historyCurrentPage > historyTotalPages)
       setHistoryCurrentPage(historyTotalPages);
-    }
-    if (historyCurrentPage < 1 && historyTotalPages >= 1) {
+    if (historyCurrentPage < 1 && historyTotalPages >= 1)
       setHistoryCurrentPage(1);
-    }
-  }, [historyTotalPages]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [historyTotalPages]);
 
   return (
     <div className="rolemaster-container">
       <div className="rolemaster-header">
-        <h1 className="rolemaster-title">Visitor Entry Approval</h1>
+        <h1 className="rolemaster-title">Security - Visitor Entry Approval</h1>
       </div>
 
       {showForm && (
         <div className="modal-overlay" onClick={resetForm}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">Edit Visitor Entry</h2>
+              <h2 className="modal-title">Edit Visitor Entry (Security)</h2>
               <button className="modal-close" onClick={resetForm}>
                 ×
               </button>
@@ -520,13 +664,25 @@ function Visitorentryapproval() {
               </div>
               <div className="form-group">
                 <label>In Time</label>
-                <input
-                  name="visitorEntry_Intime"
-                  type="datetime-local"
-                  value={formData.visitorEntry_Intime}
-                  onChange={handleInputChange}
-                  className="role-input"
-                />
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    name="visitorEntry_Intime"
+                    type="datetime-local"
+                    value={formData.visitorEntry_Intime}
+                    onChange={handleInputChange}
+                    className="role-input"
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={setCurrentInTime}
+                    title="Set current time"
+                    style={{ padding: "6px 10px" }}
+                  >
+                    Set Current Time
+                  </button>
+                </div>
               </div>
               <div className="form-group">
                 <label>Out Time</label>
@@ -548,6 +704,7 @@ function Visitorentryapproval() {
                   className="role-input"
                 />
               </div>
+
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -555,8 +712,9 @@ function Visitorentryapproval() {
                     type="checkbox"
                     checked={!!formData.visitorEntry_isCanteen}
                     onChange={handleInputChange}
+                    disabled
                   />{" "}
-                  <span>Canteen Access</span>
+                  <span>Canteen Access (read-only)</span>
                 </label>
               </div>
               <div className="form-group">
@@ -566,8 +724,9 @@ function Visitorentryapproval() {
                     type="checkbox"
                     checked={!!formData.visitorEntry_isApproval}
                     onChange={handleInputChange}
+                    disabled
                   />{" "}
-                  <span>Approved</span>
+                  <span>Approved (read-only)</span>
                 </label>
               </div>
               <div className="form-group">
@@ -577,8 +736,9 @@ function Visitorentryapproval() {
                     type="checkbox"
                     checked={!!formData.visitorEntry_isStay}
                     onChange={handleInputChange}
+                    disabled
                   />{" "}
-                  <span>Stay</span>
+                  <span>Stay (read-only)</span>
                 </label>
               </div>
 
@@ -602,7 +762,6 @@ function Visitorentryapproval() {
       )}
 
       <div className="role-table-section-full">
-        {/* Current entries controls */}
         <div className="table-controls">
           <div className="show-entries">
             <span>Show</span>
@@ -660,7 +819,6 @@ function Visitorentryapproval() {
                     <th>Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
-                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -682,8 +840,56 @@ function Visitorentryapproval() {
                       <td>{entry.visitorEntry_Vehicletype}</td>
                       <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateTime(entry.visitorEntry_Date)}</td>
-                      <td>{formatDateTime(entry.visitorEntry_Intime)}</td>
-                      <td>{formatDateTime(entry.visitorEntry_Outtime)}</td>
+                      <td>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            alignItems: "center",
+                          }}
+                        >
+                          <span>
+                            {formatDateTime(entry.visitorEntry_Intime)}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn-cancel"
+                            onClick={() => setEntryCurrentInTime(entry)}
+                            title="Set In Time to now"
+                            style={{
+                              padding: "6px 10px",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Set Now
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            alignItems: "center",
+                          }}
+                        >
+                          <span>
+                            {formatDateTime(entry.visitorEntry_Outtime)}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn-cancel"
+                            onClick={() => setEntryCurrentOutTime(entry)}
+                            title="Set Out Time to now"
+                            style={{
+                              padding: "6px 10px",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Set Out
+                          </button>
+                        </div>
+                      </td>
                       <td>
                         <span
                           className={`status-badge ${
@@ -712,28 +918,6 @@ function Visitorentryapproval() {
                         >
                           {entry.visitorEntry_isStay ? "Yes" : "No"}
                         </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn edit-btn"
-                            onClick={() => handleEdit(entry)}
-                            title="Edit"
-                            aria-label="Edit"
-                          >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -768,7 +952,6 @@ function Visitorentryapproval() {
         </div>
       </div>
 
-      {/* History section (read-only, no edit/update) */}
       <div className="role-table-section-full" style={{ marginTop: 24 }}>
         <div
           className="rolemaster-header"
@@ -834,7 +1017,6 @@ function Visitorentryapproval() {
                     <th>Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
-                    {/* No Action column */}
                   </tr>
                 </thead>
                 <tbody>
@@ -927,4 +1109,4 @@ function Visitorentryapproval() {
   );
 }
 
-export default Visitorentryapproval;
+export default Securityapprovalview;

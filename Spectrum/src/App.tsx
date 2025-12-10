@@ -9,6 +9,8 @@ import Locationmaster from "./components/Locationmaster";
 import Visitorentryapproval from "./components/Visitorentryapproval";
 import Visitor from "./components/Visitor";
 import Preappointment from "./components/Preappointment";
+import Securityappointment from "./components/Securityappointment";
+import Securityapprovalview from "./components/Securityapprovalview";
 import Admindashbord from "./components/Admindashbord";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
@@ -41,6 +43,10 @@ function App() {
         return <Visitor />;
       case "preappointment":
         return <Preappointment />;
+      case "securityappointment":
+        return <Securityappointment />;
+      case "securityapprovalview":
+        return <Securityapprovalview />;
       case "dashboard":
         // show admin dashboard for admin role, otherwise a simple welcome
         if (userRole === "admin")

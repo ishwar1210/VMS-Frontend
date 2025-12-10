@@ -149,6 +149,8 @@ const Topbar: React.FC = () => {
                 onClick={() => {
                   setShowLogoutConfirm(false);
                   clearAuth();
+                  // reload to ensure app state is fully reset after logout
+                  setTimeout(() => window.location.reload(), 50);
                 }}
               >
                 Yes, log out!
