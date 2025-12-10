@@ -10,6 +10,7 @@ interface VisitorEntry {
   visitorEntry_Vehicleno: string;
   visitorEntry_Date: string;
   visitorEntry_Intime: string;
+  visitorEntry_Outtime?: string;
   visitorEntry_Userid: number;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
@@ -48,6 +49,7 @@ function Visitorentryapproval() {
     visitorEntry_Vehicleno: "",
     visitorEntry_Date: "",
     visitorEntry_Intime: "",
+    visitorEntry_Outtime: "",
     visitorEntry_Userid: 0,
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
@@ -175,6 +177,8 @@ function Visitorentryapproval() {
             visitorEntry_Date: it.visitorEntry_Date ?? it.date ?? it.Date ?? "",
             visitorEntry_Intime:
               it.visitorEntry_Intime ?? it.intime ?? it.Intime ?? "",
+            visitorEntry_Outtime:
+              it.visitorEntry_Outtime ?? it.outtime ?? it.Outtime ?? "",
             visitorEntry_Userid:
               it.visitorEntry_Userid ?? it.userid ?? it.Userid ?? 0,
             visitorEntry_isCanteen:
@@ -225,6 +229,7 @@ function Visitorentryapproval() {
       visitorEntry_Vehicleno: entry.visitorEntry_Vehicleno ?? "",
       visitorEntry_Date: entry.visitorEntry_Date ?? "",
       visitorEntry_Intime: entry.visitorEntry_Intime ?? "",
+      visitorEntry_Outtime: entry.visitorEntry_Outtime ?? "",
       visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
       visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
       visitorEntry_isStay: !!entry.visitorEntry_isStay,
@@ -283,6 +288,7 @@ function Visitorentryapproval() {
         ).trim(),
         visitorEntry_Date: formData.visitorEntry_Date ?? "",
         visitorEntry_Intime: formData.visitorEntry_Intime ?? "",
+        visitorEntry_Outtime: formData.visitorEntry_Outtime?.trim() || null,
         visitorEntry_Userid: Number(formData.visitorEntry_Userid ?? 0),
         visitorEntry_isCanteen: !!formData.visitorEntry_isCanteen,
         visitorEntry_isStay: !!formData.visitorEntry_isStay,
@@ -318,6 +324,7 @@ function Visitorentryapproval() {
       visitorEntry_Vehicleno: "",
       visitorEntry_Date: "",
       visitorEntry_Intime: "",
+      visitorEntry_Outtime: "",
       visitorEntry_Userid: 0,
       visitorEntry_isCanteen: false,
       visitorEntry_isStay: false,
@@ -519,6 +526,16 @@ function Visitorentryapproval() {
                 />
               </div>
               <div className="form-group">
+                <label>Out Time</label>
+                <input
+                  name="visitorEntry_Outtime"
+                  type="datetime-local"
+                  value={formData.visitorEntry_Outtime}
+                  onChange={handleInputChange}
+                  className="role-input"
+                />
+              </div>
+              <div className="form-group">
                 <label>User ID</label>
                 <input
                   name="visitorEntry_Userid"
@@ -636,6 +653,7 @@ function Visitorentryapproval() {
                     <th>Vehicle No</th>
                     <th>Date</th>
                     <th>In Time</th>
+                    <th>Out Time</th>
                     <th>Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
@@ -662,6 +680,7 @@ function Visitorentryapproval() {
                       <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateTime(entry.visitorEntry_Date)}</td>
                       <td>{formatDateTime(entry.visitorEntry_Intime)}</td>
+                      <td>{formatDateTime(entry.visitorEntry_Outtime)}</td>
                       <td>
                         <span
                           className={`status-badge ${
@@ -808,6 +827,7 @@ function Visitorentryapproval() {
                     <th>Vehicle No</th>
                     <th>Date</th>
                     <th>In Time</th>
+                    <th>Out Time</th>
                     <th>Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
@@ -834,6 +854,7 @@ function Visitorentryapproval() {
                       <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateTime(entry.visitorEntry_Date)}</td>
                       <td>{formatDateTime(entry.visitorEntry_Intime)}</td>
+                      <td>{formatDateTime(entry.visitorEntry_Outtime)}</td>
                       <td>
                         <span
                           className={`status-badge ${

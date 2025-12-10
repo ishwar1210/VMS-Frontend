@@ -51,13 +51,15 @@ const location = {
 // visitor entry endpoints
 const visitorEntry = {
   getAll: () => api.get("/api/visitorentry"),
+  create: (payload: any) => api.post("/api/visitorentry", payload),
   update: (id: number, payload: any) =>
     api.put(`/api/visitorentry/${id}`, payload),
 };
-
+// visitor endpoints
 const visitor = {
   getAll: () => api.get("/api/visitor"),
   getById: (id: number) => api.get(`/api/visitor/${id}`),
+  create: (payload: any) => api.post("/api/visitor", payload),
   update: (id: number, payload: any) => api.put(`/api/visitor/${id}`, payload),
 };
 

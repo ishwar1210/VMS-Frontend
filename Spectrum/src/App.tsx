@@ -8,6 +8,7 @@ import Vendormaster from "./components/Vendormaster";
 import Locationmaster from "./components/Locationmaster";
 import Visitorentryapproval from "./components/Visitorentryapproval";
 import Visitor from "./components/Visitor";
+import Preappointment from "./components/Preappointment";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
@@ -36,6 +37,8 @@ function App() {
         return <Visitorentryapproval />;
       case "visitor":
         return <Visitor />;
+      case "preappointment":
+        return <Preappointment />;
       case "dashboard":
         return (
           <div style={{ padding: 24, color: "var(--text-primary)" }}>
