@@ -457,6 +457,29 @@ function Sidebar({ onNavigate }: SidebarProps) {
                   </svg>
                   Approval List
                 </div>
+                <div
+                  className={`dropdown-item ${
+                    selectedItem === "vendorgetpass" ? "active" : ""
+                  }`}
+                  onClick={() => handleNavigate("vendorgetpass")}
+                >
+                  {/* Vendor Gatepass icon */}
+                  <svg
+                    className="item-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ marginRight: 8 }}
+                  >
+                    <path d="M3 7h18"></path>
+                    <path d="M5 7l1.5 9.5A2 2 0 0 0 8.5 19h7a2 2 0 0 0 2-2L19 7"></path>
+                    <path d="M8 21h8"></path>
+                  </svg>
+                  Vendor Gatepass
+                </div>
               </div>
             )}
           </>

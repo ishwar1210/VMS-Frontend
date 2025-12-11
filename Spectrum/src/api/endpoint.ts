@@ -63,6 +63,24 @@ const visitor = {
   update: (id: number, payload: any) => api.put(`/api/visitor/${id}`, payload),
 };
 
+// vendor appointment endpoints
+const vendorAppointment = {
+  getAll: () => api.get("/api/vendorappointment"),
+  create: (payload: any) => api.post("/api/vendorappointment", payload),
+  update: (id: number, payload: any) =>
+    api.put(`/api/vendorappointment/${id}`, payload),
+  delete: (id: number) => api.delete(`/api/vendorappointment/${id}`),
+};
+
+// vendor employee endpoints
+const vendorEmployee = {
+  getAll: () => api.get("/api/vendoremp"),
+  create: (payload: any) => api.post("/api/vendoremp", payload),
+  update: (id: number, payload: any) =>
+    api.put(`/api/vendoremp/${id}`, payload),
+  delete: (id: number) => api.delete(`/api/vendoremp/${id}`),
+};
+
 const endpoints = {
   auth,
   role,
@@ -72,6 +90,8 @@ const endpoints = {
   location,
   visitorEntry, // <- existing
   visitor, // <- added
+  vendorAppointment,
+  vendorEmployee,
 };
 
 export default auth;

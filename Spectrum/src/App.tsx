@@ -5,6 +5,7 @@ import Rolemaster from "./components/Rolemaster";
 import Deparmentmaster from "./components/Deparmentmaster";
 import Usermaster from "./components/Usermaster";
 import Vendormaster from "./components/Vendormaster";
+import Vendorgetpass from "./components/Vendorgetpass";
 import Locationmaster from "./components/Locationmaster";
 import Visitorentryapproval from "./components/Visitorentryapproval";
 import Visitor from "./components/Visitor";
@@ -48,6 +49,8 @@ function App() {
         return <Securityappointment />;
       case "securityapprovalview":
         return <Securityapprovalview />;
+      case "vendorgetpass":
+        return <Vendorgetpass />;
       case "dashboard":
         // show admin dashboard for admin role, otherwise a simple welcome
         if (userRole === "admin")
