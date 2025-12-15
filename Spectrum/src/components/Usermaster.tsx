@@ -51,12 +51,15 @@ function Usermaster() {
   });
 
   useEffect(() => {
-    fetchUsers();
-    fetchRoles();
-    fetchDepartments();
+    const loadData = async () => {
+      await fetchRoles();
+      await fetchDepartments();
+      await fetchUsers();
+    };
+    loadData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (rolesList = roles, deptsList = departments) => {
     try {
       setLoading(true);
       setError("");
@@ -76,32 +79,55 @@ function Usermaster() {
         }
       }
 
-      const normalized = (Array.isArray(data) ? data : []).map((item: any) => ({
-        userId: item.userId || item.id || item.UserId || item.ID || 0,
-        username: item.username || item.Username || item.userName || "",
-        u_Name: item.u_Name || item.name || item.Name || item.fullName || "",
-        u_Mobile:
-          item.u_Mobile || item.mobile || item.Mobile || item.phone || "",
-        u_Email: item.u_Email || item.email || item.Email || "",
-        u_Address: item.u_Address || item.address || item.Address || "",
-        u_RoleId: item.u_RoleId || item.roleId || item.RoleId || 0,
-        u_DepartmentID:
+      const normalized = (Array.isArray(data) ? data : []).map((item: any) => {
+        const roleId = item.u_RoleId || item.roleId || item.RoleId || 0;
+        const deptId =
           item.u_DepartmentID ||
           item.departmentId ||
           item.DepartmentId ||
           item.departmentID ||
-          0,
-        u_ReportingToId:
-          item.u_ReportingToId ||
-          item.reportingToId ||
-          item.ReportingToId ||
-          null,
-        roleName: item.roleName || item.RoleName || "",
-        departmentName: item.departmentName || item.DepartmentName || "",
-      }));
+          0;
+
+        return {
+          userId: item.userId || item.id || item.UserId || item.ID || 0,
+          username: item.username || item.Username || item.userName || "",
+          u_Name: item.u_Name || item.name || item.Name || item.fullName || "",
+          u_Mobile:
+            item.u_Mobile || item.mobile || item.Mobile || item.phone || "",
+          u_Email: item.u_Email || item.email || item.Email || "",
+          u_Address: item.u_Address || item.address || item.Address || "",
+          u_RoleId: roleId,
+          u_DepartmentID: deptId,
+          u_ReportingToId:
+            item.u_ReportingToId ||
+            item.reportingToId ||
+            item.ReportingToId ||
+            null,
+          roleName: item.roleName || item.RoleName || "",
+          departmentName: item.departmentName || item.DepartmentName || "",
+        };
+      });
 
       console.log("Normalized users:", normalized);
-      setUsers(normalized);
+      console.log("Available roles for mapping:", rolesList);
+      console.log("Available departments for mapping:", deptsList);
+
+      // Map role and department names from fetched data if not present in user object
+      const enrichedUsers = normalized.map((user) => ({
+        ...user,
+        roleName:
+          user.roleName ||
+          rolesList.find((r) => r.roleId === user.u_RoleId)?.roleName ||
+          "",
+        departmentName:
+          user.departmentName ||
+          deptsList.find((d) => d.departmentId === user.u_DepartmentID)
+            ?.departmentName ||
+          "",
+      }));
+
+      console.log("Enriched users with role/dept names:", enrichedUsers);
+      setUsers(enrichedUsers);
     } catch (err: any) {
       console.error("Error fetching users:", err);
       setError(err?.response?.data?.message || "Failed to fetch users");
@@ -598,8 +624,19 @@ function Usermaster() {
                       <td>{user.u_Name}</td>
                       <td>{user.u_Email || "-"}</td>
                       <td>{user.u_Mobile || "-"}</td>
-                      <td>{user.roleName || user.u_RoleId}</td>
-                      <td>{user.departmentName || user.u_DepartmentID}</td>
+                      <td>
+                        {user.roleName ||
+                          roles.find((r) => r.roleId === user.u_RoleId)
+                            ?.roleName ||
+                          `Role ID: ${user.u_RoleId}`}
+                      </td>
+                      <td>
+                        {user.departmentName ||
+                          departments.find(
+                            (d) => d.departmentId === user.u_DepartmentID
+                          )?.departmentName ||
+                          `Dept ID: ${user.u_DepartmentID}`}
+                      </td>
                       <td>
                         <div className="action-buttons">
                           <button
