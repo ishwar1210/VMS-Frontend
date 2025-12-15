@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Rolemaster.css";
 import { endpoints } from "../api/endpoint";
+import { useAuth } from "../context/AuthContext";
 
 interface VisitorEntry {
   visitorEntry_Id: number;
@@ -29,6 +30,7 @@ interface Visitor {
 }
 
 function Visitorentryapprovalemp() {
+  const { token } = useAuth();
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
   const [, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,33 @@ function Visitorentryapprovalemp() {
   const [historySearchTerm, setHistorySearchTerm] = useState("");
   const [historyEntriesPerPage, setHistoryEntriesPerPage] = useState(10);
   const [historyCurrentPage, setHistoryCurrentPage] = useState(1);
+
+  // Get logged-in user's ID from token
+  const getLoggedInUserId = (): number => {
+    if (!token) return 0;
+    try {
+      if (token.split(".").length === 3) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        // Try various possible claim names for user ID
+        const userId =
+          payload?.userId ||
+          payload?.UserId ||
+          payload?.user_id ||
+          payload?.sub ||
+          payload?.nameid ||
+          payload?.[
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+          ] ||
+          0;
+        return Number(userId) || 0;
+      }
+    } catch (e) {
+      console.error("Error decoding token for userId:", e);
+    }
+    return 0;
+  };
+
+  const loggedInUserId = getLoggedInUserId();
 
   const [formData, setFormData] = useState<any>({
     visitorEntry_visitorId: 0,
@@ -265,13 +294,21 @@ function Visitorentryapprovalemp() {
       // debug log: check resolved ids
       console.log("Raw entries from API:", entryData);
       console.log("Normalized entries (with resolved ids):", normalizedEntries);
+      console.log("Logged-in user ID:", loggedInUserId);
+
+      // Filter entries: only show entries where visitorEntry_Userid matches logged-in user
+      const filteredEntries = normalizedEntries.filter(
+        (entry) => Number(entry.visitorEntry_Userid) === loggedInUserId
+      );
+
+      console.log("Filtered entries for current user:", filteredEntries);
 
       // sort newest first by id (higher id first)
-      normalizedEntries.sort(
+      filteredEntries.sort(
         (a, b) => (b.visitorEntry_Id || 0) - (a.visitorEntry_Id || 0)
       );
 
-      setEntries(normalizedEntries);
+      setEntries(filteredEntries);
     } catch (err: any) {
       console.error("fetchData error:", err);
       setError("Failed to fetch data");
@@ -284,6 +321,13 @@ function Visitorentryapprovalemp() {
   // handleEdit uses resolved id
   const handleEdit = (entry: VisitorEntry) => {
     console.log("handleEdit entry clicked:", entry);
+
+    // Verify entry belongs to logged-in user
+    if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
+      alert("You can only approve entries assigned to you.");
+      return;
+    }
+
     setFormData({
       visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
       visitorEntry_Gatepass: entry.visitorEntry_Gatepass ?? "",
@@ -334,6 +378,23 @@ function Visitorentryapprovalemp() {
 
       if (editingId === null) {
         setError("No entry selected for update.");
+        setLoading(false);
+        return;
+      }
+
+      // Verify that the entry belongs to the logged-in user
+      const entryToUpdate = entries.find(
+        (entry) => entry.visitorEntry_Id === editingId
+      );
+
+      if (!entryToUpdate) {
+        setError("Entry not found.");
+        setLoading(false);
+        return;
+      }
+
+      if (Number(entryToUpdate.visitorEntry_Userid) !== loggedInUserId) {
+        setError("You can only approve entries assigned to you.");
         setLoading(false);
         return;
       }
@@ -728,6 +789,8 @@ function Visitorentryapprovalemp() {
             <div className="empty-state">
               {searchTerm
                 ? "No current entries found"
+                : entries.length === 0
+                ? "No visitor entries assigned to you"
                 : "No current visitor entries"}
             </div>
           ) : (

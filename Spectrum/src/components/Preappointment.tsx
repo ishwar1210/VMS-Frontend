@@ -506,15 +506,6 @@ export default function Preappointment() {
               <label className="checkbox-label">
                 <input
                   type="checkbox"
-                  name="visitorEntry_isApproval"
-                  checked={entryForm.visitorEntry_isApproval}
-                  onChange={handleEntryChange}
-                />
-                <span>Approval Required (Admin)</span>
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
                   name="visitorEntry_isCanteen"
                   checked={entryForm.visitorEntry_isCanteen}
                   onChange={handleEntryChange}
