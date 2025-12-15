@@ -205,6 +205,99 @@
   cursor: not-allowed;
 }
 
+/* Upload Section Styles */
+.upload-section {
+  background: var(--card-bg-1);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+}
+
+.upload-section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-header);
+  margin: 0 0 20px 0;
+}
+
+.upload-file-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--card-border);
+  border-radius: 8px;
+}
+
+.upload-label {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  display: inline-block;
+}
+
+.upload-label:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.file-input {
+  display: none;
+}
+
+.file-name {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.upload-progress {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  color: #2563eb;
+  text-align: center;
+  font-weight: 500;
+}
+
+.download-pdf-section {
+  margin-top: 20px;
+  text-align: center;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.download-pdf-final-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  min-width: 200px;
+}
+
+.download-pdf-final-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .vendor-gatepass-container {
