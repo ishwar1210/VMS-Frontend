@@ -15,6 +15,8 @@ interface VisitorEntry {
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
   visitorEntry_isApproval?: boolean;
+  visitorEntry_adminApproval?: boolean;
+  visitorEntry_userApproval?: boolean;
   visitorEntry_visitorName?: string;
   [key: string]: any;
 }
@@ -53,6 +55,8 @@ function Securityapprovalview() {
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
     visitorEntry_isApproval: false,
+    visitorEntry_adminApproval: false,
+    visitorEntry_userApproval: false,
     visitorEntry_visitorName: "",
   });
 
@@ -78,16 +82,26 @@ function Securityapprovalview() {
       const normalizedVisitors = (
         Array.isArray(visitorData) ? visitorData : []
       ).map((v: any) => ({
-        visitor_Id: v.visitor_Id ?? v.visitorId ?? v.id ?? v.Id ?? 0,
+        visitor_Id:
+          v.visitor_Id ??
+          v.Visitor_Id ??
+          v.VisitorEntry_visitorId ??
+          v.visitorId ??
+          v.VisitorId ??
+          v.id ??
+          v.Id ??
+          0,
         visitor_Name:
           v.visitor_Name ??
+          v.Visitor_Name ??
           v.visitorName ??
           v.name ??
           v.Name ??
           v.fullName ??
           (`${v.firstName ?? ""} ${v.lastName ?? ""}`.trim() || "Unknown"),
-        visitor_Email: v.visitor_Email ?? v.email ?? "",
-        visitor_Mobile: v.visitor_Mobile ?? v.mobile ?? v.phone ?? "",
+        visitor_Email: v.visitor_Email ?? v.email ?? v.Email ?? "",
+        visitor_Mobile:
+          v.visitor_Mobile ?? v.mobile ?? v.phone ?? v.Phone ?? "",
       }));
       setVisitors(normalizedVisitors);
 
@@ -105,6 +119,7 @@ function Securityapprovalview() {
         (it: any) => {
           const idCandidates = [
             it.visitorEntry_Id,
+            it.VisitorEntry_Id,
             it.visitorEntryId,
             it.visitorentryId,
             it.visitorEntryid,
@@ -112,6 +127,7 @@ function Securityapprovalview() {
             it.Id,
             it.visitorEntryID,
             it.VisitorEntryId,
+            it.VisitorEntryID,
           ];
 
           let resolvedId = 0;
@@ -128,6 +144,8 @@ function Securityapprovalview() {
 
           const visitorIdCandidates = [
             it.visitorEntry_visitorId,
+            it.VisitorEntry_visitorId,
+            it.VisitorEntryVisitorId,
             it.visitorId,
             it.VisitorId,
             it.visitor_id,
@@ -158,32 +176,75 @@ function Securityapprovalview() {
             visitorEntry_Id: resolvedId,
             visitorEntry_visitorId: resolvedVisitorId,
             visitorEntry_Gatepass:
-              it.visitorEntry_Gatepass ?? it.gatepass ?? it.Gatepass ?? "",
+              it.visitorEntry_Gatepass ??
+              it.VisitorEntry_Gatepass ??
+              it.gatepass ??
+              it.Gatepass ??
+              "",
             visitorEntry_Vehicletype:
               it.visitorEntry_Vehicletype ??
+              it.VisitorEntry_Vehicletype ??
               it.vehicletype ??
               it.VehicleType ??
               "",
             visitorEntry_Vehicleno:
-              it.visitorEntry_Vehicleno ?? it.vehicleno ?? it.VehicleNo ?? "",
-            visitorEntry_Date: it.visitorEntry_Date ?? it.date ?? it.Date ?? "",
+              it.visitorEntry_Vehicleno ??
+              it.VisitorEntry_Vehicleno ??
+              it.vehicleno ??
+              it.VehicleNo ??
+              "",
+            visitorEntry_Date:
+              it.visitorEntry_Date ??
+              it.VisitorEntry_Date ??
+              it.date ??
+              it.Date ??
+              "",
             visitorEntry_Intime:
-              it.visitorEntry_Intime ?? it.intime ?? it.Intime ?? "",
+              it.visitorEntry_Intime ??
+              it.VisitorEntry_Intime ??
+              it.intime ??
+              it.Intime ??
+              "",
             visitorEntry_Outtime:
-              it.visitorEntry_Outtime ?? it.outtime ?? it.Outtime ?? "",
+              it.visitorEntry_Outtime ??
+              it.VisitorEntry_Outtime ??
+              it.outtime ??
+              it.Outtime ??
+              "",
             visitorEntry_Userid:
-              it.visitorEntry_Userid ?? it.userid ?? it.Userid ?? 0,
+              it.visitorEntry_Userid ??
+              it.VisitorEntry_Userid ??
+              it.userid ??
+              it.Userid ??
+              0,
             visitorEntry_isCanteen:
               it.visitorEntry_isCanteen ??
+              it.visitorEntry_IsCanteen ??
               it.isCanteen ??
               it.IsCanteen ??
               false,
             visitorEntry_isStay:
-              it.visitorEntry_isStay ?? it.isStay ?? it.IsStay ?? false,
+              it.visitorEntry_isStay ??
+              it.visitorEntry_IsStay ??
+              it.isStay ??
+              it.IsStay ??
+              false,
             visitorEntry_isApproval:
               it.visitorEntry_isApproval ??
               it.isApproval ??
               it.IsApproval ??
+              false,
+            visitorEntry_adminApproval:
+              it.visitorEntryAdmin_isApproval ??
+              it.visitorEntry_Admin_isApproval ??
+              it.visitorEntryAdminIsApproval ??
+              it.visitorEntry_AdminIsApproval ??
+              it.visitorEntry_isApproval ??
+              false,
+            visitorEntry_userApproval:
+              it.visitorEntryuser_isApproval ??
+              it.visitorEntry_User_isApproval ??
+              it.visitorEntryUserIsApproval ??
               false,
             visitorEntry_visitorName: visitorName,
             __raw: it,
@@ -204,7 +265,6 @@ function Securityapprovalview() {
       setLoading(false);
     }
   };
-
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -293,6 +353,13 @@ function Securityapprovalview() {
         visitorEntry_isCanteen: original_isCanteen,
         visitorEntry_isStay: original_isStay,
         visitorEntry_isApproval: original_isApproval,
+        visitorEntryAdmin_isApproval: !!(
+          original?.visitorEntry_adminApproval ??
+          entry.visitorEntry_adminApproval
+        ),
+        visitorEntryuser_isApproval: !!(
+          original?.visitorEntry_userApproval ?? entry.visitorEntry_userApproval
+        ),
       };
 
       await endpoints.visitorEntry.update(id, payload);
@@ -366,6 +433,13 @@ function Securityapprovalview() {
         visitorEntry_isCanteen: original_isCanteen,
         visitorEntry_isStay: original_isStay,
         visitorEntry_isApproval: original_isApproval,
+        visitorEntryAdmin_isApproval: !!(
+          original?.visitorEntry_adminApproval ??
+          entry.visitorEntry_adminApproval
+        ),
+        visitorEntryuser_isApproval: !!(
+          original?.visitorEntry_userApproval ?? entry.visitorEntry_userApproval
+        ),
       };
 
       await endpoints.visitorEntry.update(id, payload);
@@ -406,6 +480,12 @@ function Securityapprovalview() {
       const original_isApproval = original
         ? !!original.visitorEntry_isApproval
         : !!formData.visitorEntry_isApproval;
+      const original_adminApproval = original
+        ? !!original.visitorEntry_adminApproval
+        : !!formData.visitorEntry_adminApproval;
+      const original_userApproval = original
+        ? !!original.visitorEntry_userApproval
+        : !!formData.visitorEntry_userApproval;
 
       const payload: any = {
         visitorEntry_Id: Number(editingId),
@@ -429,6 +509,8 @@ function Securityapprovalview() {
         visitorEntry_isCanteen: original_isCanteen,
         visitorEntry_isStay: original_isStay,
         visitorEntry_isApproval: original_isApproval,
+        visitorEntryAdmin_isApproval: original_adminApproval,
+        visitorEntryuser_isApproval: original_userApproval,
       };
 
       await endpoints.visitorEntry.update(editingId, payload);
@@ -462,12 +544,13 @@ function Securityapprovalview() {
       visitorEntry_isCanteen: false,
       visitorEntry_isStay: false,
       visitorEntry_isApproval: false,
+      visitorEntry_adminApproval: false,
+      visitorEntry_userApproval: false,
     });
     setEditingId(null);
     setShowForm(false);
     setError("");
   };
-
 
   const getOutTimeMs = (e: VisitorEntry) => {
     const ts = e.visitorEntry_Outtime || "";
@@ -791,7 +874,8 @@ function Securityapprovalview() {
                     <th>Date</th>
                     <th>In Time</th>
                     <th>Out Time</th>
-                    <th>Approved</th>
+                    <th>Admin Approved</th>
+                    <th>User Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
                   </tr>
@@ -868,12 +952,23 @@ function Securityapprovalview() {
                       <td>
                         <span
                           className={`status-badge ${
-                            entry.visitorEntry_isApproval
+                            entry.visitorEntry_adminApproval
                               ? "active"
                               : "inactive"
                           }`}
                         >
-                          {entry.visitorEntry_isApproval ? "Yes" : "No"}
+                          {entry.visitorEntry_adminApproval ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            entry.visitorEntry_userApproval
+                              ? "active"
+                              : "inactive"
+                          }`}
+                        >
+                          {entry.visitorEntry_userApproval ? "Yes" : "No"}
                         </span>
                       </td>
                       <td>
@@ -989,7 +1084,8 @@ function Securityapprovalview() {
                     <th>Date</th>
                     <th>In Time</th>
                     <th>Out Time</th>
-                    <th>Approved</th>
+                    <th>Admin Approved</th>
+                    <th>User Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
                   </tr>
@@ -1018,12 +1114,23 @@ function Securityapprovalview() {
                       <td>
                         <span
                           className={`status-badge ${
-                            entry.visitorEntry_isApproval
+                            entry.visitorEntry_adminApproval
                               ? "active"
                               : "inactive"
                           }`}
                         >
-                          {entry.visitorEntry_isApproval ? "Yes" : "No"}
+                          {entry.visitorEntry_adminApproval ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            entry.visitorEntry_userApproval
+                              ? "active"
+                              : "inactive"
+                          }`}
+                        >
+                          {entry.visitorEntry_userApproval ? "Yes" : "No"}
                         </span>
                       </td>
                       <td>

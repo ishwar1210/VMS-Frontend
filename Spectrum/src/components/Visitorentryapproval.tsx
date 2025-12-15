@@ -15,6 +15,8 @@ interface VisitorEntry {
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
   visitorEntry_isApproval?: boolean;
+  visitorEntry_adminApproval?: boolean;
+  visitorEntry_userApproval?: boolean;
   visitorEntry_visitorName?: string;
   // include any unknown keys
   [key: string]: any;
@@ -54,6 +56,8 @@ function Visitorentryapproval() {
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
     visitorEntry_isApproval: false,
+    visitorEntry_adminApproval: false,
+    visitorEntry_userApproval: false,
     visitorEntry_visitorName: "",
   });
 
@@ -80,16 +84,26 @@ function Visitorentryapproval() {
       const normalizedVisitors = (
         Array.isArray(visitorData) ? visitorData : []
       ).map((v: any) => ({
-        visitor_Id: v.visitor_Id ?? v.visitorId ?? v.id ?? v.Id ?? 0,
+        visitor_Id:
+          v.visitor_Id ??
+          v.Visitor_Id ??
+          v.VisitorEntry_visitorId ??
+          v.visitorId ??
+          v.VisitorId ??
+          v.id ??
+          v.Id ??
+          0,
         visitor_Name:
           v.visitor_Name ??
+          v.Visitor_Name ??
           v.visitorName ??
           v.name ??
           v.Name ??
           v.fullName ??
           (`${v.firstName ?? ""} ${v.lastName ?? ""}`.trim() || "Unknown"),
-        visitor_Email: v.visitor_Email ?? v.email ?? "",
-        visitor_Mobile: v.visitor_Mobile ?? v.mobile ?? v.phone ?? "",
+        visitor_Email: v.visitor_Email ?? v.email ?? v.Email ?? "",
+        visitor_Mobile:
+          v.visitor_Mobile ?? v.mobile ?? v.phone ?? v.Phone ?? "",
       }));
       setVisitors(normalizedVisitors);
 
@@ -110,6 +124,7 @@ function Visitorentryapproval() {
           // possible id field names (add more if your backend uses different names)
           const idCandidates = [
             it.visitorEntry_Id,
+            it.VisitorEntry_Id,
             it.visitorEntryId,
             it.visitorentryId,
             it.visitorEntryid,
@@ -117,6 +132,7 @@ function Visitorentryapproval() {
             it.Id,
             it.visitorEntryID,
             it.VisitorEntryId,
+            it.VisitorEntryID,
           ];
 
           // find first non-null/undefined numeric-like id
@@ -135,6 +151,8 @@ function Visitorentryapproval() {
 
           const visitorIdCandidates = [
             it.visitorEntry_visitorId,
+            it.VisitorEntry_visitorId,
+            it.VisitorEntryVisitorId,
             it.visitorId,
             it.VisitorId,
             it.visitor_id,
@@ -166,35 +184,80 @@ function Visitorentryapproval() {
             visitorEntry_Id: resolvedId,
             visitorEntry_visitorId: resolvedVisitorId,
             visitorEntry_Gatepass:
-              it.visitorEntry_Gatepass ?? it.gatepass ?? it.Gatepass ?? "",
+              it.visitorEntry_Gatepass ??
+              it.VisitorEntry_Gatepass ??
+              it.gatepass ??
+              it.Gatepass ??
+              "",
             visitorEntry_Vehicletype:
               it.visitorEntry_Vehicletype ??
+              it.VisitorEntry_Vehicletype ??
               it.vehicletype ??
               it.VehicleType ??
               "",
             visitorEntry_Vehicleno:
-              it.visitorEntry_Vehicleno ?? it.vehicleno ?? it.VehicleNo ?? "",
-            visitorEntry_Date: it.visitorEntry_Date ?? it.date ?? it.Date ?? "",
+              it.visitorEntry_Vehicleno ??
+              it.VisitorEntry_Vehicleno ??
+              it.vehicleno ??
+              it.VehicleNo ??
+              "",
+            visitorEntry_Date:
+              it.visitorEntry_Date ??
+              it.VisitorEntry_Date ??
+              it.date ??
+              it.Date ??
+              "",
             visitorEntry_Intime:
-              it.visitorEntry_Intime ?? it.intime ?? it.Intime ?? "",
+              it.visitorEntry_Intime ??
+              it.VisitorEntry_Intime ??
+              it.intime ??
+              it.Intime ??
+              "",
             visitorEntry_Outtime:
-              it.visitorEntry_Outtime ?? it.outtime ?? it.Outtime ?? "",
+              it.visitorEntry_Outtime ??
+              it.VisitorEntry_Outtime ??
+              it.outtime ??
+              it.Outtime ??
+              "",
             visitorEntry_Userid:
-              it.visitorEntry_Userid ?? it.userid ?? it.Userid ?? 0,
+              it.visitorEntry_Userid ??
+              it.VisitorEntry_Userid ??
+              it.userid ??
+              it.Userid ??
+              0,
             visitorEntry_isCanteen:
               it.visitorEntry_isCanteen ??
+              it.visitorEntry_IsCanteen ??
               it.isCanteen ??
               it.IsCanteen ??
               false,
             visitorEntry_isStay:
-              it.visitorEntry_isStay ?? it.isStay ?? it.IsStay ?? false,
+              it.visitorEntry_isStay ??
+              it.visitorEntry_IsStay ??
+              it.isStay ??
+              it.IsStay ??
+              false,
             visitorEntry_isApproval:
+              // keep legacy/combined flag when present
               it.visitorEntry_isApproval ??
               it.isApproval ??
               it.IsApproval ??
               false,
+            // explicit admin/user approval flags (new fields)
+            visitorEntry_adminApproval:
+              it.visitorEntryAdmin_isApproval ??
+              it.visitorEntry_Admin_isApproval ??
+              it.visitorEntryAdminIsApproval ??
+              it.visitorEntry_AdminIsApproval ??
+              it.visitorEntry_isApproval ??
+              false,
+            visitorEntry_userApproval:
+              it.visitorEntryuser_isApproval ??
+              it.visitorEntry_User_isApproval ??
+              it.visitorEntryUserIsApproval ??
+              false,
             visitorEntry_visitorName: visitorName,
-            // keep raw object for debugging if needed
+            // include raw object for debugging if needed
             __raw: it,
           } as VisitorEntry;
         }
@@ -234,6 +297,8 @@ function Visitorentryapproval() {
       visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
       visitorEntry_isStay: !!entry.visitorEntry_isStay,
       visitorEntry_isApproval: !!entry.visitorEntry_isApproval,
+      visitorEntry_adminApproval: !!entry.visitorEntry_adminApproval,
+      visitorEntry_userApproval: !!entry.visitorEntry_userApproval,
       visitorEntry_visitorName: entry.visitorEntry_visitorName ?? "",
     });
     // set editingId from resolved field
@@ -295,7 +360,10 @@ function Visitorentryapproval() {
         visitorEntry_Userid: Number(formData.visitorEntry_Userid ?? 0),
         visitorEntry_isCanteen: !!formData.visitorEntry_isCanteen,
         visitorEntry_isStay: !!formData.visitorEntry_isStay,
+        // include both admin and user approval flags per new API
         visitorEntry_isApproval: !!formData.visitorEntry_isApproval,
+        visitorEntryAdmin_isApproval: !!formData.visitorEntry_adminApproval,
+        visitorEntryuser_isApproval: !!formData.visitorEntry_userApproval,
       };
 
       console.log("Submitting update. id:", editingId, "payload:", payload);
@@ -657,7 +725,8 @@ function Visitorentryapproval() {
                     <th>Date</th>
                     <th>In Time</th>
                     <th>Out Time</th>
-                    <th>Approved</th>
+                    <th>Admin Approved</th>
+                    <th>User Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
                     <th>Action</th>
@@ -687,12 +756,23 @@ function Visitorentryapproval() {
                       <td>
                         <span
                           className={`status-badge ${
-                            entry.visitorEntry_isApproval
+                            entry.visitorEntry_adminApproval
                               ? "active"
                               : "inactive"
                           }`}
                         >
-                          {entry.visitorEntry_isApproval ? "Yes" : "No"}
+                          {entry.visitorEntry_adminApproval ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            entry.visitorEntry_userApproval
+                              ? "active"
+                              : "inactive"
+                          }`}
+                        >
+                          {entry.visitorEntry_userApproval ? "Yes" : "No"}
                         </span>
                       </td>
                       <td>
@@ -831,7 +911,8 @@ function Visitorentryapproval() {
                     <th>Date</th>
                     <th>In Time</th>
                     <th>Out Time</th>
-                    <th>Approved</th>
+                    <th>Admin Approved</th>
+                    <th>User Approved</th>
                     <th>Canteen</th>
                     <th>Stay</th>
                     {/* No Action column */}
@@ -861,12 +942,23 @@ function Visitorentryapproval() {
                       <td>
                         <span
                           className={`status-badge ${
-                            entry.visitorEntry_isApproval
+                            entry.visitorEntry_adminApproval
                               ? "active"
                               : "inactive"
                           }`}
                         >
-                          {entry.visitorEntry_isApproval ? "Yes" : "No"}
+                          {entry.visitorEntry_adminApproval ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            entry.visitorEntry_userApproval
+                              ? "active"
+                              : "inactive"
+                          }`}
+                        >
+                          {entry.visitorEntry_userApproval ? "Yes" : "No"}
                         </span>
                       </td>
                       <td>
