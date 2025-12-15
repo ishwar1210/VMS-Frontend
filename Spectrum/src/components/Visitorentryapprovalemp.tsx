@@ -18,7 +18,6 @@ interface VisitorEntry {
   visitorEntry_adminApproval?: boolean;
   visitorEntry_userApproval?: boolean;
   visitorEntry_visitorName?: string;
-  // include any unknown keys
   [key: string]: any;
 }
 
@@ -29,7 +28,7 @@ interface Visitor {
   visitor_Mobile?: string;
 }
 
-function Visitorentryapproval() {
+function Visitorentryapprovalemp() {
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
   const [, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -525,7 +524,7 @@ function Visitorentryapproval() {
   return (
     <div className="rolemaster-container">
       <div className="rolemaster-header">
-        <h1 className="rolemaster-title">Visitor Entry Approval</h1>
+        <h1 className="rolemaster-title">Visitor Entry Approval (Employee)</h1>
       </div>
 
       {showForm && (
@@ -646,17 +645,17 @@ function Visitorentryapproval() {
                   <span>Canteen Access</span>
                 </label>
               </div>
-                <div className="form-group">
+              <div className="form-group">
                 <label className="checkbox-label">
                   <input
-                  name="visitorEntry_adminApproval"
-                  type="checkbox"
-                  checked={!!formData.visitorEntry_adminApproval}
-                  onChange={handleInputChange}
+                    name="visitorEntry_userApproval"
+                    type="checkbox"
+                    checked={!!formData.visitorEntry_userApproval}
+                    onChange={handleInputChange}
                   />{" "}
-                  <span>Admin Approved</span>
+                  <span>User Approved</span>
                 </label>
-                </div>
+              </div>
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -1038,4 +1037,4 @@ function Visitorentryapproval() {
   );
 }
 
-export default Visitorentryapproval;
+export default Visitorentryapprovalemp;

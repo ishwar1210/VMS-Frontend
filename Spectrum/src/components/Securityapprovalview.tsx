@@ -559,16 +559,43 @@ function Securityapprovalview() {
     return isNaN(d.getTime()) ? null : d.getTime();
   };
 
-  const formatDateTime = (ts?: string | null) => {
+  // Return only the date part (e.g. 12/10/2025)
+  const formatDateOnly = (ts?: string | null) => {
     if (!ts) return "";
     try {
       const d = new Date(ts);
-      if (isNaN(d.getTime())) return String(ts);
-      return d.toLocaleString();
+      if (!isNaN(d.getTime())) return d.toLocaleDateString();
+      // fallback for ISO-like strings (YYYY-MM-DDTHH:mm[:ss][...])
+      const s = String(ts);
+      const parts = s.split("T");
+      if (parts[0]) return parts[0];
+      return s;
     } catch {
       return String(ts);
     }
   };
+
+  // Return only the time part (e.g. 2:51:00 PM)
+  const formatTimeOnly = (ts?: string | null) => {
+    if (!ts) return "";
+    try {
+      const d = new Date(ts);
+      if (!isNaN(d.getTime())) return d.toLocaleTimeString();
+      // fallback for ISO-like strings (YYYY-MM-DDTHH:mm[:ss][+TZ])
+      const s = String(ts);
+      const parts = s.split("T");
+      if (parts[1]) {
+        // remove timezone offset if present
+        const timePart = parts[1].replace(/([+-]\d{2}:?\d{2}|Z)$/, "");
+        return timePart;
+      }
+      return s;
+    } catch {
+      return String(ts);
+    }
+  };
+
+  // (formatDateTime removed — use formatDateOnly/formatTimeOnly)
 
   const nowMs = Date.now();
   // Treat an entry as history only if it has an Out Time set (and that out time is in the past).
@@ -898,7 +925,7 @@ function Securityapprovalview() {
                       </td>
                       <td>{entry.visitorEntry_Vehicletype}</td>
                       <td>{entry.visitorEntry_Vehicleno}</td>
-                      <td>{formatDateTime(entry.visitorEntry_Date)}</td>
+                      <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
                       <td>
                         <div
                           style={{
@@ -908,7 +935,7 @@ function Securityapprovalview() {
                           }}
                         >
                           <span>
-                            {formatDateTime(entry.visitorEntry_Intime)}
+                            {formatTimeOnly(entry.visitorEntry_Intime)}
                           </span>
                           <button
                             type="button"
@@ -933,7 +960,7 @@ function Securityapprovalview() {
                           }}
                         >
                           <span>
-                            {formatDateTime(entry.visitorEntry_Outtime)}
+                            {formatTimeOnly(entry.visitorEntry_Outtime)}
                           </span>
                           <button
                             type="button"
@@ -1108,9 +1135,9 @@ function Securityapprovalview() {
                       </td>
                       <td>{entry.visitorEntry_Vehicletype}</td>
                       <td>{entry.visitorEntry_Vehicleno}</td>
-                      <td>{formatDateTime(entry.visitorEntry_Date)}</td>
-                      <td>{formatDateTime(entry.visitorEntry_Intime)}</td>
-                      <td>{formatDateTime(entry.visitorEntry_Outtime)}</td>
+                      <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
+                      <td>{formatTimeOnly(entry.visitorEntry_Intime)}</td>
+                      <td>{formatTimeOnly(entry.visitorEntry_Outtime)}</td>
                       <td>
                         <span
                           className={`status-badge ${

@@ -8,6 +8,7 @@ import Vendormaster from "./components/Vendormaster";
 import Vendorgetpass from "./components/Vendorgetpass";
 import Locationmaster from "./components/Locationmaster";
 import Visitorentryapproval from "./components/Visitorentryapproval";
+import Visitorentryapprovalemp from "./components/Visitorentryapprovalemp";
 import Visitor from "./components/Visitor";
 import Preappointment from "./components/Preappointment";
 import Securityappointment from "./components/Securityappointment";
@@ -41,6 +42,8 @@ function App() {
         return <Locationmaster />;
       case "visitorentryapproval":
         return <Visitorentryapproval />;
+      case "visitorentryapprovalemp":
+        return <Visitorentryapprovalemp />;
       case "visitor":
         return <Visitor />;
       case "preappointment":
