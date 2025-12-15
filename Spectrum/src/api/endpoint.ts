@@ -81,6 +81,14 @@ const vendorEmployee = {
   delete: (id: number) => api.delete(`/api/vendoremp/${id}`),
 };
 
+// parcel endpoints
+const parcel = {
+  getAll: () => api.get("/api/parcel"),
+  create: (payload: any) => api.post("/api/parcel", payload),
+  update: (id: number, payload: any) => api.put(`/api/parcel/${id}`, payload),
+  delete: (id: number) => api.delete(`/api/parcel/${id}`),
+};
+
 const endpoints = {
   auth,
   role,
@@ -92,6 +100,7 @@ const endpoints = {
   visitor, // <- added
   vendorAppointment,
   vendorEmployee,
+  parcel,
 };
 
 export default auth;

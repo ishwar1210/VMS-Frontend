@@ -15,6 +15,7 @@ import Securityappointment from "./components/Securityappointment";
 import Securityapprovalview from "./components/Securityapprovalview";
 import Admindashbord from "./components/Admindashbord";
 import Securitydashborad from "./components/Securitydashborad";
+import Securityparcelentry from "./components/Securityparcelentry";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
@@ -54,6 +55,8 @@ function App() {
         return <Securityapprovalview />;
       case "vendorgetpass":
         return <Vendorgetpass />;
+      case "securityparcelentry":
+        return <Securityparcelentry />;
       case "dashboard":
         // show admin dashboard for admin role, otherwise a simple welcome
         if (userRole === "admin")
