@@ -88,7 +88,12 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
             : item.IsActive !== undefined
             ? item.IsActive
             : true,
-        createdAt: item.createdAt || item.CreatedAt || new Date().toISOString(),
+        createdAt:
+          item.createdDate ||
+          item.CreatedDate ||
+          item.createdAt ||
+          item.CreatedAt ||
+          new Date().toISOString(),
       }));
 
       // Filter parcels assigned to logged-in user
@@ -116,11 +121,13 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
+      return date.toLocaleString("en-US", {
         month: "short",
         day: "numeric",
+        year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: true,
       });
     } catch {
       return "Recent";
@@ -131,7 +138,21 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
     <>
       <div className={`notification-sidebar ${isOpen ? "open" : ""}`}>
         <div className="notification-header">
-          <h3>Notifications</h3>
+          <div className="notification-header-content">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <h3>Notifications</h3>
+            <span className="notification-count">{parcels.length}</span>
+          </div>
           <button className="close-notification-btn" onClick={onClose}>
             ✕
           </button>
@@ -157,40 +178,183 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
             </div>
           ) : (
             <div className="notification-list">
-              {parcels.map((parcel) => (
-                <div
-                  key={parcel.parcelId}
-                  className="notification-item"
-                  onClick={() => handleParcelClick(parcel)}
-                >
-                  <div className="notification-icon">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                      <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                    </svg>
-                  </div>
-                  <div className="notification-details">
-                    <div className="notification-title">
-                      New Parcel Assigned
-                    </div>
-                    <div className="notification-subtitle">
-                      {parcel.parcelCompanyName} - {parcel.parcelBarcode}
-                    </div>
-                    <div className="notification-time">
-                      {formatDate(parcel.createdAt || "")}
-                    </div>
-                  </div>
-                  <div className="notification-arrow">›</div>
-                </div>
-              ))}
+              {(() => {
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                const todayParcels = parcels.filter((p) => {
+                  const date = new Date(p.createdAt || "");
+                  return date.toDateString() === today.toDateString();
+                });
+
+                const yesterdayParcels = parcels.filter((p) => {
+                  const date = new Date(p.createdAt || "");
+                  return date.toDateString() === yesterday.toDateString();
+                });
+
+                const olderParcels = parcels.filter((p) => {
+                  const date = new Date(p.createdAt || "");
+                  return (
+                    date < yesterday &&
+                    date.toDateString() !== yesterday.toDateString()
+                  );
+                });
+
+                return (
+                  <>
+                    {todayParcels.length > 0 && (
+                      <>
+                        <div className="notification-section-header">Today</div>
+                        {todayParcels.map((parcel) => (
+                          <div
+                            key={parcel.parcelId}
+                            className="notification-item"
+                            onClick={() => handleParcelClick(parcel)}
+                          >
+                            <div className="notification-avatar">
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                              </svg>
+                            </div>
+                            <div className="notification-details">
+                              <div className="notification-header-text">
+                                <span className="notification-sender">
+                                  Parcel Notification
+                                </span>
+                                <span className="notification-time">
+                                  {new Date(
+                                    parcel.createdAt || ""
+                                  ).toLocaleTimeString("en-US", {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })}
+                                </span>
+                              </div>
+                              <div className="notification-title">
+                                New Parcel: {parcel.parcelBarcode}
+                              </div>
+                              <div className="notification-preview">
+                                {parcel.parcelCompanyName} has been assigned to
+                                you
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {yesterdayParcels.length > 0 && (
+                      <>
+                        <div className="notification-section-header">
+                          Yesterday
+                        </div>
+                        {yesterdayParcels.map((parcel) => (
+                          <div
+                            key={parcel.parcelId}
+                            className="notification-item"
+                            onClick={() => handleParcelClick(parcel)}
+                          >
+                            <div className="notification-avatar">
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                              </svg>
+                            </div>
+                            <div className="notification-details">
+                              <div className="notification-header-text">
+                                <span className="notification-sender">
+                                  Parcel Notification
+                                </span>
+                                <span className="notification-time">
+                                  {new Date(
+                                    parcel.createdAt || ""
+                                  ).toLocaleTimeString("en-US", {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })}
+                                </span>
+                              </div>
+                              <div className="notification-title">
+                                New Parcel: {parcel.parcelBarcode}
+                              </div>
+                              <div className="notification-preview">
+                                {parcel.parcelCompanyName} has been assigned to
+                                you
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {olderParcels.length > 0 && (
+                      <>
+                        <div className="notification-section-header">
+                          This Month
+                        </div>
+                        {olderParcels.map((parcel) => (
+                          <div
+                            key={parcel.parcelId}
+                            className="notification-item"
+                            onClick={() => handleParcelClick(parcel)}
+                          >
+                            <div className="notification-avatar">
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                              </svg>
+                            </div>
+                            <div className="notification-details">
+                              <div className="notification-header-text">
+                                <span className="notification-sender">
+                                  Parcel Notification
+                                </span>
+                                <span className="notification-time">
+                                  {new Date(
+                                    parcel.createdAt || ""
+                                  ).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                  })}
+                                </span>
+                              </div>
+                              <div className="notification-title">
+                                New Parcel: {parcel.parcelBarcode}
+                              </div>
+                              <div className="notification-preview">
+                                {parcel.parcelCompanyName} has been assigned to
+                                you
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>

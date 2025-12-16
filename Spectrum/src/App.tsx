@@ -65,6 +65,8 @@ function App() {
           return <Admindashbord setCurrentView={setCurrentView} />;
         if (userRole === "security")
           return <Securitydashborad setCurrentView={setCurrentView} />;
+        if (userRole === "employee")
+          return <Admindashbord setCurrentView={setCurrentView} />;
         return (
           <div style={{ padding: 24, color: "var(--text-primary)" }}>
             <h2>Welcome to Visitor Management System</h2>
