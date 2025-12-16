@@ -16,6 +16,7 @@ import Securityapprovalview from "./components/Securityapprovalview";
 import Admindashbord from "./components/Admindashbord";
 import Securitydashborad from "./components/Securitydashborad";
 import Securityparcelentry from "./components/Securityparcelentry";
+import NotificationSidebar from "./components/NotificationSidebar";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
@@ -24,6 +25,7 @@ function App() {
   const { isAuthenticated } = useAuth();
   const { userRole } = useAuth();
   const [currentView, setCurrentView] = useState("dashboard");
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleNavigate = (component: string) => {
     setCurrentView(component);
@@ -104,7 +106,10 @@ function App() {
             overflow: "hidden",
           }}
         >
-          <Sidebar onNavigate={handleNavigate} />
+          <Sidebar
+            onNavigate={handleNavigate}
+            onNotificationClick={() => setShowNotifications(true)}
+          />
           <main
             style={{
               flex: 1,
@@ -116,6 +121,10 @@ function App() {
             <Topbar />
             {renderContent()}
           </main>
+          <NotificationSidebar
+            isOpen={showNotifications}
+            onClose={() => setShowNotifications(false)}
+          />
         </div>
       ) : (
         <Login />
