@@ -8,6 +8,9 @@ interface Parcel {
   parcelCompanyName: string;
   userId: number;
   isActive: boolean;
+  parcelHandover?: boolean;
+  createdDate?: string;
+  updatedDate?: string;
   userName?: string;
 }
 
@@ -17,7 +20,11 @@ interface User {
   u_Name: string;
 }
 
-function Securityparcelentry() {
+interface SecurityparcelentryProps {
+  onParcelAdded?: () => void;
+}
+
+function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -33,6 +40,7 @@ function Securityparcelentry() {
     parcelCompanyName: "",
     userId: "",
     isActive: true,
+    parcelHandover: false,
   });
 
   useEffect(() => {
@@ -66,6 +74,16 @@ function Securityparcelentry() {
             : item.IsActive !== undefined
             ? item.IsActive
             : true,
+        parcelHandover:
+          item.parcelHandover !== undefined
+            ? item.parcelHandover
+            : item.ParcelHandover !== undefined
+            ? item.ParcelHandover
+            : false,
+        createdDate:
+          item.createdDate || item.CreatedDate || item.created_date || "",
+        updatedDate:
+          item.updatedDate || item.UpdatedDate || item.updated_date || "",
       }));
 
       setParcels(normalizedParcels);
@@ -120,6 +138,7 @@ function Securityparcelentry() {
         parcelCompanyName: formData.parcelCompanyName.trim(),
         userId: Number(formData.userId),
         isActive: formData.isActive,
+        parcelHandover: formData.parcelHandover,
       };
 
       if (editingId) {
@@ -128,6 +147,11 @@ function Securityparcelentry() {
       } else {
         await endpoints.parcel.create(payload);
         alert("Parcel created successfully!");
+
+        // Notify parent to refresh notification count
+        if (onParcelAdded) {
+          onParcelAdded();
+        }
       }
 
       resetForm();
@@ -148,6 +172,7 @@ function Securityparcelentry() {
       parcelCompanyName: parcel.parcelCompanyName,
       userId: String(parcel.userId),
       isActive: parcel.isActive,
+      parcelHandover: parcel.parcelHandover || false,
     });
     setEditingId(parcel.parcelId || null);
     setShowForm(true);
@@ -179,6 +204,7 @@ function Securityparcelentry() {
       parcelCompanyName: "",
       userId: "",
       isActive: true,
+      parcelHandover: false,
     });
     setEditingId(null);
     setShowForm(false);
@@ -290,6 +316,18 @@ function Securityparcelentry() {
                 </label>
               </div>
 
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="parcelHandover"
+                    checked={formData.parcelHandover}
+                    onChange={handleInputChange}
+                  />
+                  <span>Parcel Handover</span>
+                </label>
+              </div>
+
               {error && <div className="error-message">{error}</div>}
 
               <div className="modal-actions">
@@ -356,6 +394,7 @@ function Securityparcelentry() {
                 <th>BARCODE</th>
                 <th>COMPANY NAME</th>
                 <th>ASSIGNED USER</th>
+                <th>HANDOVER</th>
                 <th>STATUS</th>
                 <th>ACTION</th>
               </tr>
@@ -369,6 +408,15 @@ function Securityparcelentry() {
                     <td>{parcel.parcelBarcode}</td>
                     <td>{parcel.parcelCompanyName}</td>
                     <td>{user ? user.u_Name || user.username : "N/A"}</td>
+                    <td>
+                      <span
+                        className={`status-badge ${
+                          parcel.parcelHandover ? "active" : "inactive"
+                        }`}
+                      >
+                        {parcel.parcelHandover ? "Yes" : "No"}
+                      </span>
+                    </td>
                     <td>
                       <span
                         className={`status-badge ${

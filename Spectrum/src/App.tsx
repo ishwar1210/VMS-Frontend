@@ -19,7 +19,7 @@ import Securityparcelentry from "./components/Securityparcelentry";
 import NotificationSidebar from "./components/NotificationSidebar";
 import Topbar from "./layout/Topbar";
 import { useAuth } from "./context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -27,6 +27,7 @@ function App() {
   const [currentView, setCurrentView] = useState("dashboard");
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const notificationSidebarRef = useRef<any>(null);
 
   const handleNavigate = (component: string) => {
     setCurrentView(component);
@@ -35,6 +36,19 @@ function App() {
   const handleUnreadCountChange = (count: number) => {
     setUnreadCount(count);
   };
+
+  const refreshNotifications = () => {
+    if (notificationSidebarRef.current?.refreshParcels) {
+      notificationSidebarRef.current.refreshParcels();
+    }
+  };
+
+  // Fetch initial notification count on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshNotifications();
+    }
+  }, [isAuthenticated]);
 
   const renderContent = () => {
     switch (currentView) {
@@ -63,7 +77,7 @@ function App() {
       case "vendorgetpass":
         return <Vendorgetpass />;
       case "securityparcelentry":
-        return <Securityparcelentry />;
+        return <Securityparcelentry onParcelAdded={refreshNotifications} />;
       case "dashboard":
         // show admin dashboard for admin role, otherwise a simple welcome
         if (userRole === "admin")
@@ -130,6 +144,7 @@ function App() {
             {renderContent()}
           </main>
           <NotificationSidebar
+            ref={notificationSidebarRef}
             isOpen={showNotifications}
             onClose={() => setShowNotifications(false)}
             onUnreadCountChange={handleUnreadCountChange}
