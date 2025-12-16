@@ -471,11 +471,7 @@
 }
 
 /* Aliases & additions for Securityparcelentry component */
-.role-master-container,
-.role-header,
-.role-title {
-  /* map to existing rolemaster styles */
-}
+
 
 .role-master-container {
   padding: 30px;
