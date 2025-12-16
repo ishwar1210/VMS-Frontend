@@ -10,6 +10,7 @@ interface Parcel {
   userId: number;
   isActive: boolean;
   createdAt?: string;
+  parcelHandover?: boolean | string | null;
 }
 
 interface NotificationSidebarProps {
@@ -94,6 +95,11 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
           item.createdAt ||
           item.CreatedAt ||
           new Date().toISOString(),
+        parcelHandover:
+          item.parcelHandover ||
+          item.ParcelHandover ||
+          item.parcelHandoverFlag ||
+          null,
       }));
 
       // Filter parcels assigned to logged-in user
@@ -132,6 +138,18 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
     } catch {
       return "Recent";
     }
+  };
+
+  const formatHandover = (value: any) => {
+    if (value === null || value === undefined) return "-";
+    if (typeof value === "boolean") return value ? "Yes" : "No";
+    if (typeof value === "string") {
+      const v = value.trim().toLowerCase();
+      if (v === "true" || v === "yes") return "Yes";
+      if (v === "false" || v === "no") return "No";
+      return value; // show raw string
+    }
+    return String(value);
   };
 
   return (
@@ -387,13 +405,9 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
                 </span>
               </div>
               <div className="detail-row">
-                <span className="detail-label">Status:</span>
-                <span
-                  className={`status-badge ${
-                    selectedParcel.isActive ? "active" : "inactive"
-                  }`}
-                >
-                  {selectedParcel.isActive ? "Active" : "Inactive"}
+                <span className="detail-label">Handover:</span>
+                <span className="detail-value">
+                  {formatHandover(selectedParcel.parcelHandover)}
                 </span>
               </div>
               <div className="detail-row">
