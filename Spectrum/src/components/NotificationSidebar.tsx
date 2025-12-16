@@ -14,6 +14,31 @@ interface Parcel {
   isRead?: boolean;
 }
 
+interface Appointment {
+  visitorEntryId: number;
+  visitorEntryVisitorId: number;
+  visitorEntryGatepass: string;
+  visitorEntryVehicletype?: string;
+  visitorEntryVehicleno?: string;
+  visitorEntryDate: string;
+  visitorEntryUserid: number;
+  visitorName?: string;
+  visitorMobile?: string;
+  visitorCompanyName?: string;
+  visitorPurposeofvisit?: string;
+  isRead?: boolean;
+}
+
+interface Notification {
+  id: number;
+  type: "parcel" | "appointment";
+  title: string;
+  preview: string;
+  createdAt: string;
+  isRead: boolean;
+  data: Parcel | Appointment;
+}
+
 interface NotificationSidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,35 +46,78 @@ interface NotificationSidebarProps {
 }
 
 const NotificationSidebar = forwardRef(
-  ({ isOpen, onClose, onUnreadCountChange }: NotificationSidebarProps, ref) => {
-    const [parcels, setParcels] = useState<Parcel[]>([]);
+  ({ isOpen, onUnreadCountChange }: NotificationSidebarProps, ref) => {
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(false);
-    const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null);
-    const { token } = useAuth();
+    const [selectedNotification, setSelectedNotification] =
+      useState<Notification | null>(null);
+    const [clearedOnOpen, setClearedOnOpen] = useState(false);
+    const { token, userRole } = useAuth();
+    const isAdmin = String(userRole || "")
+      .toLowerCase()
+      .includes("admin");
 
     // Helper functions for read status
-    const getReadParcels = (): number[] => {
-      const stored = localStorage.getItem("readParcels");
+    const getReadNotifications = (): { type: string; id: number }[] => {
+      const stored = localStorage.getItem("readNotifications");
       return stored ? JSON.parse(stored) : [];
     };
 
-    const markParcelAsRead = (parcelId: number) => {
-      const readParcels = getReadParcels();
-      if (!readParcels.includes(parcelId)) {
-        readParcels.push(parcelId);
-        localStorage.setItem("readParcels", JSON.stringify(readParcels));
+    const markNotificationAsRead = (
+      type: "parcel" | "appointment",
+      id: number
+    ) => {
+      const readNotifications = getReadNotifications();
+      const exists = readNotifications.some(
+        (n) => n.type === type && n.id === id
+      );
+      if (!exists) {
+        readNotifications.push({ type, id });
+        localStorage.setItem(
+          "readNotifications",
+          JSON.stringify(readNotifications)
+        );
       }
     };
 
     useEffect(() => {
-      if (isOpen) {
-        fetchUserParcels();
+      fetchUserNotifications();
+    }, []);
+
+    // When opening the notifications page, clear unread badge like WhatsApp/email
+    useEffect(() => {
+      const hasItems = notifications && notifications.length > 0;
+      const hasUnread = notifications.some((n) => !n.isRead);
+      if (isOpen && hasItems && hasUnread && !clearedOnOpen) {
+        // Mark all as read on first open
+        const readNotifications = getReadNotifications();
+        const updatedRead = [...readNotifications];
+        const toAdd: { type: string; id: number }[] = [];
+        notifications.forEach((n) => {
+          const exists = updatedRead.some(
+            (r) => r.type === n.type && r.id === n.id
+          );
+          if (!exists) {
+            updatedRead.push({ type: n.type, id: n.id });
+            toAdd.push({ type: n.type, id: n.id });
+          }
+        });
+        if (toAdd.length > 0) {
+          localStorage.setItem(
+            "readNotifications",
+            JSON.stringify(updatedRead)
+          );
+        }
+        // Update local state
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        if (onUnreadCountChange) onUnreadCountChange(0);
+        setClearedOnOpen(true);
       }
-    }, [isOpen]);
+    }, [notifications, isOpen]);
 
     // Expose refresh function to parent via ref
     useImperativeHandle(ref, () => ({
-      refreshParcels: fetchUserParcels,
+      refreshParcels: fetchUserNotifications,
     }));
 
     const getLoggedInUserId = (): number | null => {
@@ -77,22 +145,23 @@ const NotificationSidebar = forwardRef(
       }
     };
 
-    const fetchUserParcels = async () => {
+    const fetchUserNotifications = async () => {
       try {
         setLoading(true);
         const loggedInUserId = getLoggedInUserId();
 
         if (!loggedInUserId) {
           console.warn("No user ID found in token");
-          setParcels([]);
+          setNotifications([]);
           return;
         }
 
-        const response = await endpoints.parcel.getAll();
-        const data = response?.data || [];
-        const parcelList = data?.$values || data?.data || data || [];
+        // Fetch parcels
+        const parcelResponse = await endpoints.parcel.getAll();
+        const parcelData = parcelResponse?.data || [];
+        const parcelList =
+          parcelData?.$values || parcelData?.data || parcelData || [];
 
-        // Normalize and filter parcels for logged-in user
         const normalizedParcels = (
           Array.isArray(parcelList) ? parcelList : []
         ).map((item: any) => ({
@@ -124,59 +193,178 @@ const NotificationSidebar = forwardRef(
             null,
         }));
 
-        // Filter parcels assigned to logged-in user
         const userParcels = normalizedParcels.filter(
           (p) => p.userId === loggedInUserId
         );
 
-        // Mark parcels as read based on localStorage
-        const readParcels = getReadParcels();
-        const parcelsWithReadStatus = userParcels.map((p) => ({
-          ...p,
-          isRead: readParcels.includes(p.parcelId),
+        // Fetch appointments
+        const appointmentResponse = await endpoints.visitorEntry.getAll();
+        const appointmentData = appointmentResponse?.data || [];
+        const appointmentList =
+          appointmentData?.$values ||
+          appointmentData?.data ||
+          appointmentData ||
+          [];
+
+        const normalizedAppointmentsBase = (
+          Array.isArray(appointmentList) ? appointmentList : []
+        ).map((item: any) => ({
+          visitorEntryId:
+            item.visitorEntryId || item.VisitorEntryId || item.id || 0,
+          visitorEntryVisitorId:
+            item.visitorEntry_visitorId ||
+            item.visitorEntryVisitorId ||
+            item.visitorId ||
+            0,
+          visitorEntryGatepass:
+            item.visitorEntry_Gatepass ||
+            item.visitorEntryGatepass ||
+            item.gatepass ||
+            "",
+          visitorEntryVehicletype:
+            item.visitorEntry_Vehicletype ||
+            item.visitorEntryVehicletype ||
+            item.vehicleType ||
+            "",
+          visitorEntryVehicleno:
+            item.visitorEntry_Vehicleno ||
+            item.visitorEntryVehicleno ||
+            item.vehicleNo ||
+            "",
+          visitorEntryDate:
+            item.visitorEntry_Date ||
+            item.visitorEntryDate ||
+            item.date ||
+            new Date().toISOString(),
+          visitorEntryUserid:
+            item.visitorEntry_Userid ||
+            item.visitorEntryUserid ||
+            item.userId ||
+            0,
         }));
 
-        console.log("User parcels:", parcelsWithReadStatus);
-        setParcels(parcelsWithReadStatus);
+        // Enrich appointment data with visitor details when available
+        const normalizedAppointments = await Promise.all(
+          normalizedAppointmentsBase.map(async (a) => {
+            try {
+              if (a.visitorEntryVisitorId) {
+                const vRes = await endpoints.visitor.getById(
+                  Number(a.visitorEntryVisitorId)
+                );
+                const vData = vRes?.data || {};
+                const v = vData?.data || vData || {};
+                return {
+                  ...a,
+                  visitorName:
+                    v.visitor_Name || v.visitorName || v.name || undefined,
+                  visitorMobile:
+                    v.visitor_mobile ||
+                    v.visitorMobile ||
+                    v.mobile ||
+                    undefined,
+                  visitorCompanyName:
+                    v.visitor_CompanyName ||
+                    v.visitorCompanyName ||
+                    v.companyName ||
+                    undefined,
+                  visitorPurposeofvisit:
+                    v.visitor_Purposeofvisit ||
+                    v.visitorPurposeofvisit ||
+                    v.purpose ||
+                    undefined,
+                } as Appointment;
+              }
+              return {
+                ...a,
+              } as Appointment;
+            } catch {
+              return { ...a } as Appointment;
+            }
+          })
+        );
+
+        const userAppointments = normalizedAppointments.filter((a) =>
+          isAdmin ? true : a.visitorEntryUserid === loggedInUserId
+        );
+
+        // Combine into notifications
+        const readNotifications = getReadNotifications();
+
+        const parcelNotifications: Notification[] = userParcels.map((p) => ({
+          id: p.parcelId,
+          type: "parcel" as const,
+          title: `New Parcel: ${p.parcelBarcode}`,
+          preview: `${p.parcelCompanyName} has been assigned to you`,
+          createdAt: p.createdAt || new Date().toISOString(),
+          isRead: readNotifications.some(
+            (n) => n.type === "parcel" && n.id === p.parcelId
+          ),
+          data: p,
+        }));
+
+        const appointmentNotifications: Notification[] = userAppointments.map(
+          (a) => ({
+            id: a.visitorEntryId,
+            type: "appointment" as const,
+            title: `New Appointment: ${a.visitorName || "Visitor"}`,
+            preview: `${a.visitorCompanyName || "Company"} - ${
+              a.visitorPurposeofvisit || "Visit"
+            }`,
+            createdAt: a.visitorEntryDate,
+            isRead: readNotifications.some(
+              (n) => n.type === "appointment" && n.id === a.visitorEntryId
+            ),
+            data: a,
+          })
+        );
+
+        const allNotifications = [
+          ...parcelNotifications,
+          ...appointmentNotifications,
+        ].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        console.log("User notifications:", allNotifications);
+        setNotifications(allNotifications);
 
         // Calculate and notify unread count
-        const unreadCount = parcelsWithReadStatus.filter(
-          (p) => !p.isRead
-        ).length;
+        const unreadCount = allNotifications.filter((n) => !n.isRead).length;
         if (onUnreadCountChange) {
           onUnreadCountChange(unreadCount);
         }
       } catch (err) {
-        console.error("Error fetching parcels:", err);
+        console.error("Error fetching notifications:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    const handleParcelClick = (parcel: Parcel) => {
+    const handleNotificationClick = (notification: Notification) => {
       // Mark as read
-      markParcelAsRead(parcel.parcelId);
+      markNotificationAsRead(notification.type, notification.id);
 
       // Update local state
-      setParcels((prev) =>
-        prev.map((p) =>
-          p.parcelId === parcel.parcelId ? { ...p, isRead: true } : p
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notification.id && n.type === notification.type
+            ? { ...n, isRead: true }
+            : n
         )
       );
 
       // Update unread count
-      const unreadCount = parcels.filter(
-        (p) => p.parcelId !== parcel.parcelId && !p.isRead
+      const unreadCount = notifications.filter(
+        (n) =>
+          !(n.id === notification.id && n.type === notification.type) &&
+          !n.isRead
       ).length;
       if (onUnreadCountChange) {
         onUnreadCountChange(unreadCount);
       }
 
-      setSelectedParcel(parcel);
-    };
-
-    const closeDetailModal = () => {
-      setSelectedParcel(null);
+      setSelectedNotification(notification);
     };
 
     const formatDate = (dateString: string) => {
@@ -202,39 +390,23 @@ const NotificationSidebar = forwardRef(
         const v = value.trim().toLowerCase();
         if (v === "true" || v === "yes") return "Yes";
         if (v === "false" || v === "no") return "No";
-        return value; // show raw string
+        return value;
       }
       return String(value);
     };
 
     return (
-      <>
-        <div className={`notification-sidebar ${isOpen ? "open" : ""}`}>
-          <div className="notification-header">
-            <div className="notification-header-content">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <h3>Notifications</h3>
-              <span className="notification-count">{parcels.length}</span>
-            </div>
-            <button className="close-notification-btn" onClick={onClose}>
-              ✕
-            </button>
+      <div className="notification-page-container">
+        {/* Left panel - Notification list */}
+        <div className="notification-list-panel">
+          <div className="notification-list-header">
+            <h2>Notifications</h2>
           </div>
 
-          <div className="notification-content">
+          <div className="notification-list-content">
             {loading ? (
               <div className="notification-loading">Loading...</div>
-            ) : parcels.length === 0 ? (
+            ) : notifications.length === 0 ? (
               <div className="notification-empty">
                 <svg
                   width="48"
@@ -250,24 +422,24 @@ const NotificationSidebar = forwardRef(
                 <p>No notifications</p>
               </div>
             ) : (
-              <div className="notification-list">
+              <>
                 {(() => {
                   const today = new Date();
                   const yesterday = new Date(today);
                   yesterday.setDate(yesterday.getDate() - 1);
 
-                  const todayParcels = parcels.filter((p) => {
-                    const date = new Date(p.createdAt || "");
+                  const todayNotifications = notifications.filter((n) => {
+                    const date = new Date(n.createdAt || "");
                     return date.toDateString() === today.toDateString();
                   });
 
-                  const yesterdayParcels = parcels.filter((p) => {
-                    const date = new Date(p.createdAt || "");
+                  const yesterdayNotifications = notifications.filter((n) => {
+                    const date = new Date(n.createdAt || "");
                     return date.toDateString() === yesterday.toDateString();
                   });
 
-                  const olderParcels = parcels.filter((p) => {
-                    const date = new Date(p.createdAt || "");
+                  const olderNotifications = notifications.filter((n) => {
+                    const date = new Date(n.createdAt || "");
                     return (
                       date < yesterday &&
                       date.toDateString() !== yesterday.toDateString()
@@ -276,39 +448,37 @@ const NotificationSidebar = forwardRef(
 
                   return (
                     <>
-                      {todayParcels.length > 0 && (
+                      {todayNotifications.length > 0 && (
                         <>
                           <div className="notification-section-header">
                             Today
                           </div>
-                          {todayParcels.map((parcel) => (
+                          {todayNotifications.map((notification) => (
                             <div
-                              key={parcel.parcelId}
-                              className={`notification-item ${
-                                !parcel.isRead ? "unread" : ""
+                              key={`${notification.type}-${notification.id}`}
+                              className={`notification-list-item ${
+                                !notification.isRead ? "unread" : ""
+                              } ${
+                                selectedNotification?.id === notification.id &&
+                                selectedNotification?.type === notification.type
+                                  ? "selected"
+                                  : ""
                               }`}
-                              onClick={() => handleParcelClick(parcel)}
+                              onClick={() =>
+                                handleNotificationClick(notification)
+                              }
                             >
-                              <div className="notification-avatar">
-                                <svg
-                                  width="20"
-                                  height="20"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                </svg>
-                              </div>
-                              <div className="notification-details">
-                                <div className="notification-header-text">
+                              <div className="notification-item-content">
+                                <div className="notification-item-header">
                                   <span className="notification-sender">
-                                    Parcel Notification
+                                    {notification.type === "parcel"
+                                      ? "Parcel"
+                                      : "Appointment"}{" "}
+                                    Notification
                                   </span>
                                   <span className="notification-time">
                                     {new Date(
-                                      parcel.createdAt || ""
+                                      notification.createdAt || ""
                                     ).toLocaleTimeString("en-US", {
                                       hour: "numeric",
                                       minute: "2-digit",
@@ -316,12 +486,11 @@ const NotificationSidebar = forwardRef(
                                     })}
                                   </span>
                                 </div>
-                                <div className="notification-title">
-                                  New Parcel: {parcel.parcelBarcode}
+                                <div className="notification-subject">
+                                  {notification.title}
                                 </div>
                                 <div className="notification-preview">
-                                  {parcel.parcelCompanyName} has been assigned
-                                  to you
+                                  {notification.preview}
                                 </div>
                               </div>
                             </div>
@@ -329,39 +498,37 @@ const NotificationSidebar = forwardRef(
                         </>
                       )}
 
-                      {yesterdayParcels.length > 0 && (
+                      {yesterdayNotifications.length > 0 && (
                         <>
                           <div className="notification-section-header">
                             Yesterday
                           </div>
-                          {yesterdayParcels.map((parcel) => (
+                          {yesterdayNotifications.map((notification) => (
                             <div
-                              key={parcel.parcelId}
-                              className={`notification-item ${
-                                !parcel.isRead ? "unread" : ""
+                              key={`${notification.type}-${notification.id}`}
+                              className={`notification-list-item ${
+                                !notification.isRead ? "unread" : ""
+                              } ${
+                                selectedNotification?.id === notification.id &&
+                                selectedNotification?.type === notification.type
+                                  ? "selected"
+                                  : ""
                               }`}
-                              onClick={() => handleParcelClick(parcel)}
+                              onClick={() =>
+                                handleNotificationClick(notification)
+                              }
                             >
-                              <div className="notification-avatar">
-                                <svg
-                                  width="20"
-                                  height="20"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                </svg>
-                              </div>
-                              <div className="notification-details">
-                                <div className="notification-header-text">
+                              <div className="notification-item-content">
+                                <div className="notification-item-header">
                                   <span className="notification-sender">
-                                    Parcel Notification
+                                    {notification.type === "parcel"
+                                      ? "Parcel"
+                                      : "Appointment"}{" "}
+                                    Notification
                                   </span>
                                   <span className="notification-time">
                                     {new Date(
-                                      parcel.createdAt || ""
+                                      notification.createdAt || ""
                                     ).toLocaleTimeString("en-US", {
                                       hour: "numeric",
                                       minute: "2-digit",
@@ -369,12 +536,11 @@ const NotificationSidebar = forwardRef(
                                     })}
                                   </span>
                                 </div>
-                                <div className="notification-title">
-                                  New Parcel: {parcel.parcelBarcode}
+                                <div className="notification-subject">
+                                  {notification.title}
                                 </div>
                                 <div className="notification-preview">
-                                  {parcel.parcelCompanyName} has been assigned
-                                  to you
+                                  {notification.preview}
                                 </div>
                               </div>
                             </div>
@@ -382,51 +548,48 @@ const NotificationSidebar = forwardRef(
                         </>
                       )}
 
-                      {olderParcels.length > 0 && (
+                      {olderNotifications.length > 0 && (
                         <>
                           <div className="notification-section-header">
                             This Month
                           </div>
-                          {olderParcels.map((parcel) => (
+                          {olderNotifications.map((notification) => (
                             <div
-                              key={parcel.parcelId}
-                              className={`notification-item ${
-                                !parcel.isRead ? "unread" : ""
+                              key={`${notification.type}-${notification.id}`}
+                              className={`notification-list-item ${
+                                !notification.isRead ? "unread" : ""
+                              } ${
+                                selectedNotification?.id === notification.id &&
+                                selectedNotification?.type === notification.type
+                                  ? "selected"
+                                  : ""
                               }`}
-                              onClick={() => handleParcelClick(parcel)}
+                              onClick={() =>
+                                handleNotificationClick(notification)
+                              }
                             >
-                              <div className="notification-avatar">
-                                <svg
-                                  width="20"
-                                  height="20"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                </svg>
-                              </div>
-                              <div className="notification-details">
-                                <div className="notification-header-text">
+                              <div className="notification-item-content">
+                                <div className="notification-item-header">
                                   <span className="notification-sender">
-                                    Parcel Notification
+                                    {notification.type === "parcel"
+                                      ? "Parcel"
+                                      : "Appointment"}{" "}
+                                    Notification
                                   </span>
                                   <span className="notification-time">
                                     {new Date(
-                                      parcel.createdAt || ""
+                                      notification.createdAt || ""
                                     ).toLocaleDateString("en-US", {
                                       month: "short",
                                       day: "numeric",
                                     })}
                                   </span>
                                 </div>
-                                <div className="notification-title">
-                                  New Parcel: {parcel.parcelBarcode}
+                                <div className="notification-subject">
+                                  {notification.title}
                                 </div>
                                 <div className="notification-preview">
-                                  {parcel.parcelCompanyName} has been assigned
-                                  to you
+                                  {notification.preview}
                                 </div>
                               </div>
                             </div>
@@ -436,71 +599,151 @@ const NotificationSidebar = forwardRef(
                     </>
                   );
                 })()}
-              </div>
+              </>
             )}
           </div>
         </div>
 
-        {/* Detail Modal */}
-        {selectedParcel && (
-          <div
-            className="notification-detail-overlay"
-            onClick={closeDetailModal}
-          >
-            <div
-              className="notification-detail-modal"
-              onClick={(e) => e.stopPropagation()}
-            >
+        {/* Right panel - Detail view */}
+        <div className="notification-detail-panel">
+          {selectedNotification ? (
+            <>
               <div className="notification-detail-header">
-                <h3>Parcel Details</h3>
-                <button className="close-detail-btn" onClick={closeDetailModal}>
-                  ✕
-                </button>
+                <div className="detail-header-info">
+                  <h3>
+                    {selectedNotification.type === "parcel"
+                      ? "Parcel"
+                      : "Appointment"}{" "}
+                    Details
+                  </h3>
+                  <span className="detail-time">
+                    {formatDate(selectedNotification.createdAt || "")}
+                  </span>
+                </div>
               </div>
               <div className="notification-detail-content">
-                <div className="detail-row">
-                  <span className="detail-label">Barcode:</span>
-                  <span className="detail-value">
-                    {selectedParcel.parcelBarcode}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Company:</span>
-                  <span className="detail-value">
-                    {selectedParcel.parcelCompanyName}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Handover:</span>
-                  <span className="detail-value">
-                    {formatHandover(selectedParcel.parcelHandover)}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Parcel ID:</span>
-                  <span className="detail-value">
-                    #{selectedParcel.parcelId}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Assigned:</span>
-                  <span className="detail-value">
-                    {formatDate(selectedParcel.createdAt || "")}
-                  </span>
-                </div>
+                {selectedNotification.type === "parcel" ? (
+                  <>
+                    <div className="detail-row">
+                      <span className="detail-label">Barcode:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Parcel).parcelBarcode}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Company:</span>
+                      <span className="detail-value">
+                        {
+                          (selectedNotification.data as Parcel)
+                            .parcelCompanyName
+                        }
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Handover:</span>
+                      <span className="detail-value">
+                        {formatHandover(
+                          (selectedNotification.data as Parcel).parcelHandover
+                        )}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Parcel ID:</span>
+                      <span className="detail-value">
+                        #{(selectedNotification.data as Parcel).parcelId}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Status:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Parcel).isActive
+                          ? "Active"
+                          : "Inactive"}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="detail-row">
+                      <span className="detail-label">Visitor Name:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Appointment)
+                          .visitorName || "-"}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Company:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Appointment)
+                          .visitorCompanyName || "-"}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Purpose:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Appointment)
+                          .visitorPurposeofvisit || "-"}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Mobile:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Appointment)
+                          .visitorMobile || "-"}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Gatepass:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Appointment)
+                          .visitorEntryGatepass || "-"}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Vehicle Type:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Appointment)
+                          .visitorEntryVehicletype || "-"}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Vehicle No:</span>
+                      <span className="detail-value">
+                        {(selectedNotification.data as Appointment)
+                          .visitorEntryVehicleno || "-"}
+                      </span>
+                    </div>
+                    {/* <div className="detail-row">
+                      <span className="detail-label">Appointment ID:</span>
+                      <span className="detail-value">
+                        #
+                        {
+                          (selectedNotification.data as Appointment)
+                            .visitorEntryId
+                        }
+                      </span>
+                    </div> */}
+                  </>
+                )}
               </div>
-              <div className="notification-detail-footer">
-                <button className="close-modal-btn" onClick={closeDetailModal}>
-                  Close
-                </button>
-              </div>
+            </>
+          ) : (
+            <div className="notification-detail-empty">
+              <svg
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              </svg>
+              <p>Select a notification to view details</p>
             </div>
-          </div>
-        )}
-
-        {/* Backdrop */}
-        {isOpen && <div className="notification-backdrop" onClick={onClose} />}
-      </>
+          )}
+        </div>
+      </div>
     );
   }
 );

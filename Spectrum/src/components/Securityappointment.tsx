@@ -25,7 +25,13 @@ type VisitorEntryFormData = {
   visitorEntry_isStay: boolean;
 };
 
-export default function Securityappointment() {
+interface SecurityappointmentProps {
+  onAppointmentAdded?: () => void;
+}
+
+export default function Securityappointment({
+  onAppointmentAdded,
+}: SecurityappointmentProps = {}) {
   const [step, setStep] = useState<1 | 2>(1);
   const [createdVisitorId, setCreatedVisitorId] = useState<number | null>(null);
   const [visitors, setVisitors] = useState<any[]>([]);
@@ -165,6 +171,12 @@ export default function Securityappointment() {
 
       await endpoints.visitorEntry.create(payload);
       alert("Preappointment created successfully (via Security)!");
+
+      // Trigger notification refresh
+      if (onAppointmentAdded) {
+        onAppointmentAdded();
+      }
+
       setVisitorForm({
         visitor_Name: "",
         visitor_mobile: "",
