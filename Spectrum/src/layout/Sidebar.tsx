@@ -6,9 +6,14 @@ import { useState } from "react";
 interface SidebarProps {
   onNavigate?: (component: string) => void;
   onNotificationClick?: () => void;
+  unreadCount?: number;
 }
 
-function Sidebar({ onNavigate, onNotificationClick }: SidebarProps) {
+function Sidebar({
+  onNavigate,
+  onNotificationClick,
+  unreadCount,
+}: SidebarProps) {
   const { userRole } = useAuth();
   const [mastersOpen, setMastersOpen] = useState(false);
   const [applicationOpen, setApplicationOpen] = useState(false);
@@ -82,6 +87,9 @@ function Sidebar({ onNavigate, onNotificationClick }: SidebarProps) {
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
           <span>Notification</span>
+          {unreadCount && unreadCount > 0 && (
+            <span className="notification-badge">{unreadCount}</span>
+          )}
         </div>
 
         {userRole === "admin" && (

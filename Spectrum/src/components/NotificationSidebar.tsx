@@ -11,18 +11,38 @@ interface Parcel {
   isActive: boolean;
   createdAt?: string;
   parcelHandover?: boolean | string | null;
+  isRead?: boolean;
 }
 
 interface NotificationSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onUnreadCountChange?: (count: number) => void;
 }
 
-function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
+function NotificationSidebar({
+  isOpen,
+  onClose,
+  onUnreadCountChange,
+}: NotificationSidebarProps) {
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null);
   const { token } = useAuth();
+
+  // Helper functions for read status
+  const getReadParcels = (): number[] => {
+    const stored = localStorage.getItem("readParcels");
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const markParcelAsRead = (parcelId: number) => {
+    const readParcels = getReadParcels();
+    if (!readParcels.includes(parcelId)) {
+      readParcels.push(parcelId);
+      localStorage.setItem("readParcels", JSON.stringify(readParcels));
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -107,8 +127,21 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
         (p) => p.userId === loggedInUserId
       );
 
-      console.log("User parcels:", userParcels);
-      setParcels(userParcels);
+      // Mark parcels as read based on localStorage
+      const readParcels = getReadParcels();
+      const parcelsWithReadStatus = userParcels.map((p) => ({
+        ...p,
+        isRead: readParcels.includes(p.parcelId),
+      }));
+
+      console.log("User parcels:", parcelsWithReadStatus);
+      setParcels(parcelsWithReadStatus);
+
+      // Calculate and notify unread count
+      const unreadCount = parcelsWithReadStatus.filter((p) => !p.isRead).length;
+      if (onUnreadCountChange) {
+        onUnreadCountChange(unreadCount);
+      }
     } catch (err) {
       console.error("Error fetching parcels:", err);
     } finally {
@@ -117,6 +150,24 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
   };
 
   const handleParcelClick = (parcel: Parcel) => {
+    // Mark as read
+    markParcelAsRead(parcel.parcelId);
+
+    // Update local state
+    setParcels((prev) =>
+      prev.map((p) =>
+        p.parcelId === parcel.parcelId ? { ...p, isRead: true } : p
+      )
+    );
+
+    // Update unread count
+    const unreadCount = parcels.filter(
+      (p) => p.parcelId !== parcel.parcelId && !p.isRead
+    ).length;
+    if (onUnreadCountChange) {
+      onUnreadCountChange(unreadCount);
+    }
+
     setSelectedParcel(parcel);
   };
 
@@ -227,7 +278,9 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
                         {todayParcels.map((parcel) => (
                           <div
                             key={parcel.parcelId}
-                            className="notification-item"
+                            className={`notification-item ${
+                              !parcel.isRead ? "unread" : ""
+                            }`}
                             onClick={() => handleParcelClick(parcel)}
                           >
                             <div className="notification-avatar">
@@ -278,7 +331,9 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
                         {yesterdayParcels.map((parcel) => (
                           <div
                             key={parcel.parcelId}
-                            className="notification-item"
+                            className={`notification-item ${
+                              !parcel.isRead ? "unread" : ""
+                            }`}
                             onClick={() => handleParcelClick(parcel)}
                           >
                             <div className="notification-avatar">
@@ -329,7 +384,9 @@ function NotificationSidebar({ isOpen, onClose }: NotificationSidebarProps) {
                         {olderParcels.map((parcel) => (
                           <div
                             key={parcel.parcelId}
-                            className="notification-item"
+                            className={`notification-item ${
+                              !parcel.isRead ? "unread" : ""
+                            }`}
                             onClick={() => handleParcelClick(parcel)}
                           >
                             <div className="notification-avatar">

@@ -26,9 +26,14 @@ function App() {
   const { userRole } = useAuth();
   const [currentView, setCurrentView] = useState("dashboard");
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const handleNavigate = (component: string) => {
     setCurrentView(component);
+  };
+
+  const handleUnreadCountChange = (count: number) => {
+    setUnreadCount(count);
   };
 
   const renderContent = () => {
@@ -111,6 +116,7 @@ function App() {
           <Sidebar
             onNavigate={handleNavigate}
             onNotificationClick={() => setShowNotifications(true)}
+            unreadCount={unreadCount}
           />
           <main
             style={{
@@ -126,6 +132,7 @@ function App() {
           <NotificationSidebar
             isOpen={showNotifications}
             onClose={() => setShowNotifications(false)}
+            onUnreadCountChange={handleUnreadCountChange}
           />
         </div>
       ) : (
