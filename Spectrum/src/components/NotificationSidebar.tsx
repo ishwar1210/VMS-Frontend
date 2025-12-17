@@ -88,7 +88,7 @@ const NotificationSidebar = forwardRef(
       fetchUserNotifications();
     }, []);
 
-    // Reset clearedOnOpen when notification page is closed
+    // Reset clearedOnOpen when navigating away (isOpen becomes false)
     useEffect(() => {
       if (!isOpen) {
         setClearedOnOpen(false);
@@ -97,37 +97,34 @@ const NotificationSidebar = forwardRef(
 
     // When opening the notifications page, clear unread badge like WhatsApp/email
     useEffect(() => {
-      if (!isOpen || !notifications.length) return;
-
+      const hasItems = notifications && notifications.length > 0;
       const hasUnread = notifications.some((n) => !n.isRead);
-      if (hasUnread && !clearedOnOpen) {
+      if (isOpen && hasItems && hasUnread && !clearedOnOpen) {
         // Mark all as read on first open
         const readNotifications = getReadNotifications();
         const updatedRead = [...readNotifications];
-
+        const toAdd: { type: string; id: number }[] = [];
         notifications.forEach((n) => {
           const exists = updatedRead.some(
             (r) => r.type === n.type && r.id === n.id
           );
-          if (!exists && !n.isRead) {
+          if (!exists) {
             updatedRead.push({ type: n.type, id: n.id });
+            toAdd.push({ type: n.type, id: n.id });
           }
         });
-
-        localStorage.setItem("readNotifications", JSON.stringify(updatedRead));
-
-        // Update local state to mark all as read
-        const updatedNotifications = notifications.map((n) => ({
-          ...n,
-          isRead: true,
-        }));
-        setNotifications(updatedNotifications);
-
-        // Clear the unread count
+        if (toAdd.length > 0) {
+          localStorage.setItem(
+            "readNotifications",
+            JSON.stringify(updatedRead)
+          );
+        }
+        // Update local state
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         if (onUnreadCountChange) onUnreadCountChange(0);
         setClearedOnOpen(true);
       }
-    }, [notifications, isOpen, clearedOnOpen, onUnreadCountChange]);
+    }, [notifications, isOpen, clearedOnOpen]);
 
     // Expose refresh function to parent via ref
     useImperativeHandle(ref, () => ({
@@ -220,42 +217,82 @@ const NotificationSidebar = forwardRef(
           appointmentData ||
           [];
 
+        // Debug: Log first appointment to see actual field names
+        if (appointmentList.length > 0) {
+          console.log(
+            "🔍 Raw Appointment API Response (first item):",
+            appointmentList[0]
+          );
+          console.log("🔍 All field names:", Object.keys(appointmentList[0]));
+        }
+
         const normalizedAppointmentsBase = (
           Array.isArray(appointmentList) ? appointmentList : []
-        ).map((item: any) => ({
-          visitorEntryId:
-            item.visitorEntryId || item.VisitorEntryId || item.id || 0,
-          visitorEntryVisitorId:
-            item.visitorEntry_visitorId ||
-            item.visitorEntryVisitorId ||
-            item.visitorId ||
-            0,
-          visitorEntryGatepass:
-            item.visitorEntry_Gatepass ||
-            item.visitorEntryGatepass ||
-            item.gatepass ||
-            "",
-          visitorEntryVehicletype:
-            item.visitorEntry_Vehicletype ||
-            item.visitorEntryVehicletype ||
-            item.vehicleType ||
-            "",
-          visitorEntryVehicleno:
-            item.visitorEntry_Vehicleno ||
-            item.visitorEntryVehicleno ||
-            item.vehicleNo ||
-            "",
-          visitorEntryDate:
-            item.visitorEntry_Date ||
-            item.visitorEntryDate ||
-            item.date ||
-            new Date().toISOString(),
-          visitorEntryUserid:
-            item.visitorEntry_Userid ||
-            item.visitorEntryUserid ||
-            item.userId ||
-            0,
-        }));
+        ).map((item: any, index: number) => {
+          // Try all possible field name variations (API returns visitorEntryID)
+          const id =
+            item.visitorEntryID ||
+            item.VisitorEntryID ||
+            item.visitorEntry_Id ||
+            item.VisitorEntry_Id ||
+            item.visitorEntryId ||
+            item.VisitorEntryId ||
+            item.VisitorEntry_id ||
+            item.visitorentry_id ||
+            item.id ||
+            item.Id ||
+            item.ID ||
+            0;
+
+          console.log(
+            "🔍 Mapping appointment #" + index + " - Raw ID fields:",
+            {
+              visitorEntry_Id: item.visitorEntry_Id,
+              VisitorEntry_Id: item.VisitorEntry_Id,
+              visitorEntryId: item.visitorEntryId,
+              VisitorEntryId: item.VisitorEntryId,
+              id: item.id,
+              resolved: id,
+              allKeys: Object.keys(item)
+                .filter((k) => k.toLowerCase().includes("id"))
+                .join(", "),
+            }
+          );
+
+          return {
+            visitorEntryId: id,
+            visitorEntryVisitorId:
+              item.visitorEntry_visitorId ||
+              item.visitorEntryVisitorId ||
+              item.visitorId ||
+              0,
+            visitorEntryGatepass:
+              item.visitorEntry_Gatepass ||
+              item.visitorEntryGatepass ||
+              item.gatepass ||
+              "",
+            visitorEntryVehicletype:
+              item.visitorEntry_Vehicletype ||
+              item.visitorEntryVehicletype ||
+              item.vehicleType ||
+              "",
+            visitorEntryVehicleno:
+              item.visitorEntry_Vehicleno ||
+              item.visitorEntryVehicleno ||
+              item.vehicleNo ||
+              "",
+            visitorEntryDate:
+              item.visitorEntry_Date ||
+              item.visitorEntryDate ||
+              item.date ||
+              new Date().toISOString(),
+            visitorEntryUserid:
+              item.visitorEntry_Userid ||
+              item.visitorEntryUserid ||
+              item.userId ||
+              0,
+          };
+        });
 
         // Enrich appointment data with visitor details when available
         const normalizedAppointments = await Promise.all(
@@ -317,8 +354,8 @@ const NotificationSidebar = forwardRef(
         }));
 
         const appointmentNotifications: Notification[] = userAppointments.map(
-          (a) => ({
-            id: a.visitorEntryId,
+          (a, idx) => ({
+            id: a.visitorEntryId || -(idx + 1), // Use negative index as fallback for unique IDs
             type: "appointment" as const,
             title: `New Appointment: ${a.visitorName || "Visitor"}`,
             preview: `${a.visitorCompanyName || "Company"} - ${
@@ -326,7 +363,9 @@ const NotificationSidebar = forwardRef(
             }`,
             createdAt: a.visitorEntryDate,
             isRead: readNotifications.some(
-              (n) => n.type === "appointment" && n.id === a.visitorEntryId
+              (n) =>
+                n.type === "appointment" &&
+                n.id === (a.visitorEntryId || -(idx + 1))
             ),
             data: a,
           })
@@ -360,15 +399,20 @@ const NotificationSidebar = forwardRef(
       markNotificationAsRead(notification.type, notification.id);
 
       // Update local state
-      const updatedNotifications = notifications.map((n) =>
-        n.id === notification.id && n.type === notification.type
-          ? { ...n, isRead: true }
-          : n
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notification.id && n.type === notification.type
+            ? { ...n, isRead: true }
+            : n
+        )
       );
-      setNotifications(updatedNotifications);
 
-      // Calculate new unread count from updated notifications
-      const unreadCount = updatedNotifications.filter((n) => !n.isRead).length;
+      // Update unread count
+      const unreadCount = notifications.filter(
+        (n) =>
+          !(n.id === notification.id && n.type === notification.type) &&
+          !n.isRead
+      ).length;
       if (onUnreadCountChange) {
         onUnreadCountChange(unreadCount);
       }

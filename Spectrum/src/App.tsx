@@ -30,6 +30,10 @@ function App() {
 
   const handleNavigate = (component: string) => {
     setCurrentView(component);
+    // Re-fetch unread count when navigating away from notifications
+    if (component !== "notification") {
+      fetchUnreadCount();
+    }
   };
 
   const handleUnreadCountChange = (count: number) => {
@@ -94,10 +98,17 @@ function App() {
       const baseAppointments = (Array.isArray(appList) ? appList : []).map(
         (item: any) => ({
           visitorEntryId:
-            item.visitorEntryId || item.VisitorEntryId || item.id || 0,
+            item.visitorEntryID ||
+            item.visitorEntry_Id ||
+            item.VisitorEntry_Id ||
+            item.visitorEntryId ||
+            item.VisitorEntryId ||
+            item.id ||
+            0,
           visitorEntryUserid:
             item.visitorEntry_Userid ||
             item.visitorEntryUserid ||
+            item.visitorEntry_userid ||
             item.userId ||
             0,
           visitorEntryDate:
@@ -112,6 +123,16 @@ function App() {
         .includes("admin");
       const userAppointments = baseAppointments.filter((a: any) =>
         isAdmin ? true : a.visitorEntryUserid === loggedInUserId
+      );
+
+      console.log("🔍 Raw appointment data sample:", appList[0]);
+      console.log("🔍 Normalized appointment sample:", baseAppointments[0]);
+      console.log(
+        "🔍 User appointments:",
+        userAppointments.map((a: any) => ({
+          id: a.visitorEntryId,
+          userid: a.visitorEntryUserid,
+        }))
       );
 
       // compute unread via localStorage
@@ -130,6 +151,22 @@ function App() {
             (r: any) => r.type === "appointment" && r.id === a.visitorEntryId
           )
       ).length;
+
+      console.log("📊 Unread Count Debug:");
+      console.log(
+        "  Total Parcels:",
+        userParcels.length,
+        "Unread:",
+        parcelUnread
+      );
+      console.log(
+        "  Total Appointments:",
+        userAppointments.length,
+        "Unread:",
+        appUnread
+      );
+      console.log("  Read Notifications:", read);
+      console.log("  Final Unread Count:", parcelUnread + appUnread);
 
       setUnreadCount(parcelUnread + appUnread);
     } catch {
