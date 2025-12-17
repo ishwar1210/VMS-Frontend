@@ -677,43 +677,71 @@ const NotificationSidebar = forwardRef(
               <div className="notification-detail-content">
                 {selectedNotification.type === "parcel" ? (
                   <>
-                    {/* Parcel Details - Simple View */}
-                    <div className="detail-row">
-                      <span className="detail-label">Barcode:</span>
-                      <span className="detail-value">
-                        {(selectedNotification.data as Parcel).parcelBarcode}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Company:</span>
-                      <span className="detail-value">
+                    {/* Parcel Details - Email Style */}
+                    <div className="email-style-content">
+                      <div className="email-greeting">Dear User,</div>
+
+                      <div className="email-message">
+                        Your{" "}
                         {
                           (selectedNotification.data as Parcel)
                             .parcelCompanyName
-                        }
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Handover:</span>
-                      <span className="detail-value">
-                        {formatHandover(
-                          (selectedNotification.data as Parcel).parcelHandover
-                        )}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Parcel ID:</span>
-                      <span className="detail-value">
-                        #{(selectedNotification.data as Parcel).parcelId}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Status:</span>
-                      <span className="detail-value">
-                        {(selectedNotification.data as Parcel).isActive
-                          ? "Active"
-                          : "Inactive"}
-                      </span>
+                        }{" "}
+                        package has been delivered. Pick it up from the security
+                        guard cabin.
+                      </div>
+
+                      <div className="email-info-box">
+                        <div className="email-info-title">Parcel Details:</div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">Barcode:</span>
+                          <span className="email-info-value">
+                            {
+                              (selectedNotification.data as Parcel)
+                                .parcelBarcode
+                            }
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">Company:</span>
+                          <span className="email-info-value">
+                            {
+                              (selectedNotification.data as Parcel)
+                                .parcelCompanyName
+                            }
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">Parcel ID:</span>
+                          <span className="email-info-value">
+                            #{(selectedNotification.data as Parcel).parcelId}
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">
+                            Handover Status:
+                          </span>
+                          <span className="email-info-value">
+                            {formatHandover(
+                              (selectedNotification.data as Parcel)
+                                .parcelHandover
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">Status:</span>
+                          <span className="email-info-value">
+                            {(selectedNotification.data as Parcel).isActive
+                              ? "Active"
+                              : "Inactive"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </>
                 ) : (
