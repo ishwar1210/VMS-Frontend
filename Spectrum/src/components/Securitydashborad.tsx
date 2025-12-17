@@ -64,6 +64,12 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
             it.isApproval ??
             it.requiresApproval
           ),
+          visitorEntry_userReject: !!(
+            it.VisitorEntryUser_isReject ??
+            it.visitorEntryUser_isReject ??
+            it.visitorEntry_userReject ??
+            it.visitorEntry_User_isReject
+          ),
           visitorEntry_visitorName:
             (normalizedVisitors.find((v: any) => v.visitor_Id === visitorId)
               ?.visitor_Name ||
@@ -602,7 +608,8 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
               )}
               {!loading &&
                 filteredEntries.slice(0, 10).map((en: any, idx: number) => {
-                  const isActive = !en.visitorEntry_Outtime;
+                  const isRejected = !!en.visitorEntry_userReject;
+                  const isActive = !en.visitorEntry_Outtime && !isRejected;
                   const formatTime = (ts: string) => {
                     if (!ts) return "-";
                     try {
@@ -623,6 +630,17 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
                     en?.visitorEntry_Id || en?.visitorEntryId || en?.id || 0;
                   const displayId =
                     rawId && Number(rawId) !== 0 ? `#${rawId}` : `${idx + 1}`;
+
+                  // Determine status
+                  let statusText = "Checked Out";
+                  let statusClass = "status-completed";
+                  if (isRejected) {
+                    statusText = "Rejected";
+                    statusClass = "status-rejected";
+                  } else if (isActive) {
+                    statusText = "On-Site";
+                    statusClass = "status-active";
+                  }
 
                   return (
                     <tr
@@ -647,12 +665,8 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
                         {formatTime(en.visitorEntry_Outtime)}
                       </td>
                       <td className="cell-status">
-                        <span
-                          className={`status-badge ${
-                            isActive ? "status-active" : "status-completed"
-                          }`}
-                        >
-                          {isActive ? "On-Site" : "Checked Out"}
+                        <span className={`status-badge ${statusClass}`}>
+                          {statusText}
                         </span>
                       </td>
                     </tr>

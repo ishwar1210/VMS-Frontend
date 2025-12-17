@@ -452,6 +452,11 @@
   color: #6b7280;
 }
 
+.status-rejected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
 .approval-badge {
   display: inline-block;
   padding: 5px 12px;

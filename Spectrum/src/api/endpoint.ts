@@ -54,6 +54,7 @@ const visitorEntry = {
   create: (payload: any) => api.post("/api/visitorentry", payload),
   update: (id: number, payload: any) =>
     api.put(`/api/visitorentry/${id}`, payload),
+  delete: (id: number) => api.delete(`/api/visitorentry/${id}`),
 };
 // visitor endpoints
 const visitor = {

@@ -18,6 +18,7 @@ interface VisitorEntry {
   visitorEntry_isApproval?: boolean;
   visitorEntry_adminApproval?: boolean;
   visitorEntry_userApproval?: boolean;
+  visitorEntry_userReject?: boolean;
   visitorEntry_visitorName?: string;
   [key: string]: any;
 }
@@ -36,6 +37,8 @@ function Visitorentryapprovalemp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingEntry, setViewingEntry] = useState<VisitorEntry | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
@@ -86,6 +89,7 @@ function Visitorentryapprovalemp() {
     visitorEntry_isApproval: false,
     visitorEntry_adminApproval: false,
     visitorEntry_userApproval: false,
+    visitorEntry_userReject: false,
     visitorEntry_visitorName: "",
   });
 
@@ -284,6 +288,12 @@ function Visitorentryapprovalemp() {
               it.visitorEntry_User_isApproval ??
               it.visitorEntryUserIsApproval ??
               false,
+            visitorEntry_userReject:
+              it.VisitorEntryUser_isReject ??
+              it.visitorEntryUser_isReject ??
+              it.visitorEntry_userReject ??
+              it.visitorEntry_User_isReject ??
+              false,
             visitorEntry_visitorName: visitorName,
             // include raw object for debugging if needed
             __raw: it,
@@ -318,36 +328,126 @@ function Visitorentryapprovalemp() {
     }
   };
 
-  // handleEdit uses resolved id
-  const handleEdit = (entry: VisitorEntry) => {
-    console.log("handleEdit entry clicked:", entry);
+  // handleView - opens view modal
+  const handleView = (entry: VisitorEntry) => {
+    setViewingEntry(entry);
+    setShowViewModal(true);
+  };
 
-    // Verify entry belongs to logged-in user
-    if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
-      alert("You can only approve entries assigned to you.");
-      return;
+  // handleApprove - sets user approval to true
+  const handleApprove = async (entry: VisitorEntry) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      // Verify entry belongs to logged-in user
+      if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
+        alert("You can only approve entries assigned to you.");
+        return;
+      }
+
+      const entryId = Number(entry.visitorEntry_Id);
+      const payload: any = {
+        visitorEntry_Id: entryId,
+        visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
+        visitorEntry_Gatepass: String(entry.visitorEntry_Gatepass ?? "").trim(),
+        visitorEntry_Vehicletype: String(
+          entry.visitorEntry_Vehicletype ?? ""
+        ).trim(),
+        visitorEntry_Vehicleno: String(
+          entry.visitorEntry_Vehicleno ?? ""
+        ).trim(),
+        visitorEntry_Date: entry.visitorEntry_Date ?? "",
+        visitorEntry_Intime:
+          (entry.visitorEntry_Intime &&
+            String(entry.visitorEntry_Intime).trim()) ||
+          null,
+        visitorEntry_Outtime: entry.visitorEntry_Outtime?.trim() || null,
+        visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
+        visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
+        visitorEntry_isStay: !!entry.visitorEntry_isStay,
+        visitorEntry_isApproval: true,
+        visitorEntryAdmin_isApproval: !!entry.visitorEntry_adminApproval,
+        visitorEntryuser_isApproval: true, // Set user approval to true
+        VisitorEntryUser_isReject: false, // Set user reject to false
+      };
+
+      await endpoints.visitorEntry.update(entryId, payload);
+      alert("Visitor entry approved successfully!");
+      await fetchData();
+    } catch (err: any) {
+      console.error("handleApprove error:", err);
+      const backendMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to approve entry";
+      setError(String(backendMsg));
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setFormData({
-      visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
-      visitorEntry_Gatepass: entry.visitorEntry_Gatepass ?? "",
-      visitorEntry_Vehicletype: entry.visitorEntry_Vehicletype ?? "",
-      visitorEntry_Vehicleno: entry.visitorEntry_Vehicleno ?? "",
-      visitorEntry_Date: entry.visitorEntry_Date ?? "",
-      visitorEntry_Intime: entry.visitorEntry_Intime ?? "",
-      visitorEntry_Outtime: entry.visitorEntry_Outtime ?? "",
-      visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
-      visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
-      visitorEntry_isStay: !!entry.visitorEntry_isStay,
-      visitorEntry_isApproval: !!entry.visitorEntry_isApproval,
-      visitorEntry_adminApproval: !!entry.visitorEntry_adminApproval,
-      visitorEntry_userApproval: !!entry.visitorEntry_userApproval,
-      visitorEntry_visitorName: entry.visitorEntry_visitorName ?? "",
-    });
-    // set editingId from resolved field
-    setEditingId(Number(entry.visitorEntry_Id ?? entry.id ?? entry.Id ?? 0));
-    setShowForm(true);
-    setError("");
+  // handleReject - sets user reject to true
+  const handleReject = async (entry: VisitorEntry) => {
+    try {
+      // Verify entry belongs to logged-in user
+      if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
+        alert("You can only reject entries assigned to you.");
+        return;
+      }
+
+      const confirmReject = window.confirm(
+        "Are you sure you want to reject this entry?"
+      );
+      if (!confirmReject) return;
+
+      setLoading(true);
+      setError("");
+
+      const entryId = Number(entry.visitorEntry_Id);
+      const payload: any = {
+        visitorEntry_Id: entryId,
+        visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
+        visitorEntry_Gatepass: String(entry.visitorEntry_Gatepass ?? "").trim(),
+        visitorEntry_Vehicletype: String(
+          entry.visitorEntry_Vehicletype ?? ""
+        ).trim(),
+        visitorEntry_Vehicleno: String(
+          entry.visitorEntry_Vehicleno ?? ""
+        ).trim(),
+        visitorEntry_Date: entry.visitorEntry_Date ?? "",
+        visitorEntry_Intime:
+          (entry.visitorEntry_Intime &&
+            String(entry.visitorEntry_Intime).trim()) ||
+          null,
+        visitorEntry_Outtime: entry.visitorEntry_Outtime?.trim() || null,
+        visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
+        visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
+        visitorEntry_isStay: !!entry.visitorEntry_isStay,
+        visitorEntry_isApproval: false,
+        visitorEntryAdmin_isApproval: !!entry.visitorEntry_adminApproval,
+        visitorEntryuser_isApproval: false,
+        VisitorEntryUser_isReject: true, // Set user reject to true
+      };
+
+      console.log("Rejecting entry with ID:", entryId, "payload:", payload);
+
+      await endpoints.visitorEntry.update(entryId, payload);
+
+      alert("Visitor entry rejected successfully!");
+      await fetchData();
+    } catch (err: any) {
+      console.error("handleReject error:", err);
+      console.error("Error response:", err?.response);
+      const backendMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to reject entry";
+      setError(String(backendMsg));
+      alert(`Error: ${backendMsg}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (
@@ -588,6 +688,132 @@ function Visitorentryapprovalemp() {
         <h1 className="rolemaster-title">Visitor Entry Approval (Employee)</h1>
       </div>
 
+      {showViewModal && viewingEntry && (
+        <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Visitor Entry Details</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowViewModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div
+              className="modal-form"
+              style={{ maxHeight: "70vh", overflowY: "auto" }}
+            >
+              <div className="form-group">
+                <label>Visitor Name:</label>
+                <div className="detail-value">
+                  {viewingEntry.visitorEntry_visitorName || "-"}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Gatepass:</label>
+                <div className="detail-value">
+                  {viewingEntry.visitorEntry_Gatepass || "-"}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Vehicle Type:</label>
+                <div className="detail-value">
+                  {viewingEntry.visitorEntry_Vehicletype || "-"}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Vehicle No:</label>
+                <div className="detail-value">
+                  {viewingEntry.visitorEntry_Vehicleno || "-"}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Date:</label>
+                <div className="detail-value">
+                  {formatDateOnly(viewingEntry.visitorEntry_Date)}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>In Time:</label>
+                <div className="detail-value">
+                  {formatTimeOnly(viewingEntry.visitorEntry_Intime)}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Out Time:</label>
+                <div className="detail-value">
+                  {formatTimeOnly(viewingEntry.visitorEntry_Outtime) ||
+                    "Not Set"}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Admin Approved:</label>
+                <div className="detail-value">
+                  <span
+                    className={`status-badge ${
+                      viewingEntry.visitorEntry_adminApproval
+                        ? "active"
+                        : "inactive"
+                    }`}
+                  >
+                    {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
+                  </span>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>User Approved:</label>
+                <div className="detail-value">
+                  <span
+                    className={`status-badge ${
+                      viewingEntry.visitorEntry_userApproval
+                        ? "active"
+                        : "inactive"
+                    }`}
+                  >
+                    {viewingEntry.visitorEntry_userApproval ? "YES" : "NO"}
+                  </span>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Canteen:</label>
+                <div className="detail-value">
+                  <span
+                    className={`status-badge ${
+                      viewingEntry.visitorEntry_isCanteen
+                        ? "active"
+                        : "inactive"
+                    }`}
+                  >
+                    {viewingEntry.visitorEntry_isCanteen ? "Yes" : "No"}
+                  </span>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Stay:</label>
+                <div className="detail-value">
+                  <span
+                    className={`status-badge ${
+                      viewingEntry.visitorEntry_isStay ? "active" : "inactive"
+                    }`}
+                  >
+                    {viewingEntry.visitorEntry_isStay ? "Yes" : "No"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowViewModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showForm && (
         <div className="modal-overlay" onClick={resetForm}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -801,16 +1027,8 @@ function Visitorentryapprovalemp() {
                     <th>Sr.No.</th>
                     <th>Gatepass</th>
                     <th>Visitor Name</th>
-                    <th>Vehicle Type</th>
-                    <th>Vehicle No</th>
                     <th>Date</th>
-                    <th>In Time</th>
-                    <th>Out Time</th>
-                    <th>Admin Approved</th>
-                    <th>User Approved</th>
-                    <th>Canteen</th>
-                    <th>Stay</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -827,71 +1045,82 @@ function Visitorentryapprovalemp() {
                       <td>{currentStartIndex + idx + 1}</td>
                       <td>{entry.visitorEntry_Gatepass}</td>
                       <td>{entry.visitorEntry_visitorName}</td>
-                      <td>{entry.visitorEntry_Vehicletype}</td>
-                      <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
-                      <td>{formatTimeOnly(entry.visitorEntry_Intime)}</td>
-                      <td>{formatTimeOnly(entry.visitorEntry_Outtime)}</td>
                       <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_adminApproval
-                              ? "active"
-                              : "inactive"
-                          }`}
+                        <div
+                          className="action-buttons"
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            justifyContent: "center",
+                          }}
                         >
-                          {entry.visitorEntry_adminApproval ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_userApproval
-                              ? "active"
-                              : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_userApproval ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_isCanteen ? "active" : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_isCanteen ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_isStay ? "active" : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_isStay ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
                           <button
-                            className="action-btn edit-btn"
-                            onClick={() => handleEdit(entry)}
-                            title="Edit"
-                            aria-label="Edit"
+                            className="action-btn view-btn"
+                            onClick={() => handleView(entry)}
+                            title="View Details"
+                            aria-label="View Details"
+                            style={{
+                              padding: "6px 10px",
+                              background: "#3b82f6",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                            }}
                           >
                             <svg
-                              width="18"
-                              height="18"
+                              width="16"
+                              height="16"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
                               strokeWidth="2"
                             >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                           </button>
+                          {!entry.visitorEntry_userApproval && (
+                            <>
+                              <button
+                                className="action-btn approve-btn"
+                                onClick={() => handleApprove(entry)}
+                                title="Approve"
+                                aria-label="Approve"
+                                style={{
+                                  padding: "6px 12px",
+                                  background: "#10b981",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  fontWeight: "600",
+                                  fontSize: "16px",
+                                }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                className="action-btn reject-btn"
+                                onClick={() => handleReject(entry)}
+                                title="Reject"
+                                aria-label="Reject"
+                                style={{
+                                  padding: "6px 12px",
+                                  background: "#ef4444",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  fontWeight: "600",
+                                  fontSize: "16px",
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -985,16 +1214,8 @@ function Visitorentryapprovalemp() {
                     <th>Sr.No.</th>
                     <th>Gatepass</th>
                     <th>Visitor Name</th>
-                    <th>Vehicle Type</th>
-                    <th>Vehicle No</th>
                     <th>Date</th>
-                    <th>In Time</th>
-                    <th>Out Time</th>
-                    <th>Admin Approved</th>
-                    <th>User Approved</th>
-                    <th>Canteen</th>
-                    <th>Stay</th>
-                    {/* No Action column */}
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1013,50 +1234,42 @@ function Visitorentryapprovalemp() {
                       <td>
                         <strong>{entry.visitorEntry_visitorName}</strong>
                       </td>
-                      <td>{entry.visitorEntry_Vehicletype}</td>
-                      <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
-                      <td>{formatTimeOnly(entry.visitorEntry_Intime)}</td>
-                      <td>{formatTimeOnly(entry.visitorEntry_Outtime)}</td>
                       <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_adminApproval
-                              ? "active"
-                              : "inactive"
-                          }`}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            justifyContent: "center",
+                          }}
                         >
-                          {entry.visitorEntry_adminApproval ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_userApproval
-                              ? "active"
-                              : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_userApproval ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_isCanteen ? "active" : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_isCanteen ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_isStay ? "active" : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_isStay ? "Yes" : "No"}
-                        </span>
+                          <button
+                            className="action-btn view-btn"
+                            onClick={() => handleView(entry)}
+                            title="View Details"
+                            aria-label="View Details"
+                            style={{
+                              padding: "6px 10px",
+                              background: "#3b82f6",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
