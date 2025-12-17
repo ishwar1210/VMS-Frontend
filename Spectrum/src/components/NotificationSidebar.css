@@ -283,3 +283,118 @@
     z-index: 1000;
   }
 }
+
+/* Email-Style Appointment Details */
+.email-style-content {
+  max-width: 650px;
+  margin: 0 auto;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+}
+
+.email-greeting {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.email-message {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-bottom: 28px;
+}
+
+.email-info-box {
+  background: rgba(37, 99, 235, 0.05);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 28px;
+}
+
+.email-info-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-header);
+  margin-bottom: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.email-info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.email-info-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.email-info-item:first-child {
+  padding-top: 0;
+}
+
+.email-info-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex: 0 0 45%;
+}
+
+.email-info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: right;
+  flex: 1;
+}
+
+.email-action-section {
+  display: flex;
+  justify-content: center;
+  margin: 32px 0 28px;
+}
+
+.email-action-button {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.email-action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
+.email-action-button:active {
+  transform: translateY(0);
+}
+
+.email-action-button svg {
+  flex-shrink: 0;
+}
+
+.email-footer {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  text-align: center;
+  padding-top: 24px;
+  border-top: 1px solid var(--card-border);
+}

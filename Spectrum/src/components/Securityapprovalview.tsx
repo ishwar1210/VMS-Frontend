@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Rolemaster.css";
+import "./Securityapprovalview.css";
 import { endpoints } from "../api/endpoint";
 
 interface VisitorEntry {

@@ -43,10 +43,14 @@ interface NotificationSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onUnreadCountChange?: (count: number) => void;
+  onNavigate?: (view: string) => void;
 }
 
 const NotificationSidebar = forwardRef(
-  ({ isOpen, onUnreadCountChange }: NotificationSidebarProps, ref) => {
+  (
+    { isOpen, onUnreadCountChange, onNavigate }: NotificationSidebarProps,
+    ref
+  ) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedNotification, setSelectedNotification] =
@@ -84,36 +88,46 @@ const NotificationSidebar = forwardRef(
       fetchUserNotifications();
     }, []);
 
+    // Reset clearedOnOpen when notification page is closed
+    useEffect(() => {
+      if (!isOpen) {
+        setClearedOnOpen(false);
+      }
+    }, [isOpen]);
+
     // When opening the notifications page, clear unread badge like WhatsApp/email
     useEffect(() => {
-      const hasItems = notifications && notifications.length > 0;
+      if (!isOpen || !notifications.length) return;
+
       const hasUnread = notifications.some((n) => !n.isRead);
-      if (isOpen && hasItems && hasUnread && !clearedOnOpen) {
+      if (hasUnread && !clearedOnOpen) {
         // Mark all as read on first open
         const readNotifications = getReadNotifications();
         const updatedRead = [...readNotifications];
-        const toAdd: { type: string; id: number }[] = [];
+
         notifications.forEach((n) => {
           const exists = updatedRead.some(
             (r) => r.type === n.type && r.id === n.id
           );
-          if (!exists) {
+          if (!exists && !n.isRead) {
             updatedRead.push({ type: n.type, id: n.id });
-            toAdd.push({ type: n.type, id: n.id });
           }
         });
-        if (toAdd.length > 0) {
-          localStorage.setItem(
-            "readNotifications",
-            JSON.stringify(updatedRead)
-          );
-        }
-        // Update local state
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+
+        localStorage.setItem("readNotifications", JSON.stringify(updatedRead));
+
+        // Update local state to mark all as read
+        const updatedNotifications = notifications.map((n) => ({
+          ...n,
+          isRead: true,
+        }));
+        setNotifications(updatedNotifications);
+
+        // Clear the unread count
         if (onUnreadCountChange) onUnreadCountChange(0);
         setClearedOnOpen(true);
       }
-    }, [notifications, isOpen]);
+    }, [notifications, isOpen, clearedOnOpen, onUnreadCountChange]);
 
     // Expose refresh function to parent via ref
     useImperativeHandle(ref, () => ({
@@ -346,20 +360,15 @@ const NotificationSidebar = forwardRef(
       markNotificationAsRead(notification.type, notification.id);
 
       // Update local state
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notification.id && n.type === notification.type
-            ? { ...n, isRead: true }
-            : n
-        )
+      const updatedNotifications = notifications.map((n) =>
+        n.id === notification.id && n.type === notification.type
+          ? { ...n, isRead: true }
+          : n
       );
+      setNotifications(updatedNotifications);
 
-      // Update unread count
-      const unreadCount = notifications.filter(
-        (n) =>
-          !(n.id === notification.id && n.type === notification.type) &&
-          !n.isRead
-      ).length;
+      // Calculate new unread count from updated notifications
+      const unreadCount = updatedNotifications.filter((n) => !n.isRead).length;
       if (onUnreadCountChange) {
         onUnreadCountChange(unreadCount);
       }
@@ -624,6 +633,7 @@ const NotificationSidebar = forwardRef(
               <div className="notification-detail-content">
                 {selectedNotification.type === "parcel" ? (
                   <>
+                    {/* Parcel Details - Simple View */}
                     <div className="detail-row">
                       <span className="detail-label">Barcode:</span>
                       <span className="detail-value">
@@ -664,65 +674,118 @@ const NotificationSidebar = forwardRef(
                   </>
                 ) : (
                   <>
-                    <div className="detail-row">
-                      <span className="detail-label">Visitor Name:</span>
-                      <span className="detail-value">
+                    {/* Appointment Details - Email Style */}
+                    <div className="email-style-content">
+                      <div className="email-greeting">Dear User,</div>
+
+                      <div className="email-message">
+                        You have a new visitor appointment scheduled. The
+                        appointment has been successfully registered
+                      </div>
+
+                      <div className="email-info-box">
+                        <div className="email-info-title">
+                          Appointment Details:
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">
+                            Visitor Name:
+                          </span>
+                          <span className="email-info-value">
+                            {(selectedNotification.data as Appointment)
+                              .visitorName || "N/A"}
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">Company:</span>
+                          <span className="email-info-value">
+                            {(selectedNotification.data as Appointment)
+                              .visitorCompanyName || "N/A"}
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">
+                            Purpose of Visit:
+                          </span>
+                          <span className="email-info-value">
+                            {(selectedNotification.data as Appointment)
+                              .visitorPurposeofvisit || "N/A"}
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">
+                            Contact Number:
+                          </span>
+                          <span className="email-info-value">
+                            {(selectedNotification.data as Appointment)
+                              .visitorMobile || "N/A"}
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">
+                            Gatepass Number:
+                          </span>
+                          <span className="email-info-value">
+                            {(selectedNotification.data as Appointment)
+                              .visitorEntryGatepass || "N/A"}
+                          </span>
+                        </div>
+
                         {(selectedNotification.data as Appointment)
-                          .visitorName || "-"}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Company:</span>
-                      <span className="detail-value">
+                          .visitorEntryVehicletype && (
+                          <div className="email-info-item">
+                            <span className="email-info-label">
+                              Vehicle Type:
+                            </span>
+                            <span className="email-info-value">
+                              {
+                                (selectedNotification.data as Appointment)
+                                  .visitorEntryVehicletype
+                              }
+                            </span>
+                          </div>
+                        )}
+
                         {(selectedNotification.data as Appointment)
-                          .visitorCompanyName || "-"}
-                      </span>
+                          .visitorEntryVehicleno && (
+                          <div className="email-info-item">
+                            <span className="email-info-label">
+                              Vehicle Number:
+                            </span>
+                            <span className="email-info-value">
+                              {
+                                (selectedNotification.data as Appointment)
+                                  .visitorEntryVehicleno
+                              }
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="email-action-section">
+                        <button
+                          className="email-action-button"
+                          onClick={() => onNavigate?.("visitorentryapproval")}
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3" />
+                          </svg>
+                          View in Appointments
+                        </button>
+                      </div>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Purpose:</span>
-                      <span className="detail-value">
-                        {(selectedNotification.data as Appointment)
-                          .visitorPurposeofvisit || "-"}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Mobile:</span>
-                      <span className="detail-value">
-                        {(selectedNotification.data as Appointment)
-                          .visitorMobile || "-"}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Gatepass:</span>
-                      <span className="detail-value">
-                        {(selectedNotification.data as Appointment)
-                          .visitorEntryGatepass || "-"}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Vehicle Type:</span>
-                      <span className="detail-value">
-                        {(selectedNotification.data as Appointment)
-                          .visitorEntryVehicletype || "-"}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Vehicle No:</span>
-                      <span className="detail-value">
-                        {(selectedNotification.data as Appointment)
-                          .visitorEntryVehicleno || "-"}
-                      </span>
-                    </div>
-                    {/* <div className="detail-row">
-                      <span className="detail-label">Appointment ID:</span>
-                      <span className="detail-value">
-                        #
-                        {
-                          (selectedNotification.data as Appointment)
-                            .visitorEntryId
-                        }
-                      </span>
-                    </div> */}
                   </>
                 )}
               </div>

@@ -826,9 +826,7 @@ function Visitorentryapprovalemp() {
                     >
                       <td>{currentStartIndex + idx + 1}</td>
                       <td>{entry.visitorEntry_Gatepass}</td>
-                      <td>
-                        <strong>{entry.visitorEntry_visitorName}</strong>
-                      </td>
+                      <td>{entry.visitorEntry_visitorName}</td>
                       <td>{entry.visitorEntry_Vehicletype}</td>
                       <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateOnly(entry.visitorEntry_Date)}</td>

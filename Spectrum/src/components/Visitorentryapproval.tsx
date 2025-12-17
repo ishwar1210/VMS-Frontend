@@ -646,17 +646,17 @@ function Visitorentryapproval() {
                   <span>Canteen Access</span>
                 </label>
               </div>
-                <div className="form-group">
+              <div className="form-group">
                 <label className="checkbox-label">
                   <input
-                  name="visitorEntry_adminApproval"
-                  type="checkbox"
-                  checked={!!formData.visitorEntry_adminApproval}
-                  onChange={handleInputChange}
+                    name="visitorEntry_adminApproval"
+                    type="checkbox"
+                    checked={!!formData.visitorEntry_adminApproval}
+                    onChange={handleInputChange}
                   />{" "}
                   <span>Admin Approved</span>
                 </label>
-                </div>
+              </div>
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -950,9 +950,7 @@ function Visitorentryapproval() {
                     >
                       <td>{historyStartIndex + idx + 1}</td>
                       <td>{entry.visitorEntry_Gatepass}</td>
-                      <td>
-                        <strong>{entry.visitorEntry_visitorName}</strong>
-                      </td>
+                      <td>{entry.visitorEntry_visitorName}</td>
                       <td>{entry.visitorEntry_Vehicletype}</td>
                       <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateOnly(entry.visitorEntry_Date)}</td>

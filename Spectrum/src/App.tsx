@@ -188,6 +188,7 @@ function App() {
             isOpen={true}
             onClose={() => handleNavigate("dashboard")}
             onUnreadCountChange={handleUnreadCountChange}
+            onNavigate={handleNavigate}
           />
         );
       case "dashboard":
