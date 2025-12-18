@@ -11,6 +11,7 @@ interface Parcel {
   isActive: boolean;
   createdAt?: string;
   parcelHandover?: boolean | string | null;
+  parcel_type?: string;
   isRead?: boolean;
 }
 
@@ -202,6 +203,11 @@ const NotificationSidebar = forwardRef(
             item.ParcelHandover ||
             item.parcelHandoverFlag ||
             null,
+          parcel_type:
+            item.parcel_type ||
+            item.Parcel_type ||
+            item.parcelType ||
+            "company",
         }));
 
         const userParcels = normalizedParcels.filter(
@@ -711,6 +717,16 @@ const NotificationSidebar = forwardRef(
                               (selectedNotification.data as Parcel)
                                 .parcelCompanyName
                             }
+                          </span>
+                        </div>
+
+                        <div className="email-info-item">
+                          <span className="email-info-label">Parcel Type:</span>
+                          <span className="email-info-value">
+                            {(selectedNotification.data as Parcel)
+                              .parcel_type === "company"
+                              ? "Company"
+                              : "Personal"}
                           </span>
                         </div>
 

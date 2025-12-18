@@ -11,6 +11,7 @@ interface Parcel {
   userId: number;
   isActive: boolean;
   parcelHandover?: boolean;
+  parcel_type?: string;
   createdDate?: string;
   updatedDate?: string;
   userName?: string;
@@ -43,6 +44,7 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
     userId: "",
     isActive: true,
     parcelHandover: false,
+    parcel_type: "company",
   });
 
   useEffect(() => {
@@ -82,6 +84,8 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
             : item.ParcelHandover !== undefined
             ? item.ParcelHandover
             : false,
+        parcel_type:
+          item.parcel_type || item.Parcel_type || item.parcelType || "company",
         createdDate:
           item.createdDate || item.CreatedDate || item.created_date || "",
         updatedDate:
@@ -141,6 +145,7 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
         userId: Number(formData.userId),
         isActive: formData.isActive,
         parcelHandover: formData.parcelHandover,
+        Parcel_type: formData.parcel_type,
       };
 
       if (editingId) {
@@ -175,6 +180,7 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
       userId: String(parcel.userId),
       isActive: parcel.isActive,
       parcelHandover: parcel.parcelHandover || false,
+      parcel_type: parcel.parcel_type || "company",
     });
     setEditingId(parcel.parcelId || null);
     setShowForm(true);
@@ -207,6 +213,7 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
       userId: "",
       isActive: true,
       parcelHandover: false,
+      parcel_type: "company",
     });
     setEditingId(null);
     setShowForm(false);
@@ -320,6 +327,20 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
                 </div>
 
                 <div className="form-group">
+                  <label>Parcel Type *</label>
+                  <select
+                    name="parcel_type"
+                    value={formData.parcel_type}
+                    onChange={handleInputChange}
+                    required
+                    className="form-input"
+                  >
+                    <option value="company">Company</option>
+                    <option value="personal">Personal</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
                   <label className="checkbox-label">
                     <input
                       type="checkbox"
@@ -413,8 +434,8 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
                   <th>BARCODE</th>
                   <th>COMPANY NAME</th>
                   <th>ASSIGNED USER</th>
+                  <th>PARCEL TYPE</th>
                   <th>HANDOVER</th>
-                  <th>STATUS</th>
                   <th>ACTION</th>
                 </tr>
               </thead>
@@ -430,21 +451,26 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
                       <td>
                         <span
                           className={`status-badge ${
+                            parcel.parcel_type === "company"
+                              ? "active"
+                              : "inactive"
+                          }`}
+                        >
+                          {parcel.parcel_type === "company"
+                            ? "Company"
+                            : "Personal"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
                             parcel.parcelHandover ? "active" : "inactive"
                           }`}
                         >
                           {parcel.parcelHandover ? "Yes" : "No"}
                         </span>
                       </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            parcel.isActive ? "active" : "inactive"
-                          }`}
-                        >
-                          {parcel.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </td>
+                      
                       <td>
                         <div className="action-buttons">
                           <button
