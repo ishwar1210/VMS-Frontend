@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { endpoints } from "../api/endpoint";
 import "./Preappointment.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type VisitorFormData = {
   visitor_Name: string;
@@ -116,7 +118,7 @@ export default function Securityappointment({
       const res = await endpoints.visitor.create(visitorForm);
       const newVisitorId = res.data?.visitorId || res.data?.id || res.data;
       if (!newVisitorId) {
-        alert(
+        toast.error(
           "Visitor created but ID not returned. Please check API response."
         );
         setLoading(false);
@@ -131,7 +133,7 @@ export default function Securityappointment({
       }));
       setStep(2);
     } catch (err: any) {
-      alert(
+      toast.error(
         err?.response?.data?.message ||
           err?.message ||
           "Failed to create visitor"
@@ -185,7 +187,7 @@ export default function Securityappointment({
       };
 
       await endpoints.visitorEntry.create(payload);
-      alert("Preappointment created successfully (via Security)!");
+      toast.success("Preappointment created successfully (via Security)!");
 
       // Trigger notification refresh
       if (onAppointmentAdded) {
@@ -219,7 +221,7 @@ export default function Securityappointment({
       setVisitorSearchTerm("");
       fetchVisitors();
     } catch (err: any) {
-      alert(
+      toast.error(
         err?.response?.data?.message ||
           err?.message ||
           "Failed to create visitor entry"
@@ -231,6 +233,17 @@ export default function Securityappointment({
 
   return (
     <div className="preappointment-container">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <div className="preappointment-header">
         <h2 className="preappointment-title">Security appointment</h2>
         <div className="step-indicator">Step {step} of 2</div>

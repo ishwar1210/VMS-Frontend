@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { endpoints } from "../api/endpoint";
 import "./Preappointment.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type VisitorFormData = {
   visitor_Name: string;
@@ -98,7 +100,7 @@ export default function Preappointment() {
       const res = await endpoints.visitor.create(visitorForm);
       const newVisitorId = res.data?.visitorId || res.data?.id || res.data;
       if (!newVisitorId) {
-        alert(
+        toast.error(
           "Visitor created but ID not returned. Please check API response."
         );
         setLoading(false);
@@ -112,7 +114,7 @@ export default function Preappointment() {
       }));
       setStep(2);
     } catch (err: any) {
-      alert(
+      toast.error(
         err?.response?.data?.message ||
           err?.message ||
           "Failed to create visitor"
@@ -158,7 +160,7 @@ export default function Preappointment() {
     setLoading(true);
     try {
       await endpoints.visitorEntry.create(entryForm);
-      alert("Preappointment created successfully!");
+      toast.success("Preappointment created successfully!");
       // Reset forms
       setVisitorForm({
         visitor_Name: "",
@@ -187,7 +189,7 @@ export default function Preappointment() {
       // refresh list so created visitor (if any) appears
       fetchVisitors();
     } catch (err: any) {
-      alert(
+      toast.error(
         err?.response?.data?.message ||
           err?.message ||
           "Failed to create visitor entry"
@@ -198,347 +200,370 @@ export default function Preappointment() {
   };
 
   return (
-    <div className="preappointment-container">
-      <div className="preappointment-header">
-        <h2 className="preappointment-title">Pre-appointment</h2>
-        <div className="step-indicator">Step {step} of 2</div>
-      </div>
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <div className="preappointment-container">
+        <div className="preappointment-header">
+          <h2 className="preappointment-title">Pre-appointment</h2>
+          <div className="step-indicator">Step {step} of 2</div>
+        </div>
 
-      {step === 1 && (
-        <section className="preappointment-form-section">
-          <h3 className="form-section-title">Visitor Registration</h3>
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              alignItems: "center",
-              marginBottom: 12,
-            }}
-          >
-            <label
+        {step === 1 && (
+          <section className="preappointment-form-section">
+            <h3 className="form-section-title">Visitor Registration</h3>
+            <div
               style={{
-                fontSize: 13,
-                color: "var(--text-secondary)",
-                marginRight: 6,
+                display: "flex",
+                gap: 12,
+                alignItems: "center",
+                marginBottom: 12,
               }}
             >
-              Select Visitor
-            </label>
-            <select
-              value={selectedVisitorId}
-              onChange={(e) => {
-                const id = Number(e.target.value || 0);
-                setSelectedVisitorId(id);
-                if (id > 0) {
-                  const v =
-                    visitors.find((x) => Number(x.visitorId || x.id) === id) ||
-                    visitors.find(
-                      (x) => Number(x.visitor_Id || x.visitorId) === id
-                    );
-                  if (v) {
-                    setVisitorForm((prev) => ({
-                      ...prev,
-                      visitor_Name: v.visitor_Name || v.name || "",
-                      visitor_mobile: v.visitor_mobile || v.mobile || "",
-                      visitor_Address: v.visitor_Address || v.address || "",
-                      visitor_CompanyName:
-                        v.visitor_CompanyName || v.company || "",
-                      visitor_Purposeofvisit:
-                        v.visitor_Purposeofvisit || v.purpose || "",
-                      visitor_Idprooftype:
-                        v.visitor_Idprooftype || v.idProofType || "Aadhar",
-                      visitor_idproofno:
-                        v.visitor_idproofno || v.idProofNo || "",
-                      visitor_MeetingDate:
-                        v.visitor_MeetingDate || v.meetingDate || "",
-                    }));
-                    setEntryForm((prev) => ({
-                      ...prev,
-                      visitorEntry_visitorId: id,
-                    }));
-                    setCreatedVisitorId(id);
-                    setStep(2);
+              <label
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-secondary)",
+                  marginRight: 6,
+                }}
+              >
+                Select Visitor
+              </label>
+              <select
+                value={selectedVisitorId}
+                onChange={(e) => {
+                  const id = Number(e.target.value || 0);
+                  setSelectedVisitorId(id);
+                  if (id > 0) {
+                    const v =
+                      visitors.find(
+                        (x) => Number(x.visitorId || x.id) === id
+                      ) ||
+                      visitors.find(
+                        (x) => Number(x.visitor_Id || x.visitorId) === id
+                      );
+                    if (v) {
+                      setVisitorForm((prev) => ({
+                        ...prev,
+                        visitor_Name: v.visitor_Name || v.name || "",
+                        visitor_mobile: v.visitor_mobile || v.mobile || "",
+                        visitor_Address: v.visitor_Address || v.address || "",
+                        visitor_CompanyName:
+                          v.visitor_CompanyName || v.company || "",
+                        visitor_Purposeofvisit:
+                          v.visitor_Purposeofvisit || v.purpose || "",
+                        visitor_Idprooftype:
+                          v.visitor_Idprooftype || v.idProofType || "Aadhar",
+                        visitor_idproofno:
+                          v.visitor_idproofno || v.idProofNo || "",
+                        visitor_MeetingDate:
+                          v.visitor_MeetingDate || v.meetingDate || "",
+                      }));
+                      setEntryForm((prev) => ({
+                        ...prev,
+                        visitorEntry_visitorId: id,
+                      }));
+                      setCreatedVisitorId(id);
+                      setStep(2);
+                    }
+                  } else {
+                    setCreatedVisitorId(null);
+                    setStep(1);
                   }
-                } else {
-                  setCreatedVisitorId(null);
-                  setStep(1);
-                }
-              }}
-              className="form-input"
-              style={{ width: 320 }}
-            >
-              <option value={0}>-- Create New Visitor --</option>
-              {visitors.map((v) => {
-                const id = Number(
-                  v.visitorId || v.id || v.visitor_Id || v.visitorId
-                );
-                const label = `${v.visitor_Name || v.name || "Unknown"} - ${
-                  v.visitor_mobile || v.mobile || "-"
-                }`;
-                return (
-                  <option key={id} value={id}>
-                    {label}
-                  </option>
-                );
-              })}
-            </select>
-            <button type="button" onClick={fetchVisitors} className="back-btn">
-              Refresh
-            </button>
-          </div>
-          <form onSubmit={handleVisitorSubmit} className="preappointment-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label>Name *</label>
-                <input
-                  type="text"
-                  name="visitor_Name"
-                  value={visitorForm.visitor_Name}
-                  onChange={handleVisitorChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Mobile *</label>
-                <input
-                  type="text"
-                  name="visitor_mobile"
-                  value={visitorForm.visitor_mobile}
-                  onChange={handleVisitorChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Company Name *</label>
-                <input
-                  type="text"
-                  name="visitor_CompanyName"
-                  value={visitorForm.visitor_CompanyName}
-                  onChange={handleVisitorChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Purpose of Visit *</label>
-                <input
-                  type="text"
-                  name="visitor_Purposeofvisit"
-                  value={visitorForm.visitor_Purposeofvisit}
-                  onChange={handleVisitorChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Address *</label>
-              <textarea
-                name="visitor_Address"
-                value={visitorForm.visitor_Address}
-                onChange={handleVisitorChange}
-                required
+                }}
                 className="form-input"
-                rows={2}
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>ID Proof Type *</label>
-                <select
-                  name="visitor_Idprooftype"
-                  value={visitorForm.visitor_Idprooftype}
-                  onChange={handleVisitorChange}
-                  required
-                  className="form-input"
-                >
-                  <option value="Aadhar">Aadhar</option>
-                  <option value="PAN">PAN</option>
-                  <option value="Driving License">Driving License</option>
-                  <option value="Passport">Passport</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>ID Proof No *</label>
-                <input
-                  type="text"
-                  name="visitor_idproofno"
-                  value={visitorForm.visitor_idproofno}
-                  onChange={handleVisitorChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Meeting Date *</label>
-              <input
-                type="datetime-local"
-                name="visitor_MeetingDate"
-                value={visitorForm.visitor_MeetingDate}
-                onChange={handleVisitorChange}
-                required
-                className="form-input"
-              />
-            </div>
-
-            <button type="submit" disabled={loading} className="submit-btn">
-              {loading ? "Saving..." : "Next: Visitor Entry"}
-            </button>
-          </form>
-        </section>
-      )}
-
-      {step === 2 && (
-        <section className="preappointment-form-section">
-          <h3 className="form-section-title">Visitor Entry Details</h3>
-          <p className="info-text">Visitor ID: {createdVisitorId}</p>
-          <form onSubmit={handleEntrySubmit} className="preappointment-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label>Gate Pass *</label>
-                <input
-                  type="text"
-                  name="visitorEntry_Gatepass"
-                  value={entryForm.visitorEntry_Gatepass}
-                  onChange={handleEntryChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Vehicle Type</label>
-                <input
-                  type="text"
-                  name="visitorEntry_Vehicletype"
-                  value={entryForm.visitorEntry_Vehicletype}
-                  onChange={handleEntryChange}
-                  className="form-input"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Vehicle No</label>
-                <input
-                  type="text"
-                  name="visitorEntry_Vehicleno"
-                  value={entryForm.visitorEntry_Vehicleno}
-                  onChange={handleEntryChange}
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>User *</label>
-                <select
-                  name="visitorEntry_Userid"
-                  value={entryForm.visitorEntry_Userid || 0}
-                  onChange={(e) => {
-                    const val = Number(e.target.value || 0);
-                    setEntryForm((prev) => ({
-                      ...prev,
-                      visitorEntry_Userid: val,
-                    }));
-                  }}
-                  required
-                  className="form-input"
-                >
-                  <option value={0}>-- Select User --</option>
-                  {users.length === 0 && (
-                    <option value={0}>No users found</option>
-                  )}
-                  {users.map((u) => {
-                    const id = Number(
-                      u.userId || u.id || u.user_Id || u.UserId || 0
-                    );
-                    const name =
-                      u.userName ||
-                      u.name ||
-                      u.fullName ||
-                      u.username ||
-                      u.user_Name ||
-                      "Unnamed";
-                    return (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Date *</label>
-                <input
-                  type="datetime-local"
-                  name="visitorEntry_Date"
-                  value={entryForm.visitorEntry_Date}
-                  onChange={handleEntryChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>In Time *</label>
-                <input
-                  type="datetime-local"
-                  name="visitorEntry_Intime"
-                  value={entryForm.visitorEntry_Intime}
-                  onChange={handleEntryChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-            </div>
-
-            <div className="form-group checkbox-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="visitorEntry_isCanteen"
-                  checked={entryForm.visitorEntry_isCanteen}
-                  onChange={handleEntryChange}
-                />
-                <span>Canteen Access</span>
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="visitorEntry_isStay"
-                  checked={entryForm.visitorEntry_isStay}
-                  onChange={handleEntryChange}
-                />
-                <span>Stay</span>
-              </label>
-            </div>
-
-            <div className="button-row">
+                style={{ width: 320 }}
+              >
+                <option value={0}>-- Create New Visitor --</option>
+                {visitors.map((v) => {
+                  const id = Number(
+                    v.visitorId || v.id || v.visitor_Id || v.visitorId
+                  );
+                  const label = `${v.visitor_Name || v.name || "Unknown"} - ${
+                    v.visitor_mobile || v.mobile || "-"
+                  }`;
+                  return (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  );
+                })}
+              </select>
               <button
                 type="button"
-                onClick={() => setStep(1)}
+                onClick={fetchVisitors}
                 className="back-btn"
-                disabled={loading}
               >
-                Back
-              </button>
-              <button type="submit" disabled={loading} className="submit-btn">
-                {loading ? "Submitting..." : "Submit Preappointment"}
+                Refresh
               </button>
             </div>
-          </form>
-        </section>
-      )}
-    </div>
+            <form
+              onSubmit={handleVisitorSubmit}
+              className="preappointment-form"
+            >
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Name *</label>
+                  <input
+                    type="text"
+                    name="visitor_Name"
+                    value={visitorForm.visitor_Name}
+                    onChange={handleVisitorChange}
+                    required
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Mobile *</label>
+                  <input
+                    type="text"
+                    name="visitor_mobile"
+                    value={visitorForm.visitor_mobile}
+                    onChange={handleVisitorChange}
+                    required
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Company Name *</label>
+                  <input
+                    type="text"
+                    name="visitor_CompanyName"
+                    value={visitorForm.visitor_CompanyName}
+                    onChange={handleVisitorChange}
+                    required
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Purpose of Visit *</label>
+                  <input
+                    type="text"
+                    name="visitor_Purposeofvisit"
+                    value={visitorForm.visitor_Purposeofvisit}
+                    onChange={handleVisitorChange}
+                    required
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Address *</label>
+                <textarea
+                  name="visitor_Address"
+                  value={visitorForm.visitor_Address}
+                  onChange={handleVisitorChange}
+                  required
+                  className="form-input"
+                  rows={2}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>ID Proof Type *</label>
+                  <select
+                    name="visitor_Idprooftype"
+                    value={visitorForm.visitor_Idprooftype}
+                    onChange={handleVisitorChange}
+                    required
+                    className="form-input"
+                  >
+                    <option value="Aadhar">Aadhar</option>
+                    <option value="PAN">PAN</option>
+                    <option value="Driving License">Driving License</option>
+                    <option value="Passport">Passport</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>ID Proof No *</label>
+                  <input
+                    type="text"
+                    name="visitor_idproofno"
+                    value={visitorForm.visitor_idproofno}
+                    onChange={handleVisitorChange}
+                    required
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Meeting Date *</label>
+                <input
+                  type="datetime-local"
+                  name="visitor_MeetingDate"
+                  value={visitorForm.visitor_MeetingDate}
+                  onChange={handleVisitorChange}
+                  required
+                  className="form-input"
+                />
+              </div>
+
+              <button type="submit" disabled={loading} className="submit-btn">
+                {loading ? "Saving..." : "Next: Visitor Entry"}
+              </button>
+            </form>
+          </section>
+        )}
+
+        {step === 2 && (
+          <section className="preappointment-form-section">
+            <h3 className="form-section-title">Visitor Entry Details</h3>
+            <p className="info-text">Visitor ID: {createdVisitorId}</p>
+            <form onSubmit={handleEntrySubmit} className="preappointment-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Gate Pass *</label>
+                  <input
+                    type="text"
+                    name="visitorEntry_Gatepass"
+                    value={entryForm.visitorEntry_Gatepass}
+                    onChange={handleEntryChange}
+                    required
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Vehicle Type</label>
+                  <input
+                    type="text"
+                    name="visitorEntry_Vehicletype"
+                    value={entryForm.visitorEntry_Vehicletype}
+                    onChange={handleEntryChange}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Vehicle No</label>
+                  <input
+                    type="text"
+                    name="visitorEntry_Vehicleno"
+                    value={entryForm.visitorEntry_Vehicleno}
+                    onChange={handleEntryChange}
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>User *</label>
+                  <select
+                    name="visitorEntry_Userid"
+                    value={entryForm.visitorEntry_Userid || 0}
+                    onChange={(e) => {
+                      const val = Number(e.target.value || 0);
+                      setEntryForm((prev) => ({
+                        ...prev,
+                        visitorEntry_Userid: val,
+                      }));
+                    }}
+                    required
+                    className="form-input"
+                  >
+                    <option value={0}>-- Select User --</option>
+                    {users.length === 0 && (
+                      <option value={0}>No users found</option>
+                    )}
+                    {users.map((u) => {
+                      const id = Number(
+                        u.userId || u.id || u.user_Id || u.UserId || 0
+                      );
+                      const name =
+                        u.userName ||
+                        u.name ||
+                        u.fullName ||
+                        u.username ||
+                        u.user_Name ||
+                        "Unnamed";
+                      return (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Date *</label>
+                  <input
+                    type="datetime-local"
+                    name="visitorEntry_Date"
+                    value={entryForm.visitorEntry_Date}
+                    onChange={handleEntryChange}
+                    required
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>In Time *</label>
+                  <input
+                    type="datetime-local"
+                    name="visitorEntry_Intime"
+                    value={entryForm.visitorEntry_Intime}
+                    onChange={handleEntryChange}
+                    required
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="visitorEntry_isCanteen"
+                    checked={entryForm.visitorEntry_isCanteen}
+                    onChange={handleEntryChange}
+                  />
+                  <span>Canteen Access</span>
+                </label>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="visitorEntry_isStay"
+                    checked={entryForm.visitorEntry_isStay}
+                    onChange={handleEntryChange}
+                  />
+                  <span>Stay</span>
+                </label>
+              </div>
+
+              <div className="button-row">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="back-btn"
+                  disabled={loading}
+                >
+                  Back
+                </button>
+                <button type="submit" disabled={loading} className="submit-btn">
+                  {loading ? "Submitting..." : "Submit Preappointment"}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+      </div>
+    </>
   );
 }

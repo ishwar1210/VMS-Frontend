@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { endpoints } from "../api/endpoint";
 import "./Visitor.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type Visitor = {
   visitorId: number;
@@ -67,7 +69,7 @@ export default function Visitor() {
         )
       );
     } catch (e: any) {
-      alert(e?.response?.data?.message || e?.message || "Update failed");
+      toast.error(e?.response?.data?.message || e?.message || "Update failed");
     }
   };
 
@@ -81,60 +83,74 @@ export default function Visitor() {
     );
 
   return (
-    <div className="visitor-container">
-      <div className="visitor-header">
-        <h2 className="visitor-title">Visitors</h2>
-      </div>
-
-      <section className="visitor-table-section">
-        <div className="visitor-table-wrapper">
-          <table className="visitor-table">
-            <thead>
-              <tr>
-                <th>Sr No</th>
-                <th>Name</th>
-                <th>Mobile</th>
-                <th>Address</th>
-                <th>Company</th>
-                <th>Status</th>
-                <th>Block Reason</th>
-                <th>Unblock Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visitors.length === 0 ? (
-                <tr>
-                  <td className="visitor-empty" colSpan={8}>
-                    No visitors found.
-                  </td>
-                </tr>
-              ) : (
-                visitors.map((v, idx) => (
-                  <tr key={v.visitorId}>
-                    <td>{idx + 1}</td>
-                    <td>{v.visitor_Name}</td>
-                    <td>{v.visitor_mobile}</td>
-                    <td>{v.visitor_Address}</td>
-                    <td>{v.visitor_CompanyName}</td>
-                    <td>
-                      <button
-                        className={`visitor-action-btn ${
-                          v.visitor_isBlock ? "btn-unblock" : "btn-block"
-                        }`}
-                        onClick={() => onToggleBlock(v)}
-                      >
-                        {v.visitor_isBlock ? "Unblock" : "Block"}
-                      </button>
-                    </td>
-                    <td>{v.visitor_Blockreason || "-"}</td>
-                    <td>{v.visitor_Unblockreason || "-"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <div className="visitor-container">
+        <div className="visitor-header">
+          <h2 className="visitor-title">Visitors</h2>
         </div>
-      </section>
-    </div>
+
+        <section className="visitor-table-section">
+          <div className="visitor-table-wrapper">
+            <table className="visitor-table">
+              <thead>
+                <tr>
+                  <th>Sr No</th>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Address</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Block Reason</th>
+                  <th>Unblock Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visitors.length === 0 ? (
+                  <tr>
+                    <td className="visitor-empty" colSpan={8}>
+                      No visitors found.
+                    </td>
+                  </tr>
+                ) : (
+                  visitors.map((v, idx) => (
+                    <tr key={v.visitorId}>
+                      <td>{idx + 1}</td>
+                      <td>{v.visitor_Name}</td>
+                      <td>{v.visitor_mobile}</td>
+                      <td>{v.visitor_Address}</td>
+                      <td>{v.visitor_CompanyName}</td>
+                      <td>
+                        <button
+                          className={`visitor-action-btn ${
+                            v.visitor_isBlock ? "btn-unblock" : "btn-block"
+                          }`}
+                          onClick={() => onToggleBlock(v)}
+                        >
+                          {v.visitor_isBlock ? "Unblock" : "Block"}
+                        </button>
+                      </td>
+                      <td>{v.visitor_Blockreason || "-"}</td>
+                      <td>{v.visitor_Unblockreason || "-"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </>
   );
 }

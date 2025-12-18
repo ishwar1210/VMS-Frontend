@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "./Usermaster.css";
 import { endpoints } from "../api/endpoint";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface User {
   userId: number;
@@ -264,7 +266,7 @@ function Usermaster() {
 
       resetForm();
       await fetchUsers();
-      alert(
+      toast.success(
         editingId ? "User updated successfully!" : "User created successfully!"
       );
     } catch (err: any) {
@@ -302,7 +304,7 @@ function Usermaster() {
       setLoading(true);
       await endpoints.user.delete(userId);
       await fetchUsers();
-      alert("User deleted successfully!");
+      toast.success("User deleted successfully!");
     } catch (err: any) {
       console.error("Error deleting user:", err);
       setError(err?.response?.data?.message || "Failed to delete user");
@@ -358,359 +360,385 @@ function Usermaster() {
   }, [searchTerm, entriesPerPage]);
 
   return (
-    <div className="usermaster-container">
-      <div className="usermaster-header">
-        <h1 className="usermaster-title">Users</h1>
-        <button className="add-user-btn" onClick={() => setShowForm(!showForm)}>
-          {showForm ? "View All Users" : "+ Add User"}
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="modal-overlay" onClick={resetForm}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">
-                {editingId ? "Edit User" : "Add New User"}
-              </h2>
-              <button className="modal-close" onClick={resetForm}>
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <form className="modal-form" onSubmit={handleSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="username">Username *</label>
-                  <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    className="user-input"
-                    placeholder="Enter username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    required
-                    disabled={editingId !== null}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="password">Password {!editingId && "*"}</label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    className="user-input"
-                    placeholder={
-                      editingId
-                        ? "Leave blank to keep current"
-                        : "Enter password"
-                    }
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    required={!editingId}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="u_Name">Full Name *</label>
-                  <input
-                    id="u_Name"
-                    name="u_Name"
-                    type="text"
-                    className="user-input"
-                    placeholder="Enter full name"
-                    value={formData.u_Name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="u_Mobile">Mobile</label>
-                  <input
-                    id="u_Mobile"
-                    name="u_Mobile"
-                    type="tel"
-                    className="user-input"
-                    placeholder="Enter mobile number"
-                    value={formData.u_Mobile}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="u_Email">Email</label>
-                <input
-                  id="u_Email"
-                  name="u_Email"
-                  type="email"
-                  className="user-input"
-                  placeholder="Enter email address"
-                  value={formData.u_Email}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="u_Address">Address</label>
-                <textarea
-                  id="u_Address"
-                  name="u_Address"
-                  className="user-input"
-                  placeholder="Enter address"
-                  value={formData.u_Address}
-                  onChange={handleInputChange}
-                  rows={2}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="u_RoleId">Role *</label>
-                  <select
-                    id="u_RoleId"
-                    name="u_RoleId"
-                    className="user-input"
-                    value={formData.u_RoleId}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select Role</option>
-                    {roles.map((role) => (
-                      <option key={role.roleId} value={role.roleId}>
-                        {role.roleName}
-                      </option>
-                    ))}
-                  </select>
-                  {roles.length === 0 && (
-                    <small style={{ color: "#666", fontSize: "12px" }}>
-                      No roles available
-                    </small>
-                  )}
-                </div>
-                <div className="form-group">
-                  <label htmlFor="u_DepartmentID">Department *</label>
-                  <select
-                    id="u_DepartmentID"
-                    name="u_DepartmentID"
-                    className="user-input"
-                    value={formData.u_DepartmentID}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select Department</option>
-                    {departments.map((dept) => (
-                      <option key={dept.departmentId} value={dept.departmentId}>
-                        {dept.departmentName}
-                      </option>
-                    ))}
-                  </select>
-                  {departments.length === 0 && (
-                    <small style={{ color: "#666", fontSize: "12px" }}>
-                      No departments available
-                    </small>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="u_ReportingToId">Reporting To</label>
-                <select
-                  id="u_ReportingToId"
-                  name="u_ReportingToId"
-                  className="user-input"
-                  value={formData.u_ReportingToId}
-                  onChange={handleInputChange}
-                >
-                  <option value="">Select Reporting Manager</option>
-                  {users
-                    .filter((user) => user.userId !== editingId)
-                    .map((user) => (
-                      <option key={user.userId} value={user.userId}>
-                        {user.u_Name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              {error && <div className="error-message">{error}</div>}
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-cancel"
-                  onClick={resetForm}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-submit" disabled={loading}>
-                  {loading ? "Saving..." : editingId ? "Update" : "Save"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <div className="user-table-section-full">
-        <div className="table-controls">
-          <div className="show-entries">
-            <span>Show</span>
-            <select
-              className="entries-select"
-              value={entriesPerPage}
-              onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span>entries</span>
-          </div>
-
-          <div className="search-box">
-            <span>Search:</span>
-            <input
-              type="text"
-              className="search-input"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search users..."
-            />
-          </div>
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <div className="usermaster-container">
+        <div className="usermaster-header">
+          <h1 className="usermaster-title">Users</h1>
+          <button
+            className="add-user-btn"
+            onClick={() => setShowForm(!showForm)}
+          >
+            {showForm ? "View All Users" : "+ Add User"}
+          </button>
         </div>
 
-        <div className="user-table-wrapper">
-          {loading && users.length === 0 ? (
-            <div className="loading-state">Loading users...</div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="empty-state">
-              {searchTerm
-                ? "No users found matching your search"
-                : "No users added yet. Click 'Add User' to get started."}
+        {showForm && (
+          <div className="modal-overlay" onClick={resetForm}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">
+                  {editingId ? "Edit User" : "Add New User"}
+                </h2>
+                <button className="modal-close" onClick={resetForm}>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              <form className="modal-form" onSubmit={handleSubmit}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="username">Username *</label>
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      className="user-input"
+                      placeholder="Enter username"
+                      value={formData.username}
+                      onChange={handleInputChange}
+                      required
+                      disabled={editingId !== null}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="password">
+                      Password {!editingId && "*"}
+                    </label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      className="user-input"
+                      placeholder={
+                        editingId
+                          ? "Leave blank to keep current"
+                          : "Enter password"
+                      }
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required={!editingId}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="u_Name">Full Name *</label>
+                    <input
+                      id="u_Name"
+                      name="u_Name"
+                      type="text"
+                      className="user-input"
+                      placeholder="Enter full name"
+                      value={formData.u_Name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="u_Mobile">Mobile</label>
+                    <input
+                      id="u_Mobile"
+                      name="u_Mobile"
+                      type="tel"
+                      className="user-input"
+                      placeholder="Enter mobile number"
+                      value={formData.u_Mobile}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="u_Email">Email</label>
+                  <input
+                    id="u_Email"
+                    name="u_Email"
+                    type="email"
+                    className="user-input"
+                    placeholder="Enter email address"
+                    value={formData.u_Email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="u_Address">Address</label>
+                  <textarea
+                    id="u_Address"
+                    name="u_Address"
+                    className="user-input"
+                    placeholder="Enter address"
+                    value={formData.u_Address}
+                    onChange={handleInputChange}
+                    rows={2}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="u_RoleId">Role *</label>
+                    <select
+                      id="u_RoleId"
+                      name="u_RoleId"
+                      className="user-input"
+                      value={formData.u_RoleId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select Role</option>
+                      {roles.map((role) => (
+                        <option key={role.roleId} value={role.roleId}>
+                          {role.roleName}
+                        </option>
+                      ))}
+                    </select>
+                    {roles.length === 0 && (
+                      <small style={{ color: "#666", fontSize: "12px" }}>
+                        No roles available
+                      </small>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="u_DepartmentID">Department *</label>
+                    <select
+                      id="u_DepartmentID"
+                      name="u_DepartmentID"
+                      className="user-input"
+                      value={formData.u_DepartmentID}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map((dept) => (
+                        <option
+                          key={dept.departmentId}
+                          value={dept.departmentId}
+                        >
+                          {dept.departmentName}
+                        </option>
+                      ))}
+                    </select>
+                    {departments.length === 0 && (
+                      <small style={{ color: "#666", fontSize: "12px" }}>
+                        No departments available
+                      </small>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="u_ReportingToId">Reporting To</label>
+                  <select
+                    id="u_ReportingToId"
+                    name="u_ReportingToId"
+                    className="user-input"
+                    value={formData.u_ReportingToId}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Select Reporting Manager</option>
+                    {users
+                      .filter((user) => user.userId !== editingId)
+                      .map((user) => (
+                        <option key={user.userId} value={user.userId}>
+                          {user.u_Name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                {error && <div className="error-message">{error}</div>}
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={resetForm}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-submit"
+                    disabled={loading}
+                  >
+                    {loading ? "Saving..." : editingId ? "Update" : "Save"}
+                  </button>
+                </div>
+              </form>
             </div>
-          ) : (
-            <>
-              <table className="user-table">
-                <thead>
-                  <tr>
-                    <th>Sr.No.</th>
-                    <th>Username</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Mobile</th>
-                    <th>Role</th>
-                    <th>Department</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayedUsers.map((user, index) => (
-                    <tr key={user.userId}>
-                      <td>{startIndex + index + 1}</td>
-                      <td>{user.username}</td>
-                      <td>{user.u_Name}</td>
-                      <td>{user.u_Email || "-"}</td>
-                      <td>{user.u_Mobile || "-"}</td>
-                      <td>
-                        {user.roleName ||
-                          roles.find((r) => r.roleId === user.u_RoleId)
-                            ?.roleName ||
-                          `Role ID: ${user.u_RoleId}`}
-                      </td>
-                      <td>
-                        {user.departmentName ||
-                          departments.find(
-                            (d) => d.departmentId === user.u_DepartmentID
-                          )?.departmentName ||
-                          `Dept ID: ${user.u_DepartmentID}`}
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn edit-btn"
-                            onClick={() => handleEdit(user)}
-                            title="Edit"
-                          >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </button>
-                          <button
-                            className="action-btn delete-btn"
-                            onClick={() => handleDelete(user.userId)}
-                            title="Delete"
-                          >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
+          </div>
+        )}
+
+        <div className="user-table-section-full">
+          <div className="table-controls">
+            <div className="show-entries">
+              <span>Show</span>
+              <select
+                className="entries-select"
+                value={entriesPerPage}
+                onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>entries</span>
+            </div>
+
+            <div className="search-box">
+              <span>Search:</span>
+              <input
+                type="text"
+                className="search-input"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search users..."
+              />
+            </div>
+          </div>
+
+          <div className="user-table-wrapper">
+            {loading && users.length === 0 ? (
+              <div className="loading-state">Loading users...</div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="empty-state">
+                {searchTerm
+                  ? "No users found matching your search"
+                  : "No users added yet. Click 'Add User' to get started."}
+              </div>
+            ) : (
+              <>
+                <table className="user-table">
+                  <thead>
+                    <tr>
+                      <th>Sr.No.</th>
+                      <th>Username</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Mobile</th>
+                      <th>Role</th>
+                      <th>Department</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {displayedUsers.map((user, index) => (
+                      <tr key={user.userId}>
+                        <td>{startIndex + index + 1}</td>
+                        <td>{user.username}</td>
+                        <td>{user.u_Name}</td>
+                        <td>{user.u_Email || "-"}</td>
+                        <td>{user.u_Mobile || "-"}</td>
+                        <td>
+                          {user.roleName ||
+                            roles.find((r) => r.roleId === user.u_RoleId)
+                              ?.roleName ||
+                            `Role ID: ${user.u_RoleId}`}
+                        </td>
+                        <td>
+                          {user.departmentName ||
+                            departments.find(
+                              (d) => d.departmentId === user.u_DepartmentID
+                            )?.departmentName ||
+                            `Dept ID: ${user.u_DepartmentID}`}
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                            <button
+                              className="action-btn edit-btn"
+                              onClick={() => handleEdit(user)}
+                              title="Edit"
+                            >
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                            </button>
+                            <button
+                              className="action-btn delete-btn"
+                              onClick={() => handleDelete(user.userId)}
+                              title="Delete"
+                            >
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
-              {totalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="pagination-btn"
-                  >
-                    Previous
-                  </button>
-                  <span className="pagination-info">
-                    Page {currentPage} of {totalPages} ({filteredUsers.length}{" "}
-                    total entries)
-                  </span>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="pagination-btn"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+                {totalPages > 1 && (
+                  <div className="pagination">
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
+                      disabled={currentPage === 1}
+                      className="pagination-btn"
+                    >
+                      Previous
+                    </button>
+                    <span className="pagination-info">
+                      Page {currentPage} of {totalPages} ({filteredUsers.length}{" "}
+                      total entries)
+                    </span>
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="pagination-btn"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

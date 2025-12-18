@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import "./Rolemaster.css";
 import { endpoints } from "../api/endpoint";
 import { useAuth } from "../context/AuthContext";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface VisitorEntry {
   visitorEntry_Id: number;
@@ -342,7 +344,7 @@ function Visitorentryapprovalemp() {
 
       // Verify entry belongs to logged-in user
       if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
-        alert("You can only approve entries assigned to you.");
+        toast.error("You can only approve entries assigned to you.");
         return;
       }
 
@@ -373,7 +375,7 @@ function Visitorentryapprovalemp() {
       };
 
       await endpoints.visitorEntry.update(entryId, payload);
-      alert("Visitor entry approved successfully!");
+      toast.success("Visitor entry approved successfully!");
       await fetchData();
     } catch (err: any) {
       console.error("handleApprove error:", err);
@@ -392,7 +394,7 @@ function Visitorentryapprovalemp() {
     try {
       // Verify entry belongs to logged-in user
       if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
-        alert("You can only reject entries assigned to you.");
+        toast.error("You can only reject entries assigned to you.");
         return;
       }
 
@@ -434,7 +436,7 @@ function Visitorentryapprovalemp() {
 
       await endpoints.visitorEntry.update(entryId, payload);
 
-      alert("Visitor entry rejected successfully!");
+      toast.success("Visitor entry rejected successfully!");
       await fetchData();
     } catch (err: any) {
       console.error("handleReject error:", err);
@@ -444,7 +446,7 @@ function Visitorentryapprovalemp() {
         err?.message ||
         "Failed to reject entry";
       setError(String(backendMsg));
-      alert(`Error: ${backendMsg}`);
+      toast.error(`Error: ${backendMsg}`);
     } finally {
       setLoading(false);
     }
@@ -531,7 +533,7 @@ function Visitorentryapprovalemp() {
       // send PUT with id in route and body
       await endpoints.visitorEntry.update(editingId, payload);
 
-      alert("Visitor entry updated successfully!");
+      toast.success("Visitor entry updated successfully!");
       resetForm();
       await fetchData();
     } catch (err: any) {
@@ -687,10 +689,23 @@ function Visitorentryapprovalemp() {
   }, [historyTotalPages]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="rolemaster-container">
-      <div className="rolemaster-header">
-        <h1 className="rolemaster-title">Visitor Entry Approval (Employee)</h1>
-      </div>
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <div className="rolemaster-container">
+        <div className="rolemaster-header">
+          <h1 className="rolemaster-title">Visitor Entry Approval (Employee)</h1>
+        </div>
 
       {showViewModal && viewingEntry && (
         <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
@@ -1572,6 +1587,7 @@ function Visitorentryapprovalemp() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
