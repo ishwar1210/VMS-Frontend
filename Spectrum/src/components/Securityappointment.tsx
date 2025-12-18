@@ -86,15 +86,27 @@ export default function Securityappointment({
     }
   };
 
+  const generateGatePass = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0");
+    return `GP${timestamp}${random}`;
+  };
+
   const handleVisitorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Generate gate pass
+      const gatePass = generateGatePass();
+
       if (selectedVisitorId && selectedVisitorId > 0) {
         setCreatedVisitorId(selectedVisitorId);
         setEntryForm((prev) => ({
           ...prev,
           visitorEntry_visitorId: selectedVisitorId,
+          visitorEntry_Gatepass: gatePass,
         }));
         setStep(2);
         setLoading(false);
@@ -115,6 +127,7 @@ export default function Securityappointment({
       setEntryForm((prev) => ({
         ...prev,
         visitorEntry_visitorId: newVisitorId,
+        visitorEntry_Gatepass: gatePass,
       }));
       setStep(2);
     } catch (err: any) {
@@ -290,6 +303,7 @@ export default function Securityappointment({
                       setStep(1);
                     }}
                   >
+                    <strong>-- Create New Visitor --</strong>
                   </div>
                   {visitors
                     .filter((v) => {
@@ -326,6 +340,7 @@ export default function Securityappointment({
                               selectedVisitorId === id ? "#f0f9ff" : "white";
                           }}
                           onClick={() => {
+                            const gatePass = generateGatePass();
                             setSelectedVisitorId(id);
                             setVisitorSearchTerm(`${name} - ${mobile}`);
                             setShowVisitorDropdown(false);
@@ -352,6 +367,7 @@ export default function Securityappointment({
                             setEntryForm((prev) => ({
                               ...prev,
                               visitorEntry_visitorId: id,
+                              visitorEntry_Gatepass: gatePass,
                             }));
                             setCreatedVisitorId(id);
                             setStep(2);
@@ -514,6 +530,8 @@ export default function Securityappointment({
                   onChange={handleEntryChange}
                   required
                   className="form-input"
+                  disabled
+                  style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
                 />
               </div>
               <div className="form-group">
