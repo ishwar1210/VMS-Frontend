@@ -38,6 +38,8 @@ export default function Securityappointment({
   const [selectedVisitorId, setSelectedVisitorId] = useState<number>(0); // 0 => create new
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
+  const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
@@ -200,6 +202,8 @@ export default function Securityappointment({
       });
       setStep(1);
       setCreatedVisitorId(null);
+      setSelectedVisitorId(0);
+      setVisitorSearchTerm("");
       fetchVisitors();
     } catch (err: any) {
       alert(
@@ -228,6 +232,7 @@ export default function Securityappointment({
               gap: 12,
               alignItems: "center",
               marginBottom: 12,
+              position: "relative",
             }}
           >
             <label
@@ -239,67 +244,149 @@ export default function Securityappointment({
             >
               Select Visitor
             </label>
-            <select
-              value={selectedVisitorId}
-              onChange={(e) => {
-                const id = Number(e.target.value || 0);
-                setSelectedVisitorId(id);
-                if (id > 0) {
-                  const v =
-                    visitors.find((x) => Number(x.visitorId || x.id) === id) ||
-                    visitors.find(
-                      (x) => Number(x.visitor_Id || x.visitorId) === id
-                    );
-                  if (v) {
-                    setVisitorForm((prev) => ({
-                      ...prev,
-                      visitor_Name: v.visitor_Name || v.name || "",
-                      visitor_mobile: v.visitor_mobile || v.mobile || "",
-                      visitor_Address: v.visitor_Address || v.address || "",
-                      visitor_CompanyName:
-                        v.visitor_CompanyName || v.company || "",
-                      visitor_Purposeofvisit:
-                        v.visitor_Purposeofvisit || v.purpose || "",
-                      visitor_Idprooftype:
-                        v.visitor_Idprooftype || v.idProofType || "Aadhar",
-                      visitor_idproofno:
-                        v.visitor_idproofno || v.idProofNo || "",
-                      visitor_MeetingDate:
-                        v.visitor_MeetingDate || v.meetingDate || "",
-                    }));
-                    setEntryForm((prev) => ({
-                      ...prev,
-                      visitorEntry_visitorId: id,
-                    }));
-                    setCreatedVisitorId(id);
-                    setStep(2);
-                  }
-                } else {
-                  setCreatedVisitorId(null);
-                  setStep(1);
-                }
-              }}
-              className="form-input"
-              style={{ width: 320 }}
-            >
-              <option value={0}>-- Create New Visitor --</option>
-              {visitors.map((v) => {
-                const id = Number(
-                  v.visitorId || v.id || v.visitor_Id || v.visitorId
-                );
-                const label = `${v.visitor_Name || v.name || "Unknown"} - ${
-                  v.visitor_mobile || v.mobile || "-"
-                }`;
-                return (
-                  <option key={id} value={id}>
-                    {label}
-                  </option>
-                );
-              })}
-            </select>
-            <button type="button" onClick={fetchVisitors} className="back-btn">
-              Refresh
-            </button>
+            <div style={{ position: "relative", flex: 1, maxWidth: 400 }}>
+              <input
+                type="text"
+                placeholder="Search by name or mobile number..."
+                value={visitorSearchTerm}
+                onChange={(e) => {
+                  setVisitorSearchTerm(e.target.value);
+                  setShowVisitorDropdown(true);
+                }}
+                onFocus={() => setShowVisitorDropdown(true)}
+                className="form-input"
+                style={{ width: "100%" }}
+              />
+              {showVisitorDropdown && visitorSearchTerm && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    right: 0,
+                    maxHeight: 300,
+                    overflowY: "auto",
+                    backgroundColor: "white",
+                    border: "1px solid #ddd",
+                    borderRadius: 4,
+                    marginTop: 4,
+                    zIndex: 1000,
+                    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      borderBottom: "1px solid #eee",
+                      backgroundColor:
+                        selectedVisitorId === 0 ? "#f0f9ff" : "white",
+                    }}
+                    onClick={() => {
+                      setSelectedVisitorId(0);
+                      setVisitorSearchTerm("");
+                      setShowVisitorDropdown(false);
+                      setCreatedVisitorId(null);
+                      setStep(1);
+                    }}
+                  >
+                  </div>
+                  {visitors
+                    .filter((v) => {
+                      const mobile = (
+                        v.visitor_mobile ||
+                        v.mobile ||
+                        ""
+                      ).toString();
+                      const search = visitorSearchTerm.trim();
+                      // Only show if mobile number contains the search term
+                      return mobile.includes(search);
+                    })
+                    .map((v) => {
+                      const id = Number(
+                        v.visitorId || v.id || v.visitor_Id || v.visitorId
+                      );
+                      const name = v.visitor_Name || v.name || "Unknown";
+                      const mobile = v.visitor_mobile || v.mobile || "-";
+                      return (
+                        <div
+                          key={id}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                            backgroundColor:
+                              selectedVisitorId === id ? "#f0f9ff" : "white",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#f9fafb";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor =
+                              selectedVisitorId === id ? "#f0f9ff" : "white";
+                          }}
+                          onClick={() => {
+                            setSelectedVisitorId(id);
+                            setVisitorSearchTerm(`${name} - ${mobile}`);
+                            setShowVisitorDropdown(false);
+                            setVisitorForm((prev) => ({
+                              ...prev,
+                              visitor_Name: v.visitor_Name || v.name || "",
+                              visitor_mobile:
+                                v.visitor_mobile || v.mobile || "",
+                              visitor_Address:
+                                v.visitor_Address || v.address || "",
+                              visitor_CompanyName:
+                                v.visitor_CompanyName || v.company || "",
+                              visitor_Purposeofvisit:
+                                v.visitor_Purposeofvisit || v.purpose || "",
+                              visitor_Idprooftype:
+                                v.visitor_Idprooftype ||
+                                v.idProofType ||
+                                "Aadhar",
+                              visitor_idproofno:
+                                v.visitor_idproofno || v.idProofNo || "",
+                              visitor_MeetingDate:
+                                v.visitor_MeetingDate || v.meetingDate || "",
+                            }));
+                            setEntryForm((prev) => ({
+                              ...prev,
+                              visitorEntry_visitorId: id,
+                            }));
+                            setCreatedVisitorId(id);
+                            setStep(2);
+                          }}
+                        >
+                          <div style={{ fontWeight: 500 }}>{name}</div>
+                          <div style={{ fontSize: 12, color: "#666" }}>
+                            Mobile: {mobile}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {visitors.filter((v) => {
+                    const mobile = (
+                      v.visitor_mobile ||
+                      v.mobile ||
+                      ""
+                    ).toString();
+                    const search = visitorSearchTerm.trim();
+                    return mobile.includes(search);
+                  }).length === 0 &&
+                    visitorSearchTerm && (
+                      <div
+                        style={{
+                          padding: "12px",
+                          textAlign: "center",
+                          color: "#666",
+                        }}
+                      >
+                        No visitors found
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
           </div>
           <form onSubmit={handleVisitorSubmit} className="preappointment-form">
             <div className="form-row">
