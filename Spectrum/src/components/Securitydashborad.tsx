@@ -13,7 +13,7 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chartView, setChartView] = useState<"monthly" | "weekly" | "daily">(
-    "monthly"
+    "daily"
   );
   const [searchQuery, setSearchQuery] = useState("");
 
