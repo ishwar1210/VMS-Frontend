@@ -610,10 +610,14 @@ function Visitorentryapprovalemp() {
 
   const nowMs = Date.now();
   const historyEntries = entries.filter((e) => {
+    // If rejected, it goes to history
+    if (e.visitorEntry_userReject) return true;
     const t = getEntryTimeMs(e);
     return t !== null && t < nowMs;
   });
   const currentEntries = entries.filter((e) => {
+    // If rejected, it should not be in current
+    if (e.visitorEntry_userReject) return false;
     const t = getEntryTimeMs(e);
     return t === null || t >= nowMs;
   });
@@ -1491,9 +1495,7 @@ function Visitorentryapprovalemp() {
                     >
                       <td>{historyStartIndex + idx + 1}</td>
                       <td>{entry.visitorEntry_Gatepass}</td>
-                      <td>
-                        <strong>{entry.visitorEntry_visitorName}</strong>
-                      </td>
+                      <td>{entry.visitorEntry_visitorName}</td>
                       <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
                       <td>
                         <div
@@ -1510,7 +1512,9 @@ function Visitorentryapprovalemp() {
                             aria-label="View Details"
                             style={{
                               padding: "6px 10px",
-                              background: "#3b82f6",
+                              background: entry.visitorEntry_userReject
+                                ? "#ef4444"
+                                : "#3b82f6",
                               color: "white",
                               border: "none",
                               borderRadius: "6px",

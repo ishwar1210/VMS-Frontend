@@ -722,10 +722,14 @@ function Securityapprovalview() {
   // Treat an entry as history only if it has an Out Time set (and that out time is in the past).
   // Until Out Time is set, keep it in current entries even if In Time is past.
   const historyEntries = entries.filter((e) => {
+    // If rejected, it goes to history
+    if (e.visitorEntry_userReject) return true;
     const outMs = getOutTimeMs(e);
     return outMs !== null && outMs < nowMs;
   });
   const currentEntries = entries.filter((e) => {
+    // If rejected, it should not be in current
+    if (e.visitorEntry_userReject) return false;
     const outMs = getOutTimeMs(e);
     // If out time is not set, it's current. If set and in future, still current.
     return outMs === null || outMs >= nowMs;
@@ -1676,7 +1680,9 @@ function Securityapprovalview() {
                           <button
                             onClick={() => handleView(entry)}
                             style={{
-                              background: "#3b82f6",
+                              background: entry.visitorEntry_userReject
+                                ? "#ef4444"
+                                : "#3b82f6",
                               color: "white",
                               border: "none",
                               padding: "6px 12px",

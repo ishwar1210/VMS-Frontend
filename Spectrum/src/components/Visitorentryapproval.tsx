@@ -547,10 +547,14 @@ function Visitorentryapproval() {
 
   const nowMs = Date.now();
   const historyEntries = entries.filter((e) => {
+    // If rejected, it goes to history
+    if (e.visitorEntry_userReject) return true;
     const t = getEntryTimeMs(e);
     return t !== null && t < nowMs;
   });
   const currentEntries = entries.filter((e) => {
+    // If rejected, it should not be in current
+    if (e.visitorEntry_userReject) return false;
     const t = getEntryTimeMs(e);
     return t === null || t >= nowMs;
   });
@@ -1119,7 +1123,7 @@ function Visitorentryapproval() {
                           <button
                             onClick={() => handleView(entry)}
                             style={{
-                              background: "#3b82f6",
+                              background: entry.visitorEntry_userReject ? "#ef4444" : "#3b82f6",
                               color: "white",
                               border: "none",
                               padding: "6px 12px",
