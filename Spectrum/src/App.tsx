@@ -18,6 +18,8 @@ import Securitydashborad from "./components/Securitydashborad";
 import Securityparcelentry from "./components/Securityparcelentry";
 import NotificationSidebar from "./components/NotificationSidebar";
 import Topbar from "./layout/Topbar";
+import Inoutreport from "./components/Inoutreport";
+import Parcelreport from "./components/Parcelreport";
 import { endpoints } from "./api/endpoint";
 import { useAuth } from "./context/AuthContext";
 import { useState, useEffect, useRef } from "react";
@@ -256,6 +258,10 @@ function App() {
             <p>Report content coming soon...</p>
           </div>
         );
+      case "inoutreport":
+        return <Inoutreport />;
+      case "parcelreport":
+        return <Parcelreport />;
       default:
         return (
           <div style={{ padding: 24, color: "var(--text-primary)" }}>
