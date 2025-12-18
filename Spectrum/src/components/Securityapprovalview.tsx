@@ -18,6 +18,7 @@ interface VisitorEntry {
   visitorEntry_isApproval?: boolean;
   visitorEntry_adminApproval?: boolean;
   visitorEntry_userApproval?: boolean;
+  visitorEntry_userReject?: boolean;
   visitorEntry_visitorName?: string;
   [key: string]: any;
 }
@@ -35,6 +36,8 @@ function Securityapprovalview() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingEntry, setViewingEntry] = useState<VisitorEntry | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
@@ -58,6 +61,7 @@ function Securityapprovalview() {
     visitorEntry_isApproval: false,
     visitorEntry_adminApproval: false,
     visitorEntry_userApproval: false,
+    visitorEntry_userReject: false,
     visitorEntry_visitorName: "",
   });
 
@@ -246,6 +250,12 @@ function Securityapprovalview() {
               it.visitorEntryuser_isApproval ??
               it.visitorEntry_User_isApproval ??
               it.visitorEntryUserIsApproval ??
+              false,
+            visitorEntry_userReject:
+              it.VisitorEntryUser_isReject ??
+              it.visitorEntryUser_isReject ??
+              it.visitorEntry_userReject ??
+              it.visitorEntry_User_isReject ??
               false,
             visitorEntry_visitorName: visitorName,
             __raw: it,
@@ -450,6 +460,116 @@ function Securityapprovalview() {
       setError(
         err?.response?.data?.message || err?.message || "Failed to set Out Time"
       );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // handleView - opens view modal
+  const handleView = (entry: VisitorEntry) => {
+    setViewingEntry(entry);
+    setShowViewModal(true);
+  };
+
+  // handleApprove - sets admin approval to true
+  const handleApprove = async (entry: VisitorEntry) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const entryId = Number(entry.visitorEntry_Id);
+      const payload: any = {
+        visitorEntry_Id: entryId,
+        visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
+        visitorEntry_Gatepass: String(entry.visitorEntry_Gatepass ?? "").trim(),
+        visitorEntry_Vehicletype: String(
+          entry.visitorEntry_Vehicletype ?? ""
+        ).trim(),
+        visitorEntry_Vehicleno: String(
+          entry.visitorEntry_Vehicleno ?? ""
+        ).trim(),
+        visitorEntry_Date: entry.visitorEntry_Date ?? "",
+        visitorEntry_Intime:
+          (entry.visitorEntry_Intime &&
+            String(entry.visitorEntry_Intime).trim()) ||
+          null,
+        visitorEntry_Outtime: entry.visitorEntry_Outtime?.trim() || null,
+        visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
+        visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
+        visitorEntry_isStay: !!entry.visitorEntry_isStay,
+        visitorEntry_isApproval: true,
+        visitorEntryAdmin_isApproval: true,
+        visitorEntryuser_isApproval: !!entry.visitorEntry_userApproval,
+        VisitorEntryUser_isReject: false,
+      };
+
+      await endpoints.visitorEntry.update(entryId, payload);
+      alert("Visitor entry approved successfully!");
+      await fetchData();
+    } catch (err: any) {
+      console.error("handleApprove error:", err);
+      const backendMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to approve entry";
+      setError(String(backendMsg));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // handleReject - sets user reject to true
+  const handleReject = async (entry: VisitorEntry) => {
+    try {
+      const confirmReject = window.confirm(
+        "Are you sure you want to reject this entry?"
+      );
+      if (!confirmReject) return;
+
+      setLoading(true);
+      setError("");
+
+      const entryId = Number(entry.visitorEntry_Id);
+      const payload: any = {
+        visitorEntry_Id: entryId,
+        visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
+        visitorEntry_Gatepass: String(entry.visitorEntry_Gatepass ?? "").trim(),
+        visitorEntry_Vehicletype: String(
+          entry.visitorEntry_Vehicletype ?? ""
+        ).trim(),
+        visitorEntry_Vehicleno: String(
+          entry.visitorEntry_Vehicleno ?? ""
+        ).trim(),
+        visitorEntry_Date: entry.visitorEntry_Date ?? "",
+        visitorEntry_Intime:
+          (entry.visitorEntry_Intime &&
+            String(entry.visitorEntry_Intime).trim()) ||
+          null,
+        visitorEntry_Outtime: entry.visitorEntry_Outtime?.trim() || null,
+        visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
+        visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
+        visitorEntry_isStay: !!entry.visitorEntry_isStay,
+        visitorEntry_isApproval: false,
+        visitorEntryAdmin_isApproval: false,
+        visitorEntryuser_isApproval: false,
+        VisitorEntryUser_isReject: true,
+      };
+
+      console.log("Rejecting entry with ID:", entryId, "payload:", payload);
+
+      await endpoints.visitorEntry.update(entryId, payload);
+
+      alert("Visitor entry rejected successfully!");
+      await fetchData();
+    } catch (err: any) {
+      console.error("handleReject error:", err);
+      console.error("Error response:", err?.response);
+      const backendMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to reject entry";
+      setError(String(backendMsg));
+      alert(`Error: ${backendMsg}`);
     } finally {
       setLoading(false);
     }
@@ -670,6 +790,392 @@ function Securityapprovalview() {
       <div className="rolemaster-header">
         <h1 className="rolemaster-title">Security - Visitor Entry Approval</h1>
       </div>
+
+      {showViewModal && viewingEntry && (
+        <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Visitor Entry Details</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowViewModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div
+              className="modal-form"
+              style={{
+                maxHeight: "calc(70vh - 120px)",
+                overflowY: "auto",
+                padding: "20px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Visitor Name:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {viewingEntry.visitorEntry_visitorName || "-"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Gatepass:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {viewingEntry.visitorEntry_Gatepass || "-"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Vehicle Type:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {viewingEntry.visitorEntry_Vehicletype || "-"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Vehicle No:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {viewingEntry.visitorEntry_Vehicleno || "-"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Date:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {formatDateOnly(viewingEntry.visitorEntry_Date)}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    In Time:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {formatTimeOnly(viewingEntry.visitorEntry_Intime)}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Out Time:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {formatTimeOnly(viewingEntry.visitorEntry_Outtime) ||
+                      "Not Set"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Admin Approved:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_adminApproval
+                          ? "active"
+                          : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    User Approved:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_userApproval
+                          ? "active"
+                          : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_userApproval ? "YES" : "NO"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Rejected:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_userReject
+                          ? "status-rejected"
+                          : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_userReject ? "YES" : "NO"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Canteen:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_isCanteen
+                          ? "active"
+                          : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_isCanteen ? "Yes" : "No"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Stay:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_isStay ? "active" : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_isStay ? "Yes" : "No"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowViewModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="modal-overlay" onClick={resetForm}>
@@ -897,15 +1403,10 @@ function Securityapprovalview() {
                     <th>Sr.No.</th>
                     <th>Gatepass</th>
                     <th>Visitor Name</th>
-                    <th>Vehicle Type</th>
-                    <th>Vehicle No</th>
                     <th>Date</th>
                     <th>In Time</th>
                     <th>Out Time</th>
-                    <th>Admin Approved</th>
-                    <th>User Approved</th>
-                    <th>Canteen</th>
-                    <th>Stay</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -922,8 +1423,6 @@ function Securityapprovalview() {
                       <td>{currentStartIndex + idx + 1}</td>
                       <td>{entry.visitorEntry_Gatepass}</td>
                       <td>{entry.visitorEntry_visitorName}</td>
-                      <td>{entry.visitorEntry_Vehicletype}</td>
-                      <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
                       <td>
                         <div
@@ -976,44 +1475,81 @@ function Securityapprovalview() {
                         </div>
                       </td>
                       <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_adminApproval
-                              ? "active"
-                              : "inactive"
-                          }`}
+                        <div
+                          className="action-buttons"
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            justifyContent: "center",
+                          }}
                         >
-                          {entry.visitorEntry_adminApproval ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_userApproval
-                              ? "active"
-                              : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_userApproval ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_isCanteen ? "active" : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_isCanteen ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_isStay ? "active" : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_isStay ? "Yes" : "No"}
-                        </span>
+                          <button
+                            className="action-btn view-btn"
+                            onClick={() => handleView(entry)}
+                            title="View Details"
+                            aria-label="View Details"
+                            style={{
+                              padding: "6px 10px",
+                              background: "#3b82f6",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                          </button>
+                          {!entry.visitorEntry_adminApproval && (
+                            <>
+                              <button
+                                className="action-btn approve-btn"
+                                onClick={() => handleApprove(entry)}
+                                title="Approve"
+                                aria-label="Approve"
+                                style={{
+                                  padding: "6px 12px",
+                                  background: "#10b981",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  fontWeight: "600",
+                                  fontSize: "16px",
+                                }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                className="action-btn reject-btn"
+                                onClick={() => handleReject(entry)}
+                                title="Reject"
+                                aria-label="Reject"
+                                style={{
+                                  padding: "6px 12px",
+                                  background: "#ef4444",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  fontWeight: "600",
+                                  fontSize: "16px",
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1105,15 +1641,10 @@ function Securityapprovalview() {
                     <th>Sr.No.</th>
                     <th>Gatepass</th>
                     <th>Visitor Name</th>
-                    <th>Vehicle Type</th>
-                    <th>Vehicle No</th>
                     <th>Date</th>
                     <th>In Time</th>
                     <th>Out Time</th>
-                    <th>Admin Approved</th>
-                    <th>User Approved</th>
-                    <th>Canteen</th>
-                    <th>Stay</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1130,50 +1661,46 @@ function Securityapprovalview() {
                       <td>{historyStartIndex + idx + 1}</td>
                       <td>{entry.visitorEntry_Gatepass}</td>
                       <td>{entry.visitorEntry_visitorName}</td>
-                      <td>{entry.visitorEntry_Vehicletype}</td>
-                      <td>{entry.visitorEntry_Vehicleno}</td>
                       <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
                       <td>{formatTimeOnly(entry.visitorEntry_Intime)}</td>
                       <td>{formatTimeOnly(entry.visitorEntry_Outtime)}</td>
                       <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_adminApproval
-                              ? "active"
-                              : "inactive"
-                          }`}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            justifyContent: "center",
+                          }}
                         >
-                          {entry.visitorEntry_adminApproval ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_userApproval
-                              ? "active"
-                              : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_userApproval ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_isCanteen ? "active" : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_isCanteen ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            entry.visitorEntry_isStay ? "active" : "inactive"
-                          }`}
-                        >
-                          {entry.visitorEntry_isStay ? "Yes" : "No"}
-                        </span>
+                          {/* View button */}
+                          <button
+                            onClick={() => handleView(entry)}
+                            style={{
+                              background: "#3b82f6",
+                              color: "white",
+                              border: "none",
+                              padding: "6px 12px",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                            title="View Details"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

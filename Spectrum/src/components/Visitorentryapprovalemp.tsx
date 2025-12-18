@@ -702,103 +702,363 @@ function Visitorentryapprovalemp() {
             </div>
             <div
               className="modal-form"
-              style={{ maxHeight: "70vh", overflowY: "auto" }}
+              style={{
+                maxHeight: "calc(70vh - 120px)",
+                overflowY: "auto",
+                padding: "20px",
+              }}
             >
-              <div className="form-group">
-                <label>Visitor Name:</label>
-                <div className="detail-value">
-                  {viewingEntry.visitorEntry_visitorName || "-"}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Gatepass:</label>
-                <div className="detail-value">
-                  {viewingEntry.visitorEntry_Gatepass || "-"}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Vehicle Type:</label>
-                <div className="detail-value">
-                  {viewingEntry.visitorEntry_Vehicletype || "-"}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Vehicle No:</label>
-                <div className="detail-value">
-                  {viewingEntry.visitorEntry_Vehicleno || "-"}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Date:</label>
-                <div className="detail-value">
-                  {formatDateOnly(viewingEntry.visitorEntry_Date)}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>In Time:</label>
-                <div className="detail-value">
-                  {formatTimeOnly(viewingEntry.visitorEntry_Intime)}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Out Time:</label>
-                <div className="detail-value">
-                  {formatTimeOnly(viewingEntry.visitorEntry_Outtime) ||
-                    "Not Set"}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Admin Approved:</label>
-                <div className="detail-value">
-                  <span
-                    className={`status-badge ${
-                      viewingEntry.visitorEntry_adminApproval
-                        ? "active"
-                        : "inactive"
-                    }`}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
                   >
-                    {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
-                  </span>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>User Approved:</label>
-                <div className="detail-value">
-                  <span
-                    className={`status-badge ${
-                      viewingEntry.visitorEntry_userApproval
-                        ? "active"
-                        : "inactive"
-                    }`}
+                    Visitor Name:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
                   >
-                    {viewingEntry.visitorEntry_userApproval ? "YES" : "NO"}
-                  </span>
+                    {viewingEntry.visitorEntry_visitorName || "-"}
+                  </div>
                 </div>
-              </div>
-              <div className="form-group">
-                <label>Canteen:</label>
-                <div className="detail-value">
-                  <span
-                    className={`status-badge ${
-                      viewingEntry.visitorEntry_isCanteen
-                        ? "active"
-                        : "inactive"
-                    }`}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
                   >
-                    {viewingEntry.visitorEntry_isCanteen ? "Yes" : "No"}
-                  </span>
+                    Gatepass:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {viewingEntry.visitorEntry_Gatepass || "-"}
+                  </div>
                 </div>
-              </div>
-              <div className="form-group">
-                <label>Stay:</label>
-                <div className="detail-value">
-                  <span
-                    className={`status-badge ${
-                      viewingEntry.visitorEntry_isStay ? "active" : "inactive"
-                    }`}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
                   >
-                    {viewingEntry.visitorEntry_isStay ? "Yes" : "No"}
-                  </span>
+                    Vehicle Type:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {viewingEntry.visitorEntry_Vehicletype || "-"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Vehicle No:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {viewingEntry.visitorEntry_Vehicleno || "-"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Date:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {formatDateOnly(viewingEntry.visitorEntry_Date)}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    In Time:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {formatTimeOnly(viewingEntry.visitorEntry_Intime)}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Out Time:
+                  </label>
+                  <div
+                    style={{
+                      color: "#1f2937",
+                      textAlign: "right",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {formatTimeOnly(viewingEntry.visitorEntry_Outtime) ||
+                      "Not Set"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Admin Approved:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_adminApproval
+                          ? "active"
+                          : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    User Approved:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_userApproval
+                          ? "active"
+                          : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_userApproval ? "YES" : "NO"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Rejected:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_userReject
+                          ? "status-rejected"
+                          : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_userReject ? "YES" : "NO"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Canteen:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_isCanteen
+                          ? "active"
+                          : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_isCanteen ? "Yes" : "No"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e5e5e5",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontWeight: "600",
+                      color: "#374151",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Stay:
+                  </label>
+                  <div style={{ textAlign: "right" }}>
+                    <span
+                      className={`status-badge ${
+                        viewingEntry.visitorEntry_isStay ? "active" : "inactive"
+                      }`}
+                    >
+                      {viewingEntry.visitorEntry_isStay ? "Yes" : "No"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
