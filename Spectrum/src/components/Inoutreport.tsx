@@ -39,6 +39,7 @@ function Inoutreport() {
   const [loading, setLoading] = useState(false);
   const [filteredData, setFilteredData] = useState<VisitorEntry[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
   useEffect(() => {
     fetchVisitors();
@@ -254,6 +255,214 @@ function Inoutreport() {
     setShowResults(true);
   };
 
+  const downloadExcel = () => {
+    const headers = [
+      "SR.NO.",
+      "VISITOR NAME",
+      "COMPANY NAME",
+      "EMPLOYEE NAME",
+      "DATE",
+      "IN TIME",
+      "OUT TIME",
+    ];
+    const rows = filteredData.map((entry, idx) => [
+      idx + 1,
+      entry.visitorEntry_visitorName || "-",
+      entry.visitorEntry_companyName || "-",
+      entry.visitorEntry_userName || "-",
+      formatDate(entry.visitorEntry_Date),
+      formatDateTime(entry.visitorEntry_Intime),
+      formatDateTime(entry.visitorEntry_Outtime),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((cell) => {
+            const value =
+              cell === null || cell === undefined ? "-" : String(cell);
+            return `"${value.replace(/"/g, '""')}"`;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `InOut_Report_${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
+    link.click();
+    setShowDownloadMenu(false);
+  };
+
+  const downloadPDF = () => {
+    const headers = [
+      "SR.NO.",
+      "VISITOR NAME",
+      "COMPANY",
+      "EMPLOYEE",
+      "DATE",
+      "IN TIME",
+      "OUT TIME",
+    ];
+    const rows = filteredData.map((entry, idx) => [
+      idx + 1,
+      entry.visitorEntry_visitorName,
+      entry.visitorEntry_companyName,
+      entry.visitorEntry_userName,
+      formatDate(entry.visitorEntry_Date),
+      formatDateTime(entry.visitorEntry_Intime),
+      formatDateTime(entry.visitorEntry_Outtime),
+    ]);
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>In/Out Report</title>
+          <style>
+            @media print {
+              @page { margin: 1cm; }
+            }
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px;
+            }
+            h1 {
+              text-align: center;
+              color: #333;
+              margin-bottom: 20px;
+            }
+            table { 
+              border-collapse: collapse; 
+              width: 100%; 
+              margin-top: 20px;
+            }
+            th, td { 
+              border: 1px solid #ddd; 
+              padding: 8px; 
+              text-align: left; 
+              font-size: 12px;
+            }
+            th { 
+              background-color: #4CAF50; 
+              color: white;
+              font-weight: bold;
+            }
+            tr:nth-child(even) {
+              background-color: #f2f2f2;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>In/Out Report</h1>
+          <p style="text-align: center; color: #666;">Generated on: ${new Date().toLocaleDateString(
+            "en-IN"
+          )}</p>
+          <table>
+            <thead>
+              <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+            </thead>
+            <tbody>
+              ${rows
+                .map(
+                  (row) =>
+                    `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const newWindow = window.open(url, "_blank");
+
+    if (newWindow) {
+      newWindow.onload = () => {
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 1000);
+      };
+    }
+
+    setShowDownloadMenu(false);
+  };
+
+  const downloadWord = () => {
+    const headers = [
+      "SR.NO.",
+      "VISITOR NAME",
+      "COMPANY NAME",
+      "EMPLOYEE NAME",
+      "DATE",
+      "IN TIME",
+      "OUT TIME",
+    ];
+    const rows = filteredData.map((entry, idx) => [
+      idx + 1,
+      entry.visitorEntry_visitorName,
+      entry.visitorEntry_companyName,
+      entry.visitorEntry_userName,
+      formatDate(entry.visitorEntry_Date),
+      formatDateTime(entry.visitorEntry_Intime),
+      formatDateTime(entry.visitorEntry_Outtime),
+    ]);
+
+    let htmlContent = `
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>In/Out Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #4CAF50; color: white; }
+          </style>
+        </head>
+        <body>
+          <h1>In/Out Report</h1>
+          <table>
+            <thead>
+              <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+            </thead>
+            <tbody>
+              ${rows
+                .map(
+                  (row) =>
+                    `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], {
+      type: "application/msword;charset=utf-8;",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `InOut_Report_${
+      new Date().toISOString().split("T")[0]
+    }.doc`;
+    link.click();
+    setShowDownloadMenu(false);
+  };
+
   const formatDate = (dateStr: string) => {
     if (!dateStr || dateStr === "-") return "-";
     try {
@@ -408,32 +617,132 @@ function Inoutreport() {
           ) : filteredData.length === 0 ? (
             <div className="empty-state">No records found</div>
           ) : (
-            <table className="role-table">
-              <thead>
-                <tr>
-                  <th>SR.NO.</th>
-                  <th>VISITOR NAME</th>
-                  <th>COMPANY NAME</th>
-                  <th>EMPLOYEE NAME</th>
-                  <th>DATE</th>
-                  <th>IN TIME</th>
-                  <th>OUT TIME</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((entry, idx) => (
-                  <tr key={entry.visitorEntry_Id || idx}>
-                    <td>{idx + 1}</td>
-                    <td>{entry.visitorEntry_visitorName}</td>
-                    <td>{entry.visitorEntry_companyName}</td>
-                    <td>{entry.visitorEntry_userName}</td>
-                    <td>{formatDate(entry.visitorEntry_Date)}</td>
-                    <td>{formatDateTime(entry.visitorEntry_Intime)}</td>
-                    <td>{formatDateTime(entry.visitorEntry_Outtime)}</td>
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginBottom: "16px",
+                  position: "relative",
+                }}
+              >
+                <button
+                  onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                  className="btn-submit"
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Download
+                </button>
+                {showDownloadMenu && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      right: 0,
+                      marginTop: "4px",
+                      backgroundColor: "white",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                      zIndex: 1000,
+                      minWidth: "150px",
+                    }}
+                  >
+                    <div
+                      onClick={downloadExcel}
+                      style={{
+                        padding: "12px 16px",
+                        cursor: "pointer",
+                        borderBottom: "1px solid #eee",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#f5f5f5")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "white")
+                      }
+                    >
+                      📊 Excel
+                    </div>
+                    <div
+                      onClick={downloadPDF}
+                      style={{
+                        padding: "12px 16px",
+                        cursor: "pointer",
+                        borderBottom: "1px solid #eee",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#f5f5f5")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "white")
+                      }
+                    >
+                      📄 PDF
+                    </div>
+                    <div
+                      onClick={downloadWord}
+                      style={{
+                        padding: "12px 16px",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#f5f5f5")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "white")
+                      }
+                    >
+                      📝 Word
+                    </div>
+                  </div>
+                )}
+              </div>
+              <table className="role-table">
+                <thead>
+                  <tr>
+                    <th>SR.NO.</th>
+                    <th>VISITOR NAME</th>
+                    <th>COMPANY NAME</th>
+                    <th>EMPLOYEE NAME</th>
+                    <th>DATE</th>
+                    <th>IN TIME</th>
+                    <th>OUT TIME</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredData.map((entry, idx) => (
+                    <tr key={entry.visitorEntry_Id || idx}>
+                      <td>{idx + 1}</td>
+                      <td>{entry.visitorEntry_visitorName}</td>
+                      <td>{entry.visitorEntry_companyName}</td>
+                      <td>{entry.visitorEntry_userName}</td>
+                      <td>{formatDate(entry.visitorEntry_Date)}</td>
+                      <td>{formatDateTime(entry.visitorEntry_Intime)}</td>
+                      <td>{formatDateTime(entry.visitorEntry_Outtime)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </div>
       )}
