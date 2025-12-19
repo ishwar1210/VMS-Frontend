@@ -51,8 +51,28 @@ function Inoutreport() {
       const res = await endpoints.visitor.getAll();
       const data = res?.data || [];
       const list = data?.$values || data?.data || data;
-      if (Array.isArray(list)) setVisitors(list);
-      else setVisitors([]);
+
+      const normalizedVisitors = (Array.isArray(list) ? list : []).map(
+        (item: any) => ({
+          visitor_Id:
+            item.visitor_Id || item.visitorId || item.VisitorId || item.id || 0,
+          visitor_Name:
+            item.visitor_Name ||
+            item.visitorName ||
+            item.VisitorName ||
+            item.name ||
+            "",
+          visitor_CompanyName:
+            item.visitor_CompanyName ||
+            item.visitorCompanyName ||
+            item.VisitorCompanyName ||
+            item.companyName ||
+            "",
+        })
+      );
+
+      console.log("🔍 Normalized visitors:", normalizedVisitors);
+      setVisitors(normalizedVisitors);
     } catch (err) {
       console.error("Failed to fetch visitors", err);
       setVisitors([]);
@@ -146,6 +166,24 @@ function Inoutreport() {
   };
 
   const handleShow = () => {
+    console.log(
+      "🔍 Debug - selectedVisitor:",
+      selectedVisitor,
+      typeof selectedVisitor
+    );
+    console.log(
+      "🔍 Debug - Available visitors:",
+      visitors.map((v) => ({ id: v.visitor_Id, name: v.visitor_Name }))
+    );
+    console.log(
+      "🔍 Debug - Sample entries:",
+      entries.slice(0, 3).map((e) => ({
+        id: e.visitorEntry_Id,
+        visitorId: e.visitorEntry_visitorId,
+        visitorName: e.visitorEntry_visitorName,
+      }))
+    );
+
     // Normalize entries with user data at filter time
     const normalizedEntries = entries.map((item: any) => {
       const userId = item.visitorEntry_Userid;
@@ -189,8 +227,19 @@ function Inoutreport() {
 
     // Filter by visitor
     if (selectedVisitor) {
-      filtered = filtered.filter(
-        (entry) => entry.visitorEntry_visitorId === Number(selectedVisitor)
+      const visitorId = Number(selectedVisitor);
+      console.log(
+        `🔍 Parsed visitor ID: ${visitorId} (type: ${typeof visitorId})`
+      );
+      filtered = filtered.filter((entry) => {
+        const match = entry.visitorEntry_visitorId === visitorId;
+        if (match) {
+          console.log(`✅ Match found:`, entry);
+        }
+        return match;
+      });
+      console.log(
+        `Filtering by visitor ID: ${visitorId}, Found: ${filtered.length} records`
       );
     }
 
