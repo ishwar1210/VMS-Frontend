@@ -34,6 +34,7 @@ function Usermaster() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mobileError, setMobileError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -239,6 +240,14 @@ function Usermaster() {
       setLoading(true);
       setError("");
 
+      // Validate mobile if provided: must be exactly 10 digits
+      if (formData.u_Mobile && !/^\d{10}$/.test(formData.u_Mobile)) {
+        setError("Mobile number must be 10 digits");
+        setMobileError("Mobile number must be 10 digits");
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         username: formData.username.trim(),
         password: formData.password.trim(),
@@ -335,10 +344,16 @@ function Usermaster() {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    if (name === "u_Mobile") {
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      setFormData({ ...formData, [name]: digits });
+      if (digits.length === 10) setMobileError("");
+      else if (digits.length === 0) setMobileError("");
+      else setMobileError("Mobile number must be 10 digits");
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
     setError("");
   };
 
@@ -462,11 +477,31 @@ function Usermaster() {
                       id="u_Mobile"
                       name="u_Mobile"
                       type="tel"
+                      inputMode="numeric"
+                      pattern="\\d*"
+                      maxLength={10}
                       className="user-input"
                       placeholder="Enter mobile number"
                       value={formData.u_Mobile}
                       onChange={handleInputChange}
+                      onBlur={() => {
+                        if (
+                          formData.u_Mobile &&
+                          formData.u_Mobile.length !== 10
+                        ) {
+                          setMobileError("Mobile number must be 10 digits");
+                        } else {
+                          setMobileError("");
+                        }
+                      }}
                     />
+                    {mobileError && (
+                      <div
+                        style={{ color: "#d32f2f", fontSize: 12, marginTop: 6 }}
+                      >
+                        {mobileError}
+                      </div>
+                    )}
                   </div>
                 </div>
 

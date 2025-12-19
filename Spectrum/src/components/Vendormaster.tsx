@@ -39,6 +39,44 @@ function Vendormaster() {
     isActive: true,
   });
 
+  const [mobileError, setMobileError] = useState("");
+
+  // Generate next vendor code like VC12233 based on existing vendor codes
+  const generateVendorCode = () => {
+    const prefix = "VC";
+    let maxNum = 0;
+    (vendors || []).forEach((v) => {
+      const code = String(v.vendorCode || "").trim();
+      const m = code.match(/^VC0*([0-9]+)$/i);
+      if (m && m[1]) {
+        const n = parseInt(m[1], 10);
+        if (!isNaN(n) && n > maxNum) maxNum = n;
+      }
+    });
+    const next = maxNum ? maxNum + 1 : 10000;
+    return `${prefix}${next}`;
+  };
+
+  const handleOpenForm = () => {
+    if (showForm) {
+      resetForm();
+      return;
+    }
+    setFormData({
+      vendorCode: generateVendorCode(),
+      vendorName: "",
+      vendorMobile: "",
+      idProofType: "",
+      idProof: "",
+      vendorAddress: "",
+      company: "",
+      isActive: true,
+    });
+    setEditingId(null);
+    setShowForm(true);
+    setError("");
+  };
+
   useEffect(() => {
     fetchVendors();
   }, []);
@@ -47,6 +85,13 @@ function Vendormaster() {
     try {
       setLoading(true);
       setError("");
+
+      // Validate mobile before submit
+      if (formData.vendorMobile && formData.vendorMobile.length !== 10) {
+        setMobileError("Mobile must be 10 digits");
+        setLoading(false);
+        return;
+      }
       const res = await endpoints.vendor.getAll();
       console.log("API Response (vendors):", res.data);
 
@@ -132,7 +177,9 @@ function Vendormaster() {
       setError("");
 
       const payload = {
-        vendorCode: formData.vendorCode.trim(),
+        vendorCode: editingId
+          ? formData.vendorCode.trim()
+          : formData.vendorCode.trim() || generateVendorCode(),
         vendorName: formData.vendorName.trim(),
         vendorMobile: formData.vendorMobile.trim(),
         idProofType: formData.idProofType.trim(),
@@ -225,6 +272,19 @@ function Vendormaster() {
     >
   ) => {
     const { name, value, type } = e.target;
+    if (name === "vendorMobile") {
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      setFormData({
+        ...formData,
+        [name]: digits,
+      });
+      // clear error when user completes 10 digits
+      if (digits.length === 10) setMobileError("");
+      else if (digits.length === 0) setMobileError("");
+      else setMobileError("Mobile number must be 10 digits");
+      return;
+    }
+
     setFormData({
       ...formData,
       [name]:
@@ -267,10 +327,7 @@ function Vendormaster() {
       <div className="vendormaster-container">
         <div className="vendormaster-header">
           <h1 className="vendormaster-title">Vendors</h1>
-          <button
-            className="add-vendor-btn"
-            onClick={() => setShowForm(!showForm)}
-          >
+          <button className="add-vendor-btn" onClick={handleOpenForm}>
             {showForm ? "View All Vendors" : "+ Add Vendor"}
           </button>
         </div>
@@ -308,7 +365,7 @@ function Vendormaster() {
                       placeholder="Enter vendor code"
                       value={formData.vendorCode}
                       onChange={handleInputChange}
-                      disabled={editingId !== null}
+                      disabled={editingId === null}
                       required
                     />
                   </div>
@@ -338,7 +395,20 @@ function Vendormaster() {
                       placeholder="Enter mobile number"
                       value={formData.vendorMobile}
                       onChange={handleInputChange}
+                      onBlur={() => {
+                        if (
+                          formData.vendorMobile &&
+                          formData.vendorMobile.length !== 10
+                        ) {
+                          setMobileError("Mobile must be 10 digits");
+                        } else {
+                          setMobileError("");
+                        }
+                      }}
                     />
+                    {mobileError && (
+                      <div className="error-message">{mobileError}</div>
+                    )}
                   </div>
                   <div className="form-group">
                     <label htmlFor="company">Company</label>

@@ -37,6 +37,24 @@ export default function Preappointment() {
   const [loading, setLoading] = useState(false);
   const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
   const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
+  const [mobileError, setMobileError] = useState("");
+
+  const generateGatePass = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0");
+    return `GP${timestamp}${random}`;
+  };
+
+  const getLocalDateTimeForInput = () => {
+    const d = new Date();
+    d.setSeconds(0, 0);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+      d.getDate()
+    )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
@@ -68,6 +86,16 @@ export default function Preappointment() {
     >
   ) => {
     const { name, value } = e.target;
+    if (name === "visitor_mobile") {
+      // Allow only digits and limit to 10 characters
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      setVisitorForm((prev) => ({ ...prev, [name]: digits }));
+      if (digits.length === 10) setMobileError("");
+      else if (digits.length === 0) setMobileError("");
+      else setMobileError("Mobile number must be 10 digits");
+      return;
+    }
+
     setVisitorForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -89,16 +117,41 @@ export default function Preappointment() {
     try {
       // If an existing visitor is selected, reuse it instead of creating
       if (selectedVisitorId && selectedVisitorId > 0) {
+        const gatePass = generateGatePass();
         setCreatedVisitorId(selectedVisitorId);
         setEntryForm((prev) => ({
           ...prev,
           visitorEntry_visitorId: selectedVisitorId,
+          visitorEntry_Gatepass: gatePass,
         }));
         setStep(2);
         setLoading(false);
         return;
       }
 
+      // Validate mobile for new visitor creation
+      if (!selectedVisitorId || selectedVisitorId === 0) {
+        if (!/^\d{10}$/.test(visitorForm.visitor_mobile || "")) {
+          toast.error("Mobile number must be 10 digits");
+          setMobileError("Mobile number must be 10 digits");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Prevent selecting a past Registered Date
+      if (visitorForm.visitor_MeetingDate) {
+        const selected = new Date(visitorForm.visitor_MeetingDate);
+        const now = new Date();
+        now.setSeconds(0, 0);
+        if (selected < now) {
+          toast.error("Registered Date cannot be in the past");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const gatePass = generateGatePass();
       const res = await endpoints.visitor.create(visitorForm);
       const newVisitorId = res.data?.visitorId || res.data?.id || res.data;
       if (!newVisitorId) {
@@ -113,6 +166,7 @@ export default function Preappointment() {
       setEntryForm((prev) => ({
         ...prev,
         visitorEntry_visitorId: newVisitorId,
+        visitorEntry_Gatepass: gatePass,
       }));
       setStep(2);
     } catch (err: any) {
@@ -161,7 +215,23 @@ export default function Preappointment() {
     e.preventDefault();
     setLoading(true);
     try {
-      await endpoints.visitorEntry.create(entryForm);
+      // Prevent submitting a past Date for entry
+      if (entryForm.visitorEntry_Date) {
+        const selected = new Date(entryForm.visitorEntry_Date);
+        const now = new Date();
+        now.setSeconds(0, 0);
+        if (selected < now) {
+          toast.error("Date cannot be in the past");
+          setLoading(false);
+          return;
+        }
+      }
+      // Build payload so empty `visitorEntry_Intime` is sent as null (not empty string)
+      const payload: any = { ...entryForm };
+      if (!payload.visitorEntry_Intime) payload.visitorEntry_Intime = null;
+      await endpoints.visitorEntry.create(payload);
+      // NOTE: some APIs expect `visitorEntry_Intime` to be null when not provided.
+      // We'll send a payload that converts empty string to null to avoid bad request errors.
       toast.success("Preappointment created successfully!");
       // Reset forms
       setVisitorForm({
@@ -289,8 +359,7 @@ export default function Preappointment() {
                         setCreatedVisitorId(null);
                         setStep(1);
                       }}
-                    >
-                    </div>
+                    ></div>
                     {visitors
                       .filter((v) => {
                         const mobile = (
@@ -326,6 +395,7 @@ export default function Preappointment() {
                                 selectedVisitorId === id ? "#f0f9ff" : "white";
                             }}
                             onClick={() => {
+                              const gatePass = generateGatePass();
                               setSelectedVisitorId(id);
                               setVisitorSearchTerm(`${name} - ${mobile}`);
                               setShowVisitorDropdown(false);
@@ -352,6 +422,7 @@ export default function Preappointment() {
                               setEntryForm((prev) => ({
                                 ...prev,
                                 visitorEntry_visitorId: id,
+                                visitorEntry_Gatepass: gatePass,
                               }));
                               setCreatedVisitorId(id);
                               setStep(2);
@@ -409,11 +480,31 @@ export default function Preappointment() {
                   <input
                     type="text"
                     name="visitor_mobile"
+                    inputMode="numeric"
+                    pattern="\\d*"
+                    maxLength={10}
                     value={visitorForm.visitor_mobile}
                     onChange={handleVisitorChange}
+                    onBlur={() => {
+                      if (
+                        visitorForm.visitor_mobile &&
+                        visitorForm.visitor_mobile.length !== 10
+                      ) {
+                        setMobileError("Mobile number must be 10 digits");
+                      } else {
+                        setMobileError("");
+                      }
+                    }}
                     required
                     className="form-input"
                   />
+                  {mobileError && (
+                    <div
+                      style={{ color: "#d32f2f", fontSize: 12, marginTop: 6 }}
+                    >
+                      {mobileError}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -484,12 +575,13 @@ export default function Preappointment() {
               </div>
 
               <div className="form-group">
-                <label>Meeting Date *</label>
+                <label>Registered Date *</label>
                 <input
                   type="datetime-local"
                   name="visitor_MeetingDate"
                   value={visitorForm.visitor_MeetingDate}
                   onChange={handleVisitorChange}
+                  min={getLocalDateTimeForInput()}
                   required
                   className="form-input"
                 />
@@ -515,8 +607,12 @@ export default function Preappointment() {
                     name="visitorEntry_Gatepass"
                     value={entryForm.visitorEntry_Gatepass}
                     onChange={handleEntryChange}
-                    required
                     className="form-input"
+                    disabled
+                    style={{
+                      backgroundColor: "#f5f5f5",
+                      cursor: "not-allowed",
+                    }}
                   />
                 </div>
                 <div className="form-group">
@@ -590,43 +686,14 @@ export default function Preappointment() {
                     name="visitorEntry_Date"
                     value={entryForm.visitorEntry_Date}
                     onChange={handleEntryChange}
-                    required
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>In Time *</label>
-                  <input
-                    type="datetime-local"
-                    name="visitorEntry_Intime"
-                    value={entryForm.visitorEntry_Intime}
-                    onChange={handleEntryChange}
+                    min={getLocalDateTimeForInput()}
                     required
                     className="form-input"
                   />
                 </div>
               </div>
 
-              <div className="form-group checkbox-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="visitorEntry_isCanteen"
-                    checked={entryForm.visitorEntry_isCanteen}
-                    onChange={handleEntryChange}
-                  />
-                  <span>Canteen Access</span>
-                </label>
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="visitorEntry_isStay"
-                    checked={entryForm.visitorEntry_isStay}
-                    onChange={handleEntryChange}
-                  />
-                  <span>Stay</span>
-                </label>
-              </div>
+              {/* Canteen Access and Stay removed per request */}
 
               <div className="button-row">
                 <button

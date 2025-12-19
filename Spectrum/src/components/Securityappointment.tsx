@@ -42,6 +42,7 @@ export default function Securityappointment({
   const [loading, setLoading] = useState(false);
   const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
   const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
+  const [mobileError, setMobileError] = useState("");
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
@@ -73,6 +74,17 @@ export default function Securityappointment({
     >
   ) => {
     const { name, value } = e.target;
+    if (name === "visitor_mobile") {
+      // Allow only digits and limit to 10 characters
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      setVisitorForm((prev) => ({ ...prev, [name]: digits }));
+      // Clear error when length is exactly 10, otherwise show message if user typed something
+      if (digits.length === 10) setMobileError("");
+      else if (digits.length === 0) setMobileError("");
+      else setMobileError("Mobile number must be 10 digits");
+      return;
+    }
+
     setVisitorForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -115,6 +127,15 @@ export default function Securityappointment({
         return;
       }
 
+      // Validate mobile for new visitor entries
+      if (!selectedVisitorId || selectedVisitorId === 0) {
+        if (!/^\d{10}$/.test(visitorForm.visitor_mobile || "")) {
+          toast.error("Mobile number must be 10 digits");
+          setMobileError("Mobile number must be 10 digits");
+          setLoading(false);
+          return;
+        }
+      }
       const res = await endpoints.visitor.create(visitorForm);
       const newVisitorId = res.data?.visitorId || res.data?.id || res.data;
       if (!newVisitorId) {
@@ -435,11 +456,29 @@ export default function Securityappointment({
                 <input
                   type="text"
                   name="visitor_mobile"
+                  inputMode="numeric"
+                  pattern="\\d*"
+                  maxLength={10}
                   value={visitorForm.visitor_mobile}
                   onChange={handleVisitorChange}
+                  onBlur={() => {
+                    if (
+                      visitorForm.visitor_mobile &&
+                      visitorForm.visitor_mobile.length !== 10
+                    ) {
+                      setMobileError("Mobile number must be 10 digits");
+                    } else {
+                      setMobileError("");
+                    }
+                  }}
                   required
                   className="form-input"
                 />
+                {mobileError && (
+                  <div style={{ color: "#d32f2f", fontSize: 12, marginTop: 6 }}>
+                    {mobileError}
+                  </div>
+                )}
               </div>
             </div>
 
