@@ -481,7 +481,7 @@ export default function Preappointment() {
                     type="text"
                     name="visitor_mobile"
                     inputMode="numeric"
-                    pattern="\\d*"
+                    pattern="[0-9]*"
                     maxLength={10}
                     value={visitorForm.visitor_mobile}
                     onChange={handleVisitorChange}
