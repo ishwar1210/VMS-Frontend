@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { endpoints } from "../api/endpoint";
 import "./Preappointment.css";
 import { toast, ToastContainer } from "react-toastify";
@@ -43,6 +43,12 @@ export default function Securityappointment({
   const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
   const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
   const [mobileError, setMobileError] = useState("");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
@@ -108,6 +114,71 @@ export default function Securityappointment({
     return `GP${timestamp}${random}`;
   };
 
+  const startCamera = async () => {
+    try {
+      console.log("Starting camera...");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+      console.log("Camera stream obtained:", stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        streamRef.current = stream;
+        setCameraActive(true);
+        console.log("Camera active state set to true");
+        toast.success("Camera started!");
+      }
+    } catch (err: any) {
+      console.error("Camera error details:", err);
+      toast.error(`Camera error: ${err.message || "Permission denied"}`);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            setCapturedBlob(blob);
+            setCapturedImage(canvas.toDataURL("image/jpeg"));
+            stopCamera();
+            toast.success("Photo captured!");
+          }
+        }, "image/jpeg");
+      }
+    }
+  };
+
+  const uploadVisitorImage = async (imageBlob: Blob): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", imageBlob, "visitor.jpg");
+    const response = await endpoints.visitor.uploadImage(formData);
+    return response.data.imagePath || response.data;
+  };
+
   const handleVisitorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -136,7 +207,25 @@ export default function Securityappointment({
           return;
         }
       }
-      const res = await endpoints.visitor.create(visitorForm);
+
+      // Step 1: Upload image if captured
+      let imagePath = null;
+      if (capturedBlob) {
+        try {
+          imagePath = await uploadVisitorImage(capturedBlob);
+        } catch (err) {
+          toast.error("Failed to upload visitor image");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Step 2: Create visitor with image path
+      const visitorPayload = {
+        ...visitorForm,
+        Visitor_image: imagePath,
+      };
+      const res = await endpoints.visitor.create(visitorPayload);
       const newVisitorId = res.data?.visitorId || res.data?.id || res.data;
       if (!newVisitorId) {
         toast.error(
@@ -558,6 +647,135 @@ export default function Securityappointment({
                 required
                 className="form-input"
               />
+            </div>
+
+            <div className="form-group">
+              <label>Visitor Photo</label>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  width: "100%",
+                }}
+              >
+                {!cameraActive && !capturedImage && (
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    style={{
+                      padding: "12px 24px",
+                      backgroundColor: "#1976d2",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      fontSize: 16,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    📷 Open Camera
+                  </button>
+                )}
+
+                {cameraActive && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 12,
+                      width: "100%",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "100%",
+                        maxWidth: 640,
+                        backgroundColor: "#000",
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        border: "3px solid #1976d2",
+                      }}
+                    >
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          display: "block",
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", gap: 12 }}>
+                      <button
+                        type="button"
+                        onClick={capturePhoto}
+                        style={{
+                          flex: 1,
+                          padding: "12px",
+                          backgroundColor: "#4caf50",
+                          color: "white",
+                          border: "none",
+                          borderRadius: 8,
+                          fontSize: 16,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        📸 Capture Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={stopCamera}
+                        style={{
+                          flex: 1,
+                          padding: "12px",
+                          backgroundColor: "#f44336",
+                          color: "white",
+                          border: "none",
+                          borderRadius: 8,
+                          fontSize: 16,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        ✖ Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {capturedImage && (
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                  >
+                    <img
+                      src={capturedImage}
+                      alt="Captured visitor"
+                      style={{
+                        width: "100%",
+                        maxWidth: 400,
+                        borderRadius: 8,
+                        border: "2px solid #4caf50",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCapturedImage(null);
+                        setCapturedBlob(null);
+                      }}
+                      className="btn-cancel"
+                    >
+                      🔄 Retake Photo
+                    </button>
+                  </div>
+                )}
+              </div>
+              <canvas ref={canvasRef} style={{ display: "none" }} />
             </div>
 
             <button type="submit" disabled={loading} className="submit-btn">

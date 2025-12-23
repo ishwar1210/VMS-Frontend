@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { endpoints } from "../api/endpoint";
 import "./Preappointment.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Webcam from "react-webcam";
 
 type VisitorFormData = {
   visitor_Name: string;
@@ -32,12 +33,16 @@ export default function Preappointment() {
   const [step, setStep] = useState<1 | 2>(1);
   const [createdVisitorId, setCreatedVisitorId] = useState<number | null>(null);
   const [visitors, setVisitors] = useState<any[]>([]);
-  const [selectedVisitorId, setSelectedVisitorId] = useState<number>(0); // 0 => create new
+  const [selectedVisitorId, setSelectedVisitorId] = useState<number>(0);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
   const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
   const [mobileError, setMobileError] = useState("");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
+  const webcamRef = useRef<any>(null);
 
   const generateGatePass = () => {
     const timestamp = Date.now().toString().slice(-6);
@@ -54,6 +59,66 @@ export default function Preappointment() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
       d.getDate()
     )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const startCamera = async () => {
+    try {
+      setCameraActive(true);
+      toast.success("Camera opened");
+    } catch (err: any) {
+      console.error("Camera error details:", err);
+      toast.error(`Camera error: ${err.message || "Permission denied"}`);
+    }
+  };
+
+  const stopCamera = () => {
+    try {
+      const videoEl = webcamRef.current?.video as HTMLVideoElement | undefined;
+      const stream = videoEl?.srcObject as MediaStream | undefined;
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
+    } catch (e) {
+      console.warn("Error stopping camera stream", e);
+    }
+    setCameraActive(false);
+  };
+
+  const dataURLToBlob = (dataURL: string) => {
+    const arr = dataURL.split(",");
+    const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
+
+  const capturePhoto = async () => {
+    try {
+      const screenshot = webcamRef.current?.getScreenshot();
+      if (!screenshot) {
+        toast.error("Failed to capture photo");
+        return;
+      }
+      const blob = dataURLToBlob(screenshot);
+      setCapturedBlob(blob);
+      setCapturedImage(screenshot);
+      stopCamera();
+      toast.success("Photo captured!");
+    } catch (err) {
+      console.error("capture error", err);
+      toast.error("Failed to capture photo");
+    }
+  };
+
+  const uploadVisitorImage = async (imageBlob: Blob): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", imageBlob, "visitor.jpg");
+    const response = await endpoints.visitor.uploadImage(formData);
+    return response.data.imagePath || response.data;
   };
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
@@ -87,7 +152,6 @@ export default function Preappointment() {
   ) => {
     const { name, value } = e.target;
     if (name === "visitor_mobile") {
-      // Allow only digits and limit to 10 characters
       const digits = value.replace(/\D/g, "").slice(0, 10);
       setVisitorForm((prev) => ({ ...prev, [name]: digits }));
       if (digits.length === 10) setMobileError("");
@@ -115,7 +179,6 @@ export default function Preappointment() {
     e.preventDefault();
     setLoading(true);
     try {
-      // If an existing visitor is selected, reuse it instead of creating
       if (selectedVisitorId && selectedVisitorId > 0) {
         const gatePass = generateGatePass();
         setCreatedVisitorId(selectedVisitorId);
@@ -129,7 +192,6 @@ export default function Preappointment() {
         return;
       }
 
-      // Validate mobile for new visitor creation
       if (!selectedVisitorId || selectedVisitorId === 0) {
         if (!/^\d{10}$/.test(visitorForm.visitor_mobile || "")) {
           toast.error("Mobile number must be 10 digits");
@@ -139,7 +201,6 @@ export default function Preappointment() {
         }
       }
 
-      // Prevent selecting a past Registered Date
       if (visitorForm.visitor_MeetingDate) {
         const selected = new Date(visitorForm.visitor_MeetingDate);
         const now = new Date();
@@ -152,7 +213,23 @@ export default function Preappointment() {
       }
 
       const gatePass = generateGatePass();
-      const res = await endpoints.visitor.create(visitorForm);
+
+      let imagePath = null;
+      if (capturedBlob) {
+        try {
+          imagePath = await uploadVisitorImage(capturedBlob);
+        } catch (err) {
+          toast.error("Failed to upload visitor image");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const visitorPayload = {
+        ...visitorForm,
+        Visitor_image: imagePath,
+      };
+      const res = await endpoints.visitor.create(visitorPayload);
       const newVisitorId = res.data?.visitorId || res.data?.id || res.data;
       if (!newVisitorId) {
         toast.error(
@@ -209,13 +286,25 @@ export default function Preappointment() {
   useEffect(() => {
     fetchVisitors();
     fetchUsers();
+
+    // Cleanup camera on unmount
+    return () => {
+      try {
+        const videoEl = webcamRef.current?.video as
+          | HTMLVideoElement
+          | undefined;
+        const stream = videoEl?.srcObject as MediaStream | undefined;
+        if (stream) stream.getTracks().forEach((t) => t.stop());
+      } catch (e) {
+        // ignore
+      }
+    };
   }, []);
 
   const handleEntrySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Prevent submitting a past Date for entry
       if (entryForm.visitorEntry_Date) {
         const selected = new Date(entryForm.visitorEntry_Date);
         const now = new Date();
@@ -226,14 +315,10 @@ export default function Preappointment() {
           return;
         }
       }
-      // Build payload so empty `visitorEntry_Intime` is sent as null (not empty string)
       const payload: any = { ...entryForm };
       if (!payload.visitorEntry_Intime) payload.visitorEntry_Intime = null;
       await endpoints.visitorEntry.create(payload);
-      // NOTE: some APIs expect `visitorEntry_Intime` to be null when not provided.
-      // We'll send a payload that converts empty string to null to avoid bad request errors.
       toast.success("Preappointment created successfully!");
-      // Reset forms
       setVisitorForm({
         visitor_Name: "",
         visitor_mobile: "",
@@ -260,7 +345,8 @@ export default function Preappointment() {
       setCreatedVisitorId(null);
       setSelectedVisitorId(0);
       setVisitorSearchTerm("");
-      // refresh list so created visitor (if any) appears
+      setCapturedImage(null);
+      setCapturedBlob(null);
       fetchVisitors();
     } catch (err: any) {
       toast.error(
@@ -359,7 +445,9 @@ export default function Preappointment() {
                         setCreatedVisitorId(null);
                         setStep(1);
                       }}
-                    ></div>
+                    >
+                      + Create New Visitor
+                    </div>
                     {visitors
                       .filter((v) => {
                         const mobile = (
@@ -368,7 +456,6 @@ export default function Preappointment() {
                           ""
                         ).toString();
                         const search = visitorSearchTerm.trim();
-                        // Only show if mobile number contains the search term
                         return mobile.includes(search);
                       })
                       .map((v) => {
@@ -587,6 +674,201 @@ export default function Preappointment() {
                 />
               </div>
 
+              <div className="form-group">
+                <label>Visitor Photo</label>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                    width: "100%",
+                  }}
+                >
+                  {!cameraActive && !capturedImage && (
+                    <button
+                      type="button"
+                      onClick={startCamera}
+                      style={{
+                        padding: "12px 24px",
+                        backgroundColor: "#1976d2",
+                        color: "white",
+                        border: "none",
+                        borderRadius: 8,
+                        fontSize: 16,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                     Open Camera
+                    </button>
+                  )}
+
+                  {cameraActive && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                        width: "100%",
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "relative",
+                          width: "100%",
+                          maxWidth: 640,
+                          height: 340,
+                          backgroundColor: "#fff",
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          border: "3px solid #1976d2",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Webcam
+                          audio={false}
+                          ref={webcamRef}
+                          mirrored
+                          screenshotFormat="image/jpeg"
+                          videoConstraints={{
+                            facingMode: "user",
+                            width: 1280,
+                            height: 720,
+                          }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 12,
+                          alignItems: "center",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={capturePhoto}
+                          style={{
+                            flex: "0 0 72%",
+                            maxWidth: 560,
+                            padding: "12px 20px",
+                            backgroundColor: "#0b63d6",
+                            color: "white",
+                            border: "none",
+                            borderRadius: 8,
+                            fontSize: 16,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            boxShadow: "0 4px 8px rgba(11,99,214,0.2)",
+                            marginRight: 8,
+                          }}
+                        >
+                        Capture
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            stopCamera();
+                            setCapturedImage(null);
+                            setCapturedBlob(null);
+                          }}
+                          aria-label="Cancel"
+                          style={{
+                            width: 44,
+                            height: 44,
+                            backgroundColor: "#18a0f0",
+                            border: "none",
+                            borderRadius: 8,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                          }}
+                        >
+                          ⟳
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {capturedImage && (
+                    <div
+                      style={{ display: "flex", gap: 12, alignItems: "center" }}
+                    >
+                      <div>
+                        <img
+                          src={capturedImage}
+                          alt="Captured visitor"
+                          style={{
+                            width: "320px",
+                            height: "240px",
+                            objectFit: "cover",
+                            borderRadius: 8,
+                            border: "3px solid #0b63d6",
+                            boxShadow: "0 6px 12px rgba(11,99,214,0.12)",
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          disabled
+                          style={{
+                            padding: "12px 28px",
+                            backgroundColor: "#0b63d6",
+                            color: "white",
+                            border: "none",
+                            borderRadius: 8,
+                            fontSize: 16,
+                            fontWeight: 700,
+                            cursor: "default",
+                          }}
+                        >
+                          Captured
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCapturedImage(null);
+                            setCapturedBlob(null);
+                            // reopen camera for retake
+                            startCamera();
+                          }}
+                          aria-label="Retake"
+                          style={{
+                            width: 48,
+                            height: 48,
+                            backgroundColor: "#18a0f0",
+                            border: "none",
+                            borderRadius: 12,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            fontSize: 20,
+                          }}
+                        >
+                          ⟳
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <button type="submit" disabled={loading} className="submit-btn">
                 {loading ? "Saving..." : "Next: Visitor Entry"}
               </button>
@@ -692,8 +974,6 @@ export default function Preappointment() {
                   />
                 </div>
               </div>
-
-              {/* Canteen Access and Stay removed per request */}
 
               <div className="button-row">
                 <button

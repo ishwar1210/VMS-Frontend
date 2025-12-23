@@ -62,6 +62,10 @@ const visitor = {
   getById: (id: number) => api.get(`/api/visitor/${id}`),
   create: (payload: any) => api.post("/api/visitor", payload),
   update: (id: number, payload: any) => api.put(`/api/visitor/${id}`, payload),
+  uploadImage: (formData: FormData) =>
+    api.post("/api/visitor/upload-image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
 };
 
 // vendor appointment endpoints
