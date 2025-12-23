@@ -697,9 +697,11 @@ export default function Preappointment() {
                         fontSize: 16,
                         fontWeight: 600,
                         cursor: "pointer",
+                        width: 220,
+                        alignSelf: "flex-start",
                       }}
                     >
-                     Open Camera
+                      Open Camera
                     </button>
                   )}
 
@@ -756,21 +758,18 @@ export default function Preappointment() {
                           type="button"
                           onClick={capturePhoto}
                           style={{
-                            flex: "0 0 72%",
-                            maxWidth: 560,
-                            padding: "12px 20px",
-                            backgroundColor: "#0b63d6",
+                            flex: 1,
+                            padding: "14px 20px",
+                            backgroundColor: "#4caf50",
                             color: "white",
                             border: "none",
                             borderRadius: 8,
                             fontSize: 16,
-                            fontWeight: 700,
+                            fontWeight: 600,
                             cursor: "pointer",
-                            boxShadow: "0 4px 8px rgba(11,99,214,0.2)",
-                            marginRight: 8,
                           }}
                         >
-                        Capture
+                          Capture Photo
                         </button>
                         <button
                           type="button"
@@ -779,20 +778,19 @@ export default function Preappointment() {
                             setCapturedImage(null);
                             setCapturedBlob(null);
                           }}
-                          aria-label="Cancel"
                           style={{
-                            width: 44,
-                            height: 44,
-                            backgroundColor: "#18a0f0",
+                            flex: 1,
+                            padding: "14px 20px",
+                            backgroundColor: "#f44336",
+                            color: "white",
                             border: "none",
                             borderRadius: 8,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            fontSize: 16,
+                            fontWeight: 600,
                             cursor: "pointer",
                           }}
                         >
-                          ⟳
+                          ✖ Cancel
                         </button>
                       </div>
                     </div>
@@ -823,22 +821,7 @@ export default function Preappointment() {
                           gap: 8,
                         }}
                       >
-                        <button
-                          type="button"
-                          disabled
-                          style={{
-                            padding: "12px 28px",
-                            backgroundColor: "#0b63d6",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 8,
-                            fontSize: 16,
-                            fontWeight: 700,
-                            cursor: "default",
-                          }}
-                        >
-                          Captured
-                        </button>
+                        
                         <button
                           type="button"
                           onClick={() => {

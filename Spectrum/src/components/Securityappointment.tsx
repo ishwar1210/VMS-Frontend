@@ -3,6 +3,7 @@ import { endpoints } from "../api/endpoint";
 import "./Preappointment.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Webcam from "react-webcam";
 
 type VisitorFormData = {
   visitor_Name: string;
@@ -46,9 +47,7 @@ export default function Securityappointment({
   const [cameraActive, setCameraActive] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const webcamRef = useRef<any>(null);
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
@@ -116,24 +115,8 @@ export default function Securityappointment({
 
   const startCamera = async () => {
     try {
-      console.log("Starting camera...");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      });
-      console.log("Camera stream obtained:", stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        streamRef.current = stream;
-        setCameraActive(true);
-        console.log("Camera active state set to true");
-        toast.success("Camera started!");
-      }
+      setCameraActive(true);
+      toast.success("Camera opened");
     } catch (err: any) {
       console.error("Camera error details:", err);
       toast.error(`Camera error: ${err.message || "Permission denied"}`);
@@ -141,34 +124,45 @@ export default function Securityappointment({
   };
 
   const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
+    try {
+      const videoEl = webcamRef.current?.video as HTMLVideoElement | undefined;
+      const stream = videoEl?.srcObject as MediaStream | undefined;
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
+    } catch (e) {
+      console.warn("Error stopping camera stream", e);
     }
     setCameraActive(false);
   };
 
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            setCapturedBlob(blob);
-            setCapturedImage(canvas.toDataURL("image/jpeg"));
-            stopCamera();
-            toast.success("Photo captured!");
-          }
-        }, "image/jpeg");
+  const dataURLToBlob = (dataURL: string) => {
+    const arr = dataURL.split(",");
+    const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
+
+  const capturePhoto = async () => {
+    try {
+      const screenshot = webcamRef.current?.getScreenshot();
+      if (!screenshot) {
+        toast.error("Failed to capture photo");
+        return;
       }
+      const blob = dataURLToBlob(screenshot);
+      setCapturedBlob(blob);
+      setCapturedImage(screenshot);
+      stopCamera();
+      toast.success("Photo captured!");
+    } catch (err) {
+      console.error("capture error", err);
+      toast.error("Failed to capture photo");
     }
   };
 
@@ -672,9 +666,11 @@ export default function Securityappointment({
                       fontSize: 16,
                       fontWeight: 600,
                       cursor: "pointer",
+                      width: 220,
+                      alignSelf: "flex-start",
                     }}
                   >
-                    📷 Open Camera
+                    Open Camera
                   </button>
                 )}
 
@@ -689,22 +685,33 @@ export default function Securityappointment({
                   >
                     <div
                       style={{
+                        position: "relative",
                         width: "100%",
                         maxWidth: 640,
-                        backgroundColor: "#000",
+                        height: 340,
+                        backgroundColor: "#fff",
                         borderRadius: 8,
                         overflow: "hidden",
                         border: "3px solid #1976d2",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
+                      <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        mirrored
+                        screenshotFormat="image/jpeg"
+                        videoConstraints={{
+                          facingMode: "user",
+                          width: 1280,
+                          height: 720,
+                        }}
                         style={{
                           width: "100%",
-                          height: "auto",
+                          height: "100%",
+                          objectFit: "cover",
                           display: "block",
                         }}
                       />
@@ -715,7 +722,7 @@ export default function Securityappointment({
                         onClick={capturePhoto}
                         style={{
                           flex: 1,
-                          padding: "12px",
+                          padding: "14px 20px",
                           backgroundColor: "#4caf50",
                           color: "white",
                           border: "none",
@@ -725,14 +732,14 @@ export default function Securityappointment({
                           cursor: "pointer",
                         }}
                       >
-                        📸 Capture Photo
+                        Capture Photo
                       </button>
                       <button
                         type="button"
                         onClick={stopCamera}
                         style={{
                           flex: 1,
-                          padding: "12px",
+                          padding: "14px 20px",
                           backgroundColor: "#f44336",
                           color: "white",
                           border: "none",
@@ -750,32 +757,57 @@ export default function Securityappointment({
 
                 {capturedImage && (
                   <div
-                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                    style={{ display: "flex", gap: 12, alignItems: "center" }}
                   >
-                    <img
-                      src={capturedImage}
-                      alt="Captured visitor"
+                    <div>
+                      <img
+                        src={capturedImage}
+                        alt="Captured visitor"
+                        style={{
+                          width: "320px",
+                          height: "240px",
+                          objectFit: "cover",
+                          borderRadius: 8,
+                          border: "3px solid #0b63d6",
+                          boxShadow: "0 6px 12px rgba(11,99,214,0.12)",
+                        }}
+                      />
+                    </div>
+                    <div
                       style={{
-                        width: "100%",
-                        maxWidth: 400,
-                        borderRadius: 8,
-                        border: "2px solid #4caf50",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
                       }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCapturedImage(null);
-                        setCapturedBlob(null);
-                      }}
-                      className="btn-cancel"
                     >
-                      🔄 Retake Photo
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCapturedImage(null);
+                          setCapturedBlob(null);
+                          // reopen camera for retake
+                          startCamera();
+                        }}
+                        aria-label="Retake"
+                        style={{
+                          width: 48,
+                          height: 48,
+                          backgroundColor: "#18a0f0",
+                          border: "none",
+                          borderRadius: 12,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          fontSize: 20,
+                        }}
+                      >
+                        ⟳
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-              <canvas ref={canvasRef} style={{ display: "none" }} />
             </div>
 
             <button type="submit" disabled={loading} className="submit-btn">
