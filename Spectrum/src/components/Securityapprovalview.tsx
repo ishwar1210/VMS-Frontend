@@ -1473,18 +1473,20 @@ function Securityapprovalview() {
                             <span>
                               {formatTimeOnly(entry.visitorEntry_Intime)}
                             </span>
-                            <button
-                              type="button"
-                              className="btn-cancel"
-                              onClick={() => setEntryCurrentInTime(entry)}
-                              title="Set In Time to now"
-                              style={{
-                                padding: "6px 10px",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              Set Now
-                            </button>
+                            {!entry.visitorEntry_Intime && (
+                              <button
+                                type="button"
+                                className="btn-cancel"
+                                onClick={() => setEntryCurrentInTime(entry)}
+                                title="Set In Time to now"
+                                style={{
+                                  padding: "6px 10px",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                Set Now
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td>
@@ -1498,18 +1500,20 @@ function Securityapprovalview() {
                             <span>
                               {formatTimeOnly(entry.visitorEntry_Outtime)}
                             </span>
-                            <button
-                              type="button"
-                              className="btn-cancel"
-                              onClick={() => setEntryCurrentOutTime(entry)}
-                              title="Set Out Time to now"
-                              style={{
-                                padding: "6px 10px",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              Set Out
-                            </button>
+                            {!entry.visitorEntry_Outtime && (
+                              <button
+                                type="button"
+                                className="btn-cancel"
+                                onClick={() => setEntryCurrentOutTime(entry)}
+                                title="Set Out Time to now"
+                                style={{
+                                  padding: "6px 10px",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                Set Out
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td>

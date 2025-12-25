@@ -717,9 +717,8 @@ export default function Preappointment() {
                       <div
                         style={{
                           position: "relative",
-                          width: "100%",
-                          maxWidth: 640,
-                          height: 340,
+                          width: "400px",
+                          height: "300px",
                           backgroundColor: "#fff",
                           borderRadius: 8,
                           overflow: "hidden",
@@ -758,7 +757,6 @@ export default function Preappointment() {
                           type="button"
                           onClick={capturePhoto}
                           style={{
-                            flex: 1,
                             padding: "14px 20px",
                             backgroundColor: "#4caf50",
                             color: "white",
@@ -779,7 +777,6 @@ export default function Preappointment() {
                             setCapturedBlob(null);
                           }}
                           style={{
-                            flex: 1,
                             padding: "14px 20px",
                             backgroundColor: "#f44336",
                             color: "white",
@@ -790,7 +787,7 @@ export default function Preappointment() {
                             cursor: "pointer",
                           }}
                         >
-                          ✖ Cancel
+                          Cancel
                         </button>
                       </div>
                     </div>
@@ -821,7 +818,6 @@ export default function Preappointment() {
                           gap: 8,
                         }}
                       >
-                        
                         <button
                           type="button"
                           onClick={() => {

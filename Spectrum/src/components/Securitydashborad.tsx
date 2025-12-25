@@ -364,9 +364,9 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
             </svg>
           </div>
           <div className="card-content">
-            <div className="card-title">Today Visitor Entry IN</div>
+            <div className="card-title">Today's Visitor Entry IN</div>
             <div className="card-value">{todayEntries.length}</div>
-            <div className="card-badge">Checked In Today</div>
+            <div className="card-badge">Today's Checked In</div>
           </div>
         </div>
         <div className="card card-entries">
@@ -384,7 +384,7 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
             </svg>
           </div>
           <div className="card-content">
-            <div className="card-title">Today Active Visitors</div>
+            <div className="card-title">Today's Active Visitors</div>
             <div className="card-value">{todayActiveEntries.length}</div>
             <div className="card-badge">Currently On-Site</div>
           </div>
@@ -405,9 +405,9 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
             </svg>
           </div>
           <div className="card-content">
-            <div className="card-title">Today Visitor Entry OUT</div>
+            <div className="card-title">Today's Visitor Entry OUT</div>
             <div className="card-value">{todayOutEntries.length}</div>
-            <div className="card-badge badge-success">Checked Out Today</div>
+            <div className="card-badge badge-success">Today's Checked Out</div>
           </div>
         </div>
         <div className="card card-pending">

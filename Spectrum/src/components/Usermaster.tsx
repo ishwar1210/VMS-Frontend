@@ -478,7 +478,7 @@ function Usermaster() {
                       name="u_Mobile"
                       type="tel"
                       inputMode="numeric"
-                      pattern="\\d*"
+                      pattern="[0-9]*"
                       maxLength={10}
                       className="user-input"
                       placeholder="Enter mobile number"

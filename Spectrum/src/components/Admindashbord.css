@@ -448,8 +448,8 @@
 }
 
 .status-completed {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
 }
 
 .status-rejected {
