@@ -32,6 +32,7 @@ interface Visitor {
   visitor_Name: string;
   visitor_Email?: string;
   visitor_Mobile?: string;
+  visitor_image?: string;
 }
 
 function Securityapprovalview() {
@@ -63,7 +64,8 @@ function Securityapprovalview() {
   const loggedInUserId = getLoggedInUserId();
 
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
-  const [, setVisitors] = useState<Visitor[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -138,9 +140,29 @@ function Securityapprovalview() {
           (`${v.firstName ?? ""} ${v.lastName ?? ""}`.trim() || "Unknown"),
         visitor_Email: v.visitor_Email ?? v.email ?? v.Email ?? "",
         visitor_Mobile:
-          v.visitor_Mobile ?? v.mobile ?? v.phone ?? v.Phone ?? "",
+          v.visitor_Mobile ??
+          v.visitor_mobile ??
+          v.Visitor_Mobile ??
+          v.mobile ??
+          v.phone ??
+          v.Phone ??
+          "",
+        visitor_image:
+          v.visitor_image ?? v.Visitor_image ?? v.image ?? v.photo ?? undefined,
       }));
       setVisitors(normalizedVisitors);
+
+      // Fetch users
+      try {
+        const userRes = await endpoints.user.getAll();
+        const userData = userRes?.data || [];
+        const userList = userData?.$values || userData?.data || userData;
+        if (Array.isArray(userList)) {
+          setUsers(userList);
+        }
+      } catch (err) {
+        console.error("Failed to fetch users", err);
+      }
 
       const entryRes = await endpoints.visitorEntry.getAll();
       let entryData: any = entryRes?.data;
@@ -501,6 +523,262 @@ function Securityapprovalview() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // printGatepass - generates and prints visitor gatepass
+  const printGatepass = (entry: VisitorEntry) => {
+    const printWindow = window.open("", "_blank", "width=800,height=600");
+    if (!printWindow) {
+      toast.error("Please allow popups to print gatepass");
+      return;
+    }
+
+    // Find visitor details for mobile and photo
+    const visitor = visitors.find(
+      (v) => v.visitor_Id === entry.visitorEntry_visitorId
+    );
+
+    console.log("Debug - Entry ALL fields:", entry);
+    console.log("Debug - Vehicle fields check:", {
+      visitorEntry_Vehicleno: entry.visitorEntry_Vehicleno,
+      Vehicleno: entry.Vehicleno,
+      vehicleno: entry.vehicleno,
+      vehicle_no: entry.vehicle_no,
+      visitorEntry_Vehicletype: entry.visitorEntry_Vehicletype,
+    });
+
+    const mobileNo =
+      visitor?.visitor_Mobile && visitor.visitor_Mobile.trim() !== ""
+        ? visitor.visitor_Mobile
+        : "N/A";
+
+    // Get full image URL
+    const rawPhotoPath = visitor?.visitor_image || null;
+    const visitorPhoto = rawPhotoPath
+      ? rawPhotoPath.startsWith("http")
+        ? rawPhotoPath
+        : `https://192.168.1.63:6515${rawPhotoPath}`
+      : null;
+
+    console.log("Debug - Photo check:", {
+      visitor,
+      rawPhotoPath,
+      visitorPhoto,
+      visitor_image: visitor?.visitor_image,
+      allVisitorFields: visitor,
+    });
+
+    // Find user name for "Person To Meet"
+    const user = users.find((u) => {
+      const userId = u.userId || u.id || u.user_Id || u.UserId || 0;
+      return Number(userId) === Number(entry.visitorEntry_Userid);
+    });
+
+    console.log("Debug - User search:", {
+      users,
+      searchingForUserId: entry.visitorEntry_Userid,
+      foundUser: user,
+    });
+
+    const userName =
+      user?.userName ||
+      user?.name ||
+      user?.fullName ||
+      user?.username ||
+      user?.user_Name ||
+      `User ID ${entry.visitorEntry_Userid}`;
+
+    // Get vehicle number from entry - try multiple field names
+    const vehicleNo =
+      entry.visitorEntry_Vehicleno ||
+      entry.Vehicleno ||
+      entry.vehicleno ||
+      entry.vehicle_no ||
+      "N/A";
+
+    console.log("Print Gatepass Final Values:", {
+      mobileNo,
+      vehicleNo,
+      userName,
+      visitorPhoto,
+      hasPhoto: !!visitorPhoto,
+    });
+
+    const gatepassHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Visitor Gate Pass</title>
+        <style>
+          @media print {
+            body { margin: 0; }
+            @page { margin: 0.5cm; }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+          }
+          .gatepass-container {
+            max-width: 600px;
+            margin: 0 auto;
+            border: 3px solid #000;
+            padding: 0;
+          }
+          .header {
+            text-align: center;
+            background: #f0f0f0;
+            padding: 15px;
+            border-bottom: 2px solid #000;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+            text-transform: uppercase;
+          }
+          .header h2 {
+            margin: 5px 0 0 0;
+            font-size: 22px;
+            font-weight: bold;
+          }
+          .content {
+            display: flex;
+            padding: 20px;
+          }
+          .left-section {
+            flex: 1;
+            padding-right: 20px;
+          }
+          .right-section {
+            width: 150px;
+            text-align: center;
+          }
+          .photo-box {
+            width: 130px;
+            height: 170px;
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+            overflow: hidden;
+          }
+          .photo-box img {
+            width: 130px;
+            height: 170px;
+            object-fit: cover;
+            object-position: center;
+          }
+          .info-row {
+            display: flex;
+            margin-bottom: 12px;
+            font-size: 14px;
+          }
+          .info-label {
+            font-weight: bold;
+            color: #00008B;
+            min-width: 140px;
+          }
+          .info-value {
+            color: #000;
+          }
+          .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #000;
+          }
+          .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+          }
+          .signature-box {
+            text-align: center;
+          }
+          .signature-line {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin: 0 auto 5px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="gatepass-container">
+          <div class="header">
+            <h2>Visitor Gate Pass</h2>
+          </div>
+          <div class="content">
+            <div class="left-section">
+              <div class="info-row">
+                <div class="info-label">Visitor Name</div>
+                <div class="info-value">: ${
+                  entry.visitorEntry_visitorName || "N/A"
+                }</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Gate Pass No</div>
+                <div class="info-value">: ${
+                  entry.visitorEntry_Gatepass || "N/A"
+                }</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Mobile No</div>
+                <div class="info-value">: ${mobileNo}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Person To Meet</div>
+                <div class="info-value">: ${userName}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Vehicle No</div>
+                <div class="info-value">: ${
+                  entry.visitorEntry_Vehicleno || "N/A"
+                }</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Purpose</div>
+                <div class="info-value">: ${
+                  entry.visitorEntry_Purposeofvisit || "N/A"
+                }</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">GP Date/Time</div>
+                <div class="info-value">: ${formatDateOnly(
+                  entry.visitorEntry_Date
+                )} ${formatTimeOnly(entry.visitorEntry_Intime)}</div>
+              </div>
+            </div>
+            <div class="right-section">
+              <div class="photo-box">
+                ${
+                  visitorPhoto
+                    ? `<img src="${visitorPhoto}" alt="Visitor Photo" />`
+                    : '<span style="color: #999;">Photo</span>'
+                }
+              </div>
+            </div>
+          </div>
+          <div class="footer" style="padding: 20px;">
+            <div class="signature-section">
+              <div class="signature-box">
+                <div class="signature-line"></div>
+                <div>Operator Signature</div>
+                <div style="margin-top: 5px; font-size: 12px;">Security</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(gatepassHTML);
+    printWindow.document.close();
   };
 
   // handleView - opens view modal
@@ -1614,6 +1892,33 @@ function Securityapprovalview() {
                               >
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
+                              </svg>
+                            </button>
+                            <button
+                              className="action-btn print-btn"
+                              onClick={() => printGatepass(entry)}
+                              title="Print Gatepass"
+                              aria-label="Print Gatepass"
+                              style={{
+                                padding: "6px 10px",
+                                background: "#8b5cf6",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M6 9V2h12v7"></path>
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                <path d="M6 14h12v8H6z"></path>
                               </svg>
                             </button>
                             {!entry.visitorEntry_adminApproval &&
