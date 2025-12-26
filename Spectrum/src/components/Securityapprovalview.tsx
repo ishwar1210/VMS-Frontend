@@ -4,6 +4,7 @@ import "./Securityapprovalview.css";
 import { endpoints } from "../api/endpoint";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "../context/AuthContext";
 
 interface VisitorEntry {
   visitorEntry_Id: number;
@@ -15,6 +16,7 @@ interface VisitorEntry {
   visitorEntry_Intime: string;
   visitorEntry_Outtime?: string;
   visitorEntry_Userid: number;
+  visitorEntry_Purposeofvisit?: string;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
   visitorEntry_isApproval?: boolean;
@@ -33,6 +35,33 @@ interface Visitor {
 }
 
 function Securityapprovalview() {
+  const { token } = useAuth();
+
+  const getLoggedInUserId = (): number => {
+    if (!token) return 0;
+    try {
+      if (token.split(".").length === 3) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId =
+          payload?.userId ||
+          payload?.UserId ||
+          payload?.user_id ||
+          payload?.sub ||
+          payload?.nameid ||
+          payload?.[
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+          ] ||
+          0;
+        return Number(userId) || 0;
+      }
+    } catch (e) {
+      console.error("Error decoding token for userId:", e);
+    }
+    return 0;
+  };
+
+  const loggedInUserId = getLoggedInUserId();
+
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
   const [, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -58,6 +87,7 @@ function Securityapprovalview() {
     visitorEntry_Intime: "",
     visitorEntry_Outtime: "",
     visitorEntry_Userid: 0,
+    visitorEntry_Purposeofvisit: "",
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
     visitorEntry_isApproval: false,
@@ -224,6 +254,12 @@ function Securityapprovalview() {
               it.userid ??
               it.Userid ??
               0,
+            visitorEntry_Purposeofvisit:
+              it.visitorEntry_Purposeofvisit ??
+              it.VisitorEntry_Purposeofvisit ??
+              it.purposeofvisit ??
+              it.Purposeofvisit ??
+              "",
             visitorEntry_isCanteen:
               it.visitorEntry_isCanteen ??
               it.visitorEntry_IsCanteen ??
@@ -664,6 +700,7 @@ function Securityapprovalview() {
       visitorEntry_Intime: "",
       visitorEntry_Outtime: "",
       visitorEntry_Userid: 0,
+      visitorEntry_Purposeofvisit: "",
       visitorEntry_isCanteen: false,
       visitorEntry_isStay: false,
       visitorEntry_isApproval: false,
@@ -952,6 +989,34 @@ function Securityapprovalview() {
                       }}
                     >
                       {viewingEntry.visitorEntry_Vehicleno || "-"}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Purpose of Visit:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {viewingEntry.visitorEntry_Purposeofvisit || "-"}
                     </div>
                   </div>
                   <div
@@ -1551,46 +1616,48 @@ function Securityapprovalview() {
                                 <circle cx="12" cy="12" r="3"></circle>
                               </svg>
                             </button>
-                            {!entry.visitorEntry_adminApproval && (
-                              <>
-                                <button
-                                  className="action-btn approve-btn"
-                                  onClick={() => handleApprove(entry)}
-                                  title="Approve"
-                                  aria-label="Approve"
-                                  style={{
-                                    padding: "6px 12px",
-                                    background: "#10b981",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    fontWeight: "600",
-                                    fontSize: "16px",
-                                  }}
-                                >
-                                  ✓
-                                </button>
-                                <button
-                                  className="action-btn reject-btn"
-                                  onClick={() => handleReject(entry)}
-                                  title="Reject"
-                                  aria-label="Reject"
-                                  style={{
-                                    padding: "6px 12px",
-                                    background: "#ef4444",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    fontWeight: "600",
-                                    fontSize: "16px",
-                                  }}
-                                >
-                                  ✕
-                                </button>
-                              </>
-                            )}
+                            {!entry.visitorEntry_adminApproval &&
+                              loggedInUserId > 0 &&
+                              entry.visitorEntry_Userid === loggedInUserId && (
+                                <>
+                                  <button
+                                    className="action-btn approve-btn"
+                                    onClick={() => handleApprove(entry)}
+                                    title="Approve"
+                                    aria-label="Approve"
+                                    style={{
+                                      padding: "6px 12px",
+                                      background: "#10b981",
+                                      color: "white",
+                                      border: "none",
+                                      borderRadius: "6px",
+                                      cursor: "pointer",
+                                      fontWeight: "600",
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    ✓
+                                  </button>
+                                  <button
+                                    className="action-btn reject-btn"
+                                    onClick={() => handleReject(entry)}
+                                    title="Reject"
+                                    aria-label="Reject"
+                                    style={{
+                                      padding: "6px 12px",
+                                      background: "#ef4444",
+                                      color: "white",
+                                      border: "none",
+                                      borderRadius: "6px",
+                                      cursor: "pointer",
+                                      fontWeight: "600",
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    ✕
+                                  </button>
+                                </>
+                              )}
                           </div>
                         </td>
                       </tr>

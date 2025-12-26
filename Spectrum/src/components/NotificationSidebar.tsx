@@ -297,6 +297,23 @@ const NotificationSidebar = forwardRef(
               item.visitorEntryUserid ||
               item.userId ||
               0,
+            visitorEntryPurpose:
+              item.visitorEntry_Purposeofvisit ??
+              item.VisitorEntry_Purposeofvisit ??
+              item.purposeofvisit ??
+              item.Purposeofvisit ??
+              item.purpose ??
+              item.Purpose ??
+              "",
+            // Provide a normalized field used by the UI (falls back to entry purpose)
+            visitorPurposeofvisit:
+              item.visitorEntry_Purposeofvisit ??
+              item.VisitorEntry_Purposeofvisit ??
+              item.purposeofvisit ??
+              item.Purposeofvisit ??
+              item.purpose ??
+              item.Purpose ??
+              undefined,
           };
         });
 
@@ -324,7 +341,9 @@ const NotificationSidebar = forwardRef(
                     v.visitorCompanyName ||
                     v.companyName ||
                     undefined,
+                  // Prefer purpose from the visitor entry itself; fallback to visitor record
                   visitorPurposeofvisit:
+                    a.visitorEntryPurpose ||
                     v.visitor_Purposeofvisit ||
                     v.visitorPurposeofvisit ||
                     v.purpose ||

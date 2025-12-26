@@ -15,6 +15,7 @@ interface VisitorEntry {
   visitorEntry_Intime: string;
   visitorEntry_Outtime?: string;
   visitorEntry_Userid: number;
+  visitorEntry_Purposeofvisit?: string;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
   visitorEntry_isApproval?: boolean;
@@ -86,6 +87,7 @@ function Visitorentryapprovalemp() {
     visitorEntry_Intime: "",
     visitorEntry_Outtime: "",
     visitorEntry_Userid: 0,
+    visitorEntry_Purposeofvisit: "",
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
     visitorEntry_isApproval: false,
@@ -259,6 +261,12 @@ function Visitorentryapprovalemp() {
               it.userid ??
               it.Userid ??
               0,
+            visitorEntry_Purposeofvisit:
+              it.visitorEntry_Purposeofvisit ??
+              it.VisitorEntry_Purposeofvisit ??
+              it.purposeofvisit ??
+              it.Purposeofvisit ??
+              "",
             visitorEntry_isCanteen:
               it.visitorEntry_isCanteen ??
               it.visitorEntry_IsCanteen ??
@@ -559,6 +567,7 @@ function Visitorentryapprovalemp() {
       visitorEntry_Intime: "",
       visitorEntry_Outtime: "",
       visitorEntry_Userid: 0,
+      visitorEntry_Purposeofvisit: "",
       visitorEntry_isCanteen: false,
       visitorEntry_isStay: false,
       visitorEntry_isApproval: false,
@@ -704,889 +713,936 @@ function Visitorentryapprovalemp() {
       />
       <div className="rolemaster-container">
         <div className="rolemaster-header">
-          <h1 className="rolemaster-title">Visitor Entry Approval (Employee)</h1>
+          <h1 className="rolemaster-title">
+            Visitor Entry Approval (Employee)
+          </h1>
         </div>
 
-      {showViewModal && viewingEntry && (
-        <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Visitor Entry Details</h2>
-              <button
-                className="modal-close"
-                onClick={() => setShowViewModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div
-              className="modal-form"
-              style={{
-                maxHeight: "calc(70vh - 120px)",
-                overflowY: "auto",
-                padding: "20px",
-              }}
-            >
+        {showViewModal && viewingEntry && (
+          <div
+            className="modal-overlay"
+            onClick={() => setShowViewModal(false)}
+          >
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">Visitor Entry Details</h2>
+                <button
+                  className="modal-close"
+                  onClick={() => setShowViewModal(false)}
+                >
+                  ×
+                </button>
+              </div>
               <div
+                className="modal-form"
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
+                  maxHeight: "calc(70vh - 120px)",
+                  overflowY: "auto",
+                  padding: "20px",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
+                    flexDirection: "column",
+                    gap: "16px",
                   }}
                 >
-                  <label
-                    style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
-                    }}
-                  >
-                    Visitor Name:
-                  </label>
                   <div
                     style={{
-                      color: "#1f2937",
-                      textAlign: "right",
-                      fontWeight: "500",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
                     }}
                   >
-                    {viewingEntry.visitorEntry_visitorName || "-"}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
-                    style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
-                    }}
-                  >
-                    Gatepass:
-                  </label>
-                  <div
-                    style={{
-                      color: "#1f2937",
-                      textAlign: "right",
-                      fontWeight: "500",
-                    }}
-                  >
-                    {viewingEntry.visitorEntry_Gatepass || "-"}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
-                    style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
-                    }}
-                  >
-                    Vehicle Type:
-                  </label>
-                  <div
-                    style={{
-                      color: "#1f2937",
-                      textAlign: "right",
-                      fontWeight: "500",
-                    }}
-                  >
-                    {viewingEntry.visitorEntry_Vehicletype || "-"}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
-                    style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
-                    }}
-                  >
-                    Vehicle No:
-                  </label>
-                  <div
-                    style={{
-                      color: "#1f2937",
-                      textAlign: "right",
-                      fontWeight: "500",
-                    }}
-                  >
-                    {viewingEntry.visitorEntry_Vehicleno || "-"}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
-                    style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
-                    }}
-                  >
-                    Date:
-                  </label>
-                  <div
-                    style={{
-                      color: "#1f2937",
-                      textAlign: "right",
-                      fontWeight: "500",
-                    }}
-                  >
-                    {formatDateOnly(viewingEntry.visitorEntry_Date)}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
-                    style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
-                    }}
-                  >
-                    In Time:
-                  </label>
-                  <div
-                    style={{
-                      color: "#1f2937",
-                      textAlign: "right",
-                      fontWeight: "500",
-                    }}
-                  >
-                    {formatTimeOnly(viewingEntry.visitorEntry_Intime)}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
-                    style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
-                    }}
-                  >
-                    Out Time:
-                  </label>
-                  <div
-                    style={{
-                      color: "#1f2937",
-                      textAlign: "right",
-                      fontWeight: "500",
-                    }}
-                  >
-                    {formatTimeOnly(viewingEntry.visitorEntry_Outtime) ||
-                      "Not Set"}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
-                    style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
-                    }}
-                  >
-                    Admin Approved:
-                  </label>
-                  <div style={{ textAlign: "right" }}>
-                    <span
-                      className={`status-badge ${
-                        viewingEntry.visitorEntry_adminApproval
-                          ? "active"
-                          : "inactive"
-                      }`}
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
                     >
-                      {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
-                    </span>
+                      Visitor Name:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {viewingEntry.visitorEntry_visitorName || "-"}
+                    </div>
                   </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
+                  <div
                     style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
                     }}
                   >
-                    User Approved:
-                  </label>
-                  <div style={{ textAlign: "right" }}>
-                    <span
-                      className={`status-badge ${
-                        viewingEntry.visitorEntry_userApproval
-                          ? "active"
-                          : "inactive"
-                      }`}
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
                     >
-                      {viewingEntry.visitorEntry_userApproval ? "YES" : "NO"}
-                    </span>
+                      Gatepass:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {viewingEntry.visitorEntry_Gatepass || "-"}
+                    </div>
                   </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
+                  <div
                     style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
                     }}
                   >
-                    Rejected:
-                  </label>
-                  <div style={{ textAlign: "right" }}>
-                    <span
-                      className={`status-badge ${
-                        viewingEntry.visitorEntry_userReject
-                          ? "status-rejected"
-                          : "inactive"
-                      }`}
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
                     >
-                      {viewingEntry.visitorEntry_userReject ? "YES" : "NO"}
-                    </span>
+                      Vehicle Type:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {viewingEntry.visitorEntry_Vehicletype || "-"}
+                    </div>
                   </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
+                  <div
                     style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
                     }}
                   >
-                    Canteen:
-                  </label>
-                  <div style={{ textAlign: "right" }}>
-                    <span
-                      className={`status-badge ${
-                        viewingEntry.visitorEntry_isCanteen
-                          ? "active"
-                          : "inactive"
-                      }`}
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
                     >
-                      {viewingEntry.visitorEntry_isCanteen ? "Yes" : "No"}
-                    </span>
+                      Vehicle No:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {viewingEntry.visitorEntry_Vehicleno || "-"}
+                    </div>
                   </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  <label
+                  <div
                     style={{
-                      fontWeight: "600",
-                      color: "#374151",
-                      minWidth: "140px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
                     }}
                   >
-                    Stay:
-                  </label>
-                  <div style={{ textAlign: "right" }}>
-                    <span
-                      className={`status-badge ${
-                        viewingEntry.visitorEntry_isStay ? "active" : "inactive"
-                      }`}
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
                     >
-                      {viewingEntry.visitorEntry_isStay ? "Yes" : "No"}
-                    </span>
+                      Purpose of Visit:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {viewingEntry.visitorEntry_Purposeofvisit || "-"}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Date:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {formatDateOnly(viewingEntry.visitorEntry_Date)}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      In Time:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {formatTimeOnly(viewingEntry.visitorEntry_Intime)}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Out Time:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {formatTimeOnly(viewingEntry.visitorEntry_Outtime) ||
+                        "Not Set"}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Admin Approved:
+                    </label>
+                    <div style={{ textAlign: "right" }}>
+                      <span
+                        className={`status-badge ${
+                          viewingEntry.visitorEntry_adminApproval
+                            ? "active"
+                            : "inactive"
+                        }`}
+                      >
+                        {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      User Approved:
+                    </label>
+                    <div style={{ textAlign: "right" }}>
+                      <span
+                        className={`status-badge ${
+                          viewingEntry.visitorEntry_userApproval
+                            ? "active"
+                            : "inactive"
+                        }`}
+                      >
+                        {viewingEntry.visitorEntry_userApproval ? "YES" : "NO"}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Rejected:
+                    </label>
+                    <div style={{ textAlign: "right" }}>
+                      <span
+                        className={`status-badge ${
+                          viewingEntry.visitorEntry_userReject
+                            ? "status-rejected"
+                            : "inactive"
+                        }`}
+                      >
+                        {viewingEntry.visitorEntry_userReject ? "YES" : "NO"}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Canteen:
+                    </label>
+                    <div style={{ textAlign: "right" }}>
+                      <span
+                        className={`status-badge ${
+                          viewingEntry.visitorEntry_isCanteen
+                            ? "active"
+                            : "inactive"
+                        }`}
+                      >
+                        {viewingEntry.visitorEntry_isCanteen ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Stay:
+                    </label>
+                    <div style={{ textAlign: "right" }}>
+                      <span
+                        className={`status-badge ${
+                          viewingEntry.visitorEntry_isStay
+                            ? "active"
+                            : "inactive"
+                        }`}
+                      >
+                        {viewingEntry.visitorEntry_isStay ? "Yes" : "No"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="modal-actions">
-              <button
-                className="btn-cancel"
-                onClick={() => setShowViewModal(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showForm && (
-        <div className="modal-overlay" onClick={resetForm}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Edit Visitor Entry</h2>
-              <button className="modal-close" onClick={resetForm}>
-                ×
-              </button>
-            </div>
-            <form className="modal-form" onSubmit={(e) => handleSubmit(e)}>
-              <div className="form-group">
-                <label>Visitor Name</label>
-                <input
-                  name="visitorEntry_visitorName"
-                  value={formData.visitorEntry_visitorName}
-                  className="role-input"
-                  disabled
-                  style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
-                />
-              </div>
-              <div className="form-group">
-                <label>Visitor ID</label>
-                <input
-                  name="visitorEntry_visitorId"
-                  type="number"
-                  value={formData.visitorEntry_visitorId}
-                  onChange={handleInputChange}
-                  className="role-input"
-                  required
-                  disabled
-                  style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
-                />
-              </div>
-              <div className="form-group">
-                <label>Gatepass</label>
-                <input
-                  name="visitorEntry_Gatepass"
-                  value={formData.visitorEntry_Gatepass}
-                  onChange={handleInputChange}
-                  className="role-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Vehicle Type</label>
-                <select
-                  name="visitorEntry_Vehicletype"
-                  value={formData.visitorEntry_Vehicletype}
-                  onChange={handleInputChange}
-                  className="role-input"
-                >
-                  <option value="">Select Type</option>
-                  <option value="Car">Car</option>
-                  <option value="Bike">Bike</option>
-                  <option value="Two Wheeler">Two Wheeler</option>
-                  <option value="Truck">Truck</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Vehicle No</label>
-                <input
-                  name="visitorEntry_Vehicleno"
-                  value={formData.visitorEntry_Vehicleno}
-                  onChange={handleInputChange}
-                  className="role-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Date</label>
-                <input
-                  name="visitorEntry_Date"
-                  type="datetime-local"
-                  value={formData.visitorEntry_Date}
-                  onChange={handleInputChange}
-                  className="role-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>In Time</label>
-                <input
-                  name="visitorEntry_Intime"
-                  type="datetime-local"
-                  value={formData.visitorEntry_Intime}
-                  onChange={handleInputChange}
-                  className="role-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Out Time</label>
-                <input
-                  name="visitorEntry_Outtime"
-                  type="datetime-local"
-                  value={formData.visitorEntry_Outtime}
-                  onChange={handleInputChange}
-                  className="role-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>User ID</label>
-                <input
-                  name="visitorEntry_Userid"
-                  type="number"
-                  value={formData.visitorEntry_Userid}
-                  onChange={handleInputChange}
-                  className="role-input"
-                />
-              </div>
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    name="visitorEntry_isCanteen"
-                    type="checkbox"
-                    checked={!!formData.visitorEntry_isCanteen}
-                    onChange={handleInputChange}
-                  />{" "}
-                  <span>Canteen Access</span>
-                </label>
-              </div>
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    name="visitorEntry_userApproval"
-                    type="checkbox"
-                    checked={!!formData.visitorEntry_userApproval}
-                    onChange={handleInputChange}
-                  />{" "}
-                  <span>User Approved</span>
-                </label>
-              </div>
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    name="visitorEntry_isStay"
-                    type="checkbox"
-                    checked={!!formData.visitorEntry_isStay}
-                    onChange={handleInputChange}
-                  />{" "}
-                  <span>Stay</span>
-                </label>
-              </div>
-
-              {error && <div className="error-message">{error}</div>}
-
               <div className="modal-actions">
                 <button
-                  type="button"
                   className="btn-cancel"
-                  onClick={resetForm}
+                  onClick={() => setShowViewModal(false)}
                 >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-submit" disabled={loading}>
-                  {loading ? "Saving..." : "Update"}
+                  Close
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <div className="role-table-section-full">
-        {/* Current entries controls */}
-        <div className="table-controls">
-          <div className="show-entries">
-            <span>Show</span>
-            <select
-              className="entries-select"
-              value={entriesPerPage}
-              onChange={(e) => {
-                setEntriesPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span>entries</span>
-          </div>
-          <div className="search-box">
-            <span>Search:</span>
-            <input
-              className="search-input"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search by name, gatepass or vehicle..."
-            />
-          </div>
-        </div>
-
-        <div className="role-table-wrapper">
-          {loading ? (
-            <div className="loading-state">Loading...</div>
-          ) : currentFiltered.length === 0 ? (
-            <div className="empty-state">
-              {searchTerm
-                ? "No current entries found"
-                : entries.length === 0
-                ? "No visitor entries assigned to you"
-                : "No current visitor entries"}
             </div>
-          ) : (
-            <>
-              <table className="role-table">
-                <thead>
-                  <tr>
-                    <th>Sr.No.</th>
-                    <th>Gatepass</th>
-                    <th>Visitor Name</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentDisplayed.map((entry, idx) => (
-                    <tr
-                      key={
-                        entry.visitorEntry_Id
-                          ? `cur-${entry.visitorEntry_Id}`
-                          : `cur-${entry.visitorEntry_Gatepass || "gp"}-${
-                              currentStartIndex + idx
-                            }`
-                      }
-                    >
-                      <td>{currentStartIndex + idx + 1}</td>
-                      <td>{entry.visitorEntry_Gatepass}</td>
-                      <td>{entry.visitorEntry_visitorName}</td>
-                      <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
-                      <td>
-                        <div
-                          className="action-buttons"
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <button
-                            className="action-btn view-btn"
-                            onClick={() => handleView(entry)}
-                            title="View Details"
-                            aria-label="View Details"
-                            style={{
-                              padding: "6px 10px",
-                              background: "#3b82f6",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "6px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                              <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                          </button>
-                          {!entry.visitorEntry_userApproval && (
-                            <>
-                              <button
-                                className="action-btn approve-btn"
-                                onClick={() => handleApprove(entry)}
-                                title="Approve"
-                                aria-label="Approve"
-                                style={{
-                                  padding: "6px 12px",
-                                  background: "#10b981",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "6px",
-                                  cursor: "pointer",
-                                  fontWeight: "600",
-                                  fontSize: "16px",
-                                }}
-                              >
-                                ✓
-                              </button>
-                              <button
-                                className="action-btn reject-btn"
-                                onClick={() => handleReject(entry)}
-                                title="Reject"
-                                aria-label="Reject"
-                                style={{
-                                  padding: "6px 12px",
-                                  background: "#ef4444",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "6px",
-                                  cursor: "pointer",
-                                  fontWeight: "600",
-                                  fontSize: "16px",
-                                }}
-                              >
-                                ✕
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          </div>
+        )}
 
-              {currentTotalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    className="pagination-btn"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
+        {showForm && (
+          <div className="modal-overlay" onClick={resetForm}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 className="modal-title">Edit Visitor Entry</h2>
+                <button className="modal-close" onClick={resetForm}>
+                  ×
+                </button>
+              </div>
+              <form className="modal-form" onSubmit={(e) => handleSubmit(e)}>
+                <div className="form-group">
+                  <label>Visitor Name</label>
+                  <input
+                    name="visitorEntry_visitorName"
+                    value={formData.visitorEntry_visitorName}
+                    className="role-input"
+                    disabled
+                    style={{
+                      backgroundColor: "#f5f5f5",
+                      cursor: "not-allowed",
+                    }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Visitor ID</label>
+                  <input
+                    name="visitorEntry_visitorId"
+                    type="number"
+                    value={formData.visitorEntry_visitorId}
+                    onChange={handleInputChange}
+                    className="role-input"
+                    required
+                    disabled
+                    style={{
+                      backgroundColor: "#f5f5f5",
+                      cursor: "not-allowed",
+                    }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Gatepass</label>
+                  <input
+                    name="visitorEntry_Gatepass"
+                    value={formData.visitorEntry_Gatepass}
+                    onChange={handleInputChange}
+                    className="role-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Vehicle Type</label>
+                  <select
+                    name="visitorEntry_Vehicletype"
+                    value={formData.visitorEntry_Vehicletype}
+                    onChange={handleInputChange}
+                    className="role-input"
                   >
-                    Previous
+                    <option value="">Select Type</option>
+                    <option value="Car">Car</option>
+                    <option value="Bike">Bike</option>
+                    <option value="Two Wheeler">Two Wheeler</option>
+                    <option value="Truck">Truck</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Vehicle No</label>
+                  <input
+                    name="visitorEntry_Vehicleno"
+                    value={formData.visitorEntry_Vehicleno}
+                    onChange={handleInputChange}
+                    className="role-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Date</label>
+                  <input
+                    name="visitorEntry_Date"
+                    type="datetime-local"
+                    value={formData.visitorEntry_Date}
+                    onChange={handleInputChange}
+                    className="role-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>In Time</label>
+                  <input
+                    name="visitorEntry_Intime"
+                    type="datetime-local"
+                    value={formData.visitorEntry_Intime}
+                    onChange={handleInputChange}
+                    className="role-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Out Time</label>
+                  <input
+                    name="visitorEntry_Outtime"
+                    type="datetime-local"
+                    value={formData.visitorEntry_Outtime}
+                    onChange={handleInputChange}
+                    className="role-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>User ID</label>
+                  <input
+                    name="visitorEntry_Userid"
+                    type="number"
+                    value={formData.visitorEntry_Userid}
+                    onChange={handleInputChange}
+                    className="role-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      name="visitorEntry_isCanteen"
+                      type="checkbox"
+                      checked={!!formData.visitorEntry_isCanteen}
+                      onChange={handleInputChange}
+                    />{" "}
+                    <span>Canteen Access</span>
+                  </label>
+                </div>
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      name="visitorEntry_userApproval"
+                      type="checkbox"
+                      checked={!!formData.visitorEntry_userApproval}
+                      onChange={handleInputChange}
+                    />{" "}
+                    <span>User Approved</span>
+                  </label>
+                </div>
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      name="visitorEntry_isStay"
+                      type="checkbox"
+                      checked={!!formData.visitorEntry_isStay}
+                      onChange={handleInputChange}
+                    />{" "}
+                    <span>Stay</span>
+                  </label>
+                </div>
+
+                {error && <div className="error-message">{error}</div>}
+
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={resetForm}
+                  >
+                    Cancel
                   </button>
-                  <span className="pagination-info">
-                    Page {currentPage} of {currentTotalPages}
-                  </span>
                   <button
-                    className="pagination-btn"
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(currentTotalPages, p + 1))
-                    }
-                    disabled={currentPage === currentTotalPages}
+                    type="submit"
+                    className="btn-submit"
+                    disabled={loading}
                   >
-                    Next
+                    {loading ? "Saving..." : "Update"}
                   </button>
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* History section (read-only, no edit/update) */}
-      <div className="role-table-section-full" style={{ marginTop: 24 }}>
-        <div
-          className="rolemaster-header"
-          style={{ paddingLeft: 0, paddingRight: 0 }}
-        >
-          <h2 className="rolemaster-title">Visitor Entry Approval History</h2>
-        </div>
-
-        <div className="table-controls">
-          <div className="show-entries">
-            <span>Show</span>
-            <select
-              className="entries-select"
-              value={historyEntriesPerPage}
-              onChange={(e) => {
-                setHistoryEntriesPerPage(Number(e.target.value));
-                setHistoryCurrentPage(1);
-              }}
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span>entries</span>
-          </div>
-          <div className="search-box">
-            <span>Search:</span>
-            <input
-              className="search-input"
-              value={historySearchTerm}
-              onChange={(e) => {
-                setHistorySearchTerm(e.target.value);
-                setHistoryCurrentPage(1);
-              }}
-              placeholder="Search history by name, gatepass or vehicle..."
-            />
-          </div>
-        </div>
-
-        <div className="role-table-wrapper">
-          {loading ? (
-            <div className="loading-state">Loading...</div>
-          ) : historyFiltered.length === 0 ? (
-            <div className="empty-state">
-              {historySearchTerm
-                ? "No history entries found"
-                : "No visitor entry history"}
+              </form>
             </div>
-          ) : (
-            <>
-              <table className="role-table">
-                <thead>
-                  <tr>
-                    <th>Sr.No.</th>
-                    <th>Gatepass</th>
-                    <th>Visitor Name</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historyDisplayed.map((entry, idx) => (
-                    <tr
-                      key={
-                        entry.visitorEntry_Id
-                          ? `hist-${entry.visitorEntry_Id}`
-                          : `hist-${entry.visitorEntry_Gatepass || "gp"}-${
-                              historyStartIndex + idx
-                            }`
-                      }
-                    >
-                      <td>{historyStartIndex + idx + 1}</td>
-                      <td>{entry.visitorEntry_Gatepass}</td>
-                      <td>{entry.visitorEntry_visitorName}</td>
-                      <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
-                      <td>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <button
-                            className="action-btn view-btn"
-                            onClick={() => handleView(entry)}
-                            title="View Details"
-                            aria-label="View Details"
+          </div>
+        )}
+
+        <div className="role-table-section-full">
+          {/* Current entries controls */}
+          <div className="table-controls">
+            <div className="show-entries">
+              <span>Show</span>
+              <select
+                className="entries-select"
+                value={entriesPerPage}
+                onChange={(e) => {
+                  setEntriesPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>entries</span>
+            </div>
+            <div className="search-box">
+              <span>Search:</span>
+              <input
+                className="search-input"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Search by name, gatepass or vehicle..."
+              />
+            </div>
+          </div>
+
+          <div className="role-table-wrapper">
+            {loading ? (
+              <div className="loading-state">Loading...</div>
+            ) : currentFiltered.length === 0 ? (
+              <div className="empty-state">
+                {searchTerm
+                  ? "No current entries found"
+                  : entries.length === 0
+                  ? "No visitor entries assigned to you"
+                  : "No current visitor entries"}
+              </div>
+            ) : (
+              <>
+                <table className="role-table">
+                  <thead>
+                    <tr>
+                      <th>Sr.No.</th>
+                      <th>Gatepass</th>
+                      <th>Visitor Name</th>
+                      <th>Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentDisplayed.map((entry, idx) => (
+                      <tr
+                        key={
+                          entry.visitorEntry_Id
+                            ? `cur-${entry.visitorEntry_Id}`
+                            : `cur-${entry.visitorEntry_Gatepass || "gp"}-${
+                                currentStartIndex + idx
+                              }`
+                        }
+                      >
+                        <td>{currentStartIndex + idx + 1}</td>
+                        <td>{entry.visitorEntry_Gatepass}</td>
+                        <td>{entry.visitorEntry_visitorName}</td>
+                        <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
+                        <td>
+                          <div
+                            className="action-buttons"
                             style={{
-                              padding: "6px 10px",
-                              background: entry.visitorEntry_userReject
-                                ? "#ef4444"
-                                : "#3b82f6",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "6px",
-                              cursor: "pointer",
+                              display: "flex",
+                              gap: "8px",
+                              justifyContent: "center",
                             }}
                           >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
+                            <button
+                              className="action-btn view-btn"
+                              onClick={() => handleView(entry)}
+                              title="View Details"
+                              aria-label="View Details"
+                              style={{
+                                padding: "6px 10px",
+                                background: "#3b82f6",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                              }}
                             >
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                              <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                              </svg>
+                            </button>
+                            {!entry.visitorEntry_userApproval && (
+                              <>
+                                <button
+                                  className="action-btn approve-btn"
+                                  onClick={() => handleApprove(entry)}
+                                  title="Approve"
+                                  aria-label="Approve"
+                                  style={{
+                                    padding: "6px 12px",
+                                    background: "#10b981",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    fontWeight: "600",
+                                    fontSize: "16px",
+                                  }}
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  className="action-btn reject-btn"
+                                  onClick={() => handleReject(entry)}
+                                  title="Reject"
+                                  aria-label="Reject"
+                                  style={{
+                                    padding: "6px 12px",
+                                    background: "#ef4444",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    fontWeight: "600",
+                                    fontSize: "16px",
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
-              {historyTotalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    className="pagination-btn"
-                    onClick={() =>
-                      setHistoryCurrentPage((p) => Math.max(1, p - 1))
-                    }
-                    disabled={historyCurrentPage === 1}
-                  >
-                    Previous
-                  </button>
-                  <span className="pagination-info">
-                    Page {historyCurrentPage} of {historyTotalPages}
-                  </span>
-                  <button
-                    className="pagination-btn"
-                    onClick={() =>
-                      setHistoryCurrentPage((p) =>
-                        Math.min(historyTotalPages, p + 1)
-                      )
-                    }
-                    disabled={historyCurrentPage === historyTotalPages}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+                {currentTotalPages > 1 && (
+                  <div className="pagination">
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <span className="pagination-info">
+                      Page {currentPage} of {currentTotalPages}
+                    </span>
+                    <button
+                      className="pagination-btn"
+                      onClick={() =>
+                        setCurrentPage((p) =>
+                          Math.min(currentTotalPages, p + 1)
+                        )
+                      }
+                      disabled={currentPage === currentTotalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* History section (read-only, no edit/update) */}
+        <div className="role-table-section-full" style={{ marginTop: 24 }}>
+          <div
+            className="rolemaster-header"
+            style={{ paddingLeft: 0, paddingRight: 0 }}
+          >
+            <h2 className="rolemaster-title">Visitor Entry Approval History</h2>
+          </div>
+
+          <div className="table-controls">
+            <div className="show-entries">
+              <span>Show</span>
+              <select
+                className="entries-select"
+                value={historyEntriesPerPage}
+                onChange={(e) => {
+                  setHistoryEntriesPerPage(Number(e.target.value));
+                  setHistoryCurrentPage(1);
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>entries</span>
+            </div>
+            <div className="search-box">
+              <span>Search:</span>
+              <input
+                className="search-input"
+                value={historySearchTerm}
+                onChange={(e) => {
+                  setHistorySearchTerm(e.target.value);
+                  setHistoryCurrentPage(1);
+                }}
+                placeholder="Search history by name, gatepass or vehicle..."
+              />
+            </div>
+          </div>
+
+          <div className="role-table-wrapper">
+            {loading ? (
+              <div className="loading-state">Loading...</div>
+            ) : historyFiltered.length === 0 ? (
+              <div className="empty-state">
+                {historySearchTerm
+                  ? "No history entries found"
+                  : "No visitor entry history"}
+              </div>
+            ) : (
+              <>
+                <table className="role-table">
+                  <thead>
+                    <tr>
+                      <th>Sr.No.</th>
+                      <th>Gatepass</th>
+                      <th>Visitor Name</th>
+                      <th>Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyDisplayed.map((entry, idx) => (
+                      <tr
+                        key={
+                          entry.visitorEntry_Id
+                            ? `hist-${entry.visitorEntry_Id}`
+                            : `hist-${entry.visitorEntry_Gatepass || "gp"}-${
+                                historyStartIndex + idx
+                              }`
+                        }
+                      >
+                        <td>{historyStartIndex + idx + 1}</td>
+                        <td>{entry.visitorEntry_Gatepass}</td>
+                        <td>{entry.visitorEntry_visitorName}</td>
+                        <td>{formatDateOnly(entry.visitorEntry_Date)}</td>
+                        <td>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <button
+                              className="action-btn view-btn"
+                              onClick={() => handleView(entry)}
+                              title="View Details"
+                              aria-label="View Details"
+                              style={{
+                                padding: "6px 10px",
+                                background: entry.visitorEntry_userReject
+                                  ? "#ef4444"
+                                  : "#3b82f6",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {historyTotalPages > 1 && (
+                  <div className="pagination">
+                    <button
+                      className="pagination-btn"
+                      onClick={() =>
+                        setHistoryCurrentPage((p) => Math.max(1, p - 1))
+                      }
+                      disabled={historyCurrentPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <span className="pagination-info">
+                      Page {historyCurrentPage} of {historyTotalPages}
+                    </span>
+                    <button
+                      className="pagination-btn"
+                      onClick={() =>
+                        setHistoryCurrentPage((p) =>
+                          Math.min(historyTotalPages, p + 1)
+                        )
+                      }
+                      disabled={historyCurrentPage === historyTotalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }

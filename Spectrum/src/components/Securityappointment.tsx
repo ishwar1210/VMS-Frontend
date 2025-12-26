@@ -10,7 +10,6 @@ type VisitorFormData = {
   visitor_mobile: string;
   visitor_Address: string;
   visitor_CompanyName: string;
-  visitor_Purposeofvisit: string;
   visitor_Idprooftype: string;
   visitor_idproofno: string;
   visitor_MeetingDate: string;
@@ -23,6 +22,7 @@ type VisitorEntryFormData = {
   visitorEntry_Vehicleno: string;
   visitorEntry_Date: string;
   visitorEntry_Userid: number;
+  visitorEntry_Purposeofvisit: string;
   visitorEntry_isApproval: boolean;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
@@ -54,7 +54,6 @@ export default function Securityappointment({
     visitor_mobile: "",
     visitor_Address: "",
     visitor_CompanyName: "",
-    visitor_Purposeofvisit: "",
     visitor_Idprooftype: "Aadhar",
     visitor_idproofno: "",
     visitor_MeetingDate: "",
@@ -68,6 +67,7 @@ export default function Securityappointment({
     visitorEntry_Vehicleno: "",
     visitorEntry_Date: "",
     visitorEntry_Userid: 0,
+    visitorEntry_Purposeofvisit: "",
     visitorEntry_isApproval: false,
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
@@ -105,12 +105,53 @@ export default function Securityappointment({
     }
   };
 
-  const generateGatePass = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0");
-    return `GP${timestamp}${random}`;
+  const generateGatePass = (persist: boolean = false) => {
+    try {
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const day = pad(now.getDate());
+      const month = pad(now.getMonth() + 1);
+      const todayKey = `${now.getFullYear()}-${month}-${day}`; // YYYY-MM-DD
+
+      const storageKey = "gatepass_seq";
+      let seq = 1;
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (
+            parsed &&
+            parsed.date === todayKey &&
+            typeof parsed.seq === "number"
+          ) {
+            seq = parsed.seq + 1;
+          }
+        }
+      } catch (e) {
+        // ignore localStorage parse errors
+      }
+
+      const seqStr = String(seq).padStart(4, "0");
+
+      if (persist) {
+        try {
+          localStorage.setItem(
+            storageKey,
+            JSON.stringify({ date: todayKey, seq })
+          );
+        } catch (e) {
+          // ignore storage errors
+        }
+      }
+
+      return `GP-${day}-${month}-${seqStr}`;
+    } catch (e) {
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000)
+        .toString()
+        .padStart(3, "0");
+      return `GP${timestamp}${random}`;
+    }
   };
 
   const startCamera = async () => {
@@ -290,6 +331,14 @@ export default function Securityappointment({
         visitorEntry_isStay: false,
       };
 
+      // Reserve and persist gatepass only when actually saving to DB
+      try {
+        payload.visitorEntry_Gatepass = generateGatePass(true);
+      } catch (e) {
+        payload.visitorEntry_Gatepass =
+          payload.visitorEntry_Gatepass || generateGatePass(false);
+      }
+
       await endpoints.visitorEntry.create(payload);
       toast.success("Preappointment created successfully (via Security)!");
 
@@ -303,7 +352,6 @@ export default function Securityappointment({
         visitor_mobile: "",
         visitor_Address: "",
         visitor_CompanyName: "",
-        visitor_Purposeofvisit: "",
         visitor_Idprooftype: "Aadhar",
         visitor_idproofno: "",
         visitor_MeetingDate: "",
@@ -315,6 +363,7 @@ export default function Securityappointment({
         visitorEntry_Vehicleno: "",
         visitorEntry_Date: "",
         visitorEntry_Userid: 0,
+        visitorEntry_Purposeofvisit: "",
         visitorEntry_isApproval: false,
         visitorEntry_isCanteen: false,
         visitorEntry_isStay: false,
@@ -470,8 +519,6 @@ export default function Securityappointment({
                                 v.visitor_Address || v.address || "",
                               visitor_CompanyName:
                                 v.visitor_CompanyName || v.company || "",
-                              visitor_Purposeofvisit:
-                                v.visitor_Purposeofvisit || v.purpose || "",
                               visitor_Idprooftype:
                                 v.visitor_Idprooftype ||
                                 v.idProofType ||
@@ -572,17 +619,6 @@ export default function Securityappointment({
                   type="text"
                   name="visitor_CompanyName"
                   value={visitorForm.visitor_CompanyName}
-                  onChange={handleVisitorChange}
-                  required
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Purpose of Visit *</label>
-                <input
-                  type="text"
-                  name="visitor_Purposeofvisit"
-                  value={visitorForm.visitor_Purposeofvisit}
                   onChange={handleVisitorChange}
                   required
                   className="form-input"
@@ -897,6 +933,17 @@ export default function Securityappointment({
             </div>
 
             <div className="form-row">
+              <div className="form-group">
+                <label>Purpose of Visit *</label>
+                <input
+                  type="text"
+                  name="visitorEntry_Purposeofvisit"
+                  value={entryForm.visitorEntry_Purposeofvisit}
+                  onChange={handleEntryChange}
+                  required
+                  className="form-input"
+                />
+              </div>
               <div className="form-group">
                 <label>Date *</label>
                 <input

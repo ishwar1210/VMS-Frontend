@@ -444,7 +444,7 @@ function Vendorgetpass() {
     // Title
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("Vendor Appointment", 14, 20);
+    doc.text("Vendor Gatepass", 14, 20);
 
     // Horizontal line
     doc.setLineWidth(0.5);
@@ -526,7 +526,7 @@ function Vendorgetpass() {
     });
 
     // Save the PDF
-    doc.save(`Vendor_Appointment_${currentGatepass}.pdf`);
+    doc.save(`Vendor_Gatepass_${currentGatepass}.pdf`);
 
     setMessage({
       type: "success",

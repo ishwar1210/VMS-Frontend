@@ -14,6 +14,7 @@ interface VisitorEntry {
   visitorEntry_Intime: string;
   visitorEntry_Outtime?: string;
   visitorEntry_Userid: number;
+  visitorEntry_Purposeofvisit?: string;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
   visitorEntry_isApproval?: boolean;
@@ -58,6 +59,7 @@ function Visitorentryapproval() {
     visitorEntry_Intime: "",
     visitorEntry_Outtime: "",
     visitorEntry_Userid: 0,
+    visitorEntry_Purposeofvisit: "",
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
     visitorEntry_isApproval: false,
@@ -231,6 +233,12 @@ function Visitorentryapproval() {
               it.userid ??
               it.Userid ??
               0,
+            visitorEntry_Purposeofvisit:
+              it.visitorEntry_Purposeofvisit ??
+              it.VisitorEntry_Purposeofvisit ??
+              it.purposeofvisit ??
+              it.Purposeofvisit ??
+              "",
             visitorEntry_isCanteen:
               it.visitorEntry_isCanteen ??
               it.visitorEntry_IsCanteen ??
@@ -496,6 +504,7 @@ function Visitorentryapproval() {
       visitorEntry_Intime: "",
       visitorEntry_Outtime: "",
       visitorEntry_Userid: 0,
+      visitorEntry_Purposeofvisit: "",
       visitorEntry_isCanteen: false,
       visitorEntry_isStay: false,
       visitorEntry_isApproval: false,
@@ -784,6 +793,34 @@ function Visitorentryapproval() {
                       }}
                     >
                       {viewingEntry.visitorEntry_Vehicleno || "-"}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: "#374151",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Purpose of Visit:
+                    </label>
+                    <div
+                      style={{
+                        color: "#1f2937",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {viewingEntry.visitorEntry_Purposeofvisit || "-"}
                     </div>
                   </div>
                   <div
