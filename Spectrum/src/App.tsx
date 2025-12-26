@@ -13,6 +13,7 @@ import Visitor from "./components/Visitor";
 import Preappointment from "./components/Preappointment";
 import Securityappointment from "./components/Securityappointment";
 import Securityapprovalview from "./components/Securityapprovalview";
+import Barcodescanner from "./components/Barcodescanner";
 import Admindashbord from "./components/Admindashbord";
 import Securitydashborad from "./components/Securitydashborad";
 import Securityparcelentry from "./components/Securityparcelentry";
@@ -216,6 +217,8 @@ function App() {
         );
       case "securityapprovalview":
         return <Securityapprovalview />;
+      case "barcodescanner":
+        return <Barcodescanner />;
       case "vendorgetpass":
         return <Vendorgetpass />;
       case "securityparcelentry":

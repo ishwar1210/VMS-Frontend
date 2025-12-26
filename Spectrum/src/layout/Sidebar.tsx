@@ -607,6 +607,33 @@ function Sidebar({
                   </svg>
                   Parcel
                 </div>
+                <div
+                  className={`dropdown-item ${
+                    selectedItem === "barcodescanner" ? "active" : ""
+                  }`}
+                  onClick={() => handleNavigate("barcodescanner")}
+                >
+                  {/* Barcode Scanner icon */}
+                  <svg
+                    className="item-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ marginRight: 8 }}
+                  >
+                    <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+                    <line x1="5" y1="8" x2="5" y2="16"></line>
+                    <line x1="8" y1="8" x2="8" y2="16"></line>
+                    <line x1="11" y1="8" x2="11" y2="16"></line>
+                    <line x1="14" y1="8" x2="14" y2="16"></line>
+                    <line x1="17" y1="8" x2="17" y2="16"></line>
+                    <line x1="19" y1="8" x2="19" y2="16"></line>
+                  </svg>
+                  Barcode Scanner
+                </div>
               </div>
             )}
           </>

@@ -609,6 +609,7 @@ function Securityapprovalview() {
       <html>
       <head>
         <title>Visitor Gate Pass</title>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
         <style>
           @media print {
             body { margin: 0; }
@@ -682,8 +683,17 @@ function Securityapprovalview() {
           .info-value {
             color: #000;
           }
+          .barcode-section {
+            text-align: center;
+            padding: 20px;
+            border-top: 2px solid #000;
+          }
+          .barcode-section svg {
+            max-width: 100%;
+            height: auto;
+          }
           .footer {
-            margin-top: 30px;
+            margin-top: 10px;
             padding-top: 20px;
             border-top: 1px solid #000;
           }
@@ -758,6 +768,12 @@ function Securityapprovalview() {
               </div>
             </div>
           </div>
+          <div class="barcode-section">
+            <svg id="barcode"></svg>
+            <div style="margin-top: 5px; font-size: 12px; font-weight: bold;">${
+              entry.visitorEntry_Gatepass || "N/A"
+            }</div>
+          </div>
           <div class="footer" style="padding: 20px;">
             <div class="signature-section">
               <div class="signature-box">
@@ -770,7 +786,18 @@ function Securityapprovalview() {
         </div>
         <script>
           window.onload = function() {
-            window.print();
+            try {
+              JsBarcode("#barcode", "${entry.visitorEntry_Gatepass || "N/A"}", {
+                format: "CODE128",
+                width: 2,
+                height: 60,
+                displayValue: false,
+                margin: 10
+              });
+            } catch(e) {
+              console.error("Barcode generation error:", e);
+            }
+            setTimeout(() => window.print(), 500);
           };
         </script>
       </body>
@@ -1894,33 +1921,35 @@ function Securityapprovalview() {
                                 <circle cx="12" cy="12" r="3"></circle>
                               </svg>
                             </button>
-                            <button
-                              className="action-btn print-btn"
-                              onClick={() => printGatepass(entry)}
-                              title="Print Gatepass"
-                              aria-label="Print Gatepass"
-                              style={{
-                                padding: "6px 10px",
-                                background: "#8b5cf6",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "6px",
-                                cursor: "pointer",
-                              }}
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
+                            {entry.visitorEntry_adminApproval && (
+                              <button
+                                className="action-btn print-btn"
+                                onClick={() => printGatepass(entry)}
+                                title="Print Gatepass"
+                                aria-label="Print Gatepass"
+                                style={{
+                                  padding: "6px 10px",
+                                  background: "#8b5cf6",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                }}
                               >
-                                <path d="M6 9V2h12v7"></path>
-                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                <path d="M6 14h12v8H6z"></path>
-                              </svg>
-                            </button>
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <path d="M6 9V2h12v7"></path>
+                                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                  <path d="M6 14h12v8H6z"></path>
+                                </svg>
+                              </button>
+                            )}
                             {!entry.visitorEntry_adminApproval &&
                               loggedInUserId > 0 &&
                               entry.visitorEntry_Userid === loggedInUserId && (

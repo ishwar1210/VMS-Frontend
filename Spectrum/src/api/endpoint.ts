@@ -108,5 +108,5 @@ const endpoints = {
   parcel,
 };
 
-export default auth;
+export default endpoints;
 export { endpoints };
