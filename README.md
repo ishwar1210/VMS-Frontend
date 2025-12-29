@@ -7,12 +7,21 @@ Packages
 - `jspdf` — client-side PDF generation library.
 - `jspdf-autotable` — a plugin for `jspdf` to render tables (used for the "Vendor Team Member" table).
 - `xlsx` — read and parse Excel (`.xlsx`) files in the browser.
+- `react-webcam` — for open camera in website
+-
 
 Install (PowerShell)
 
 ```powershell
 cd Spectrum
 npm install jspdf jspdf-autotable xlsx
+```
+
+Install (PowerShell)
+
+```powershell
+cd Spectrum
+npm install react-webcam
 ```
 
 Run dev server (PowerShell)
