@@ -16,6 +16,52 @@ function Barcodescanner() {
     }
   }, []);
 
+  // Global buffered listener for barcode scanners (fast input + Enter)
+  useEffect(() => {
+    const buf = { chars: "", lastTime: 0 } as {
+      chars: string;
+      lastTime: number;
+    };
+    const THRESHOLD_MS = 100; // reset buffer if gap > 100ms
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Only capture when BarcodeScanner component is active (this component is mounted)
+      // Ignore if user is typing into an input/textarea/contenteditable
+      const active = document.activeElement as HTMLElement | null;
+      const isTextField =
+        active &&
+        (active.tagName === "INPUT" ||
+          active.tagName === "TEXTAREA" ||
+          active.isContentEditable);
+      if (isTextField) return; // let normal input handle it
+
+      const now = Date.now();
+      if (now - buf.lastTime > THRESHOLD_MS) buf.chars = "";
+
+      if (e.key === "Enter") {
+        if (buf.chars.length > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          const code = buf.chars;
+          buf.chars = "";
+          buf.lastTime = 0;
+          console.log("[Barcode Scanner - global] Detected barcode:", code);
+          // call the same handler used by the form
+          void handleScan(code);
+        }
+        return;
+      }
+
+      if (e.key.length === 1) {
+        buf.chars += e.key;
+        buf.lastTime = now;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const handleScan = async (gatepassNo: string) => {
     if (!gatepassNo || gatepassNo.trim() === "") {
       toast.error("Invalid barcode");
@@ -92,22 +138,34 @@ function Barcodescanner() {
 
       console.log("[Barcode Scan] Resolved entry ID:", entryId);
 
-      // Check if In Time is already set — consider multiple field names and empty strings
-      const hasInTime = !!(
+      // Check if In Time / Out Time already set — consider multiple field names and empty strings
+      const inTimeValue =
         entry.visitorEntry_Intime ||
         entry.VisitorEntry_Intime ||
         entry.intime ||
-        entry.Intime
-      );
+        entry.Intime ||
+        null;
+      const outTimeValue =
+        entry.visitorEntry_Outtime ||
+        entry.VisitorEntry_Outtime ||
+        entry.outtime ||
+        entry.Outtime ||
+        null;
+
+      const hasInTime = !!inTimeValue;
+      const hasOutTime = !!outTimeValue;
 
       console.log(
         "[Barcode Scan] Has In Time:",
         hasInTime,
         "| In time value:",
-        entry.visitorEntry_Intime ||
-          entry.VisitorEntry_Intime ||
-          entry.intime ||
-          entry.Intime
+        inTimeValue
+      );
+      console.log(
+        "[Barcode Scan] Has Out Time:",
+        hasOutTime,
+        "| Out time value:",
+        outTimeValue
       );
 
       // Generate local timestamp with timezone offset
@@ -162,8 +220,8 @@ function Barcodescanner() {
           ),
         };
         actionType = "IN";
-      } else {
-        // Second scan - Set Out Time
+      } else if (!hasOutTime) {
+        // Second scan - Set Out Time (only if Out not set)
         payload = {
           visitorEntry_Id: entryId,
           visitorEntry_visitorId: Number(entry.visitorEntry_visitorId || 0),
@@ -195,6 +253,15 @@ function Barcodescanner() {
           ),
         };
         actionType = "OUT";
+      } else {
+        // Both IN and OUT already present — do not overwrite OUT repeatedly
+        toast.info(`Gatepass ${gatepassNo} already has IN and OUT set`);
+        console.log(
+          "[Barcode Scan] Skipping update — both times present for:",
+          gatepassNo,
+          entryId
+        );
+        return;
       }
 
       console.log(
@@ -204,12 +271,96 @@ function Barcodescanner() {
         payload
       );
       await endpoints.visitorEntry.update(entryId, payload);
+
       console.log("[Barcode Scan] Update successful!");
 
-      const visitorName =
-        entry.visitorEntry_visitorName ||
-        entry.visitorName ||
-        "Unknown Visitor";
+      // Try to resolve visitor name from visitor API using visitor id from entry
+      let visitorName = "";
+      const visitorIdCandidates = [
+        entry.visitorEntry_visitorId,
+        entry.VisitorEntry_visitorId,
+        entry.visitorId,
+        entry.VisitorId,
+        entry.visitor_id,
+        entry.Visitor_id,
+      ];
+      let visitorId = 0;
+      for (const v of visitorIdCandidates) {
+        if (v !== undefined && v !== null && v !== "") {
+          const n = Number(v);
+          if (!isNaN(n) && n !== 0) {
+            visitorId = n;
+            break;
+          }
+          if (!isNaN(n) && visitorId === 0) visitorId = n;
+        }
+      }
+
+      if (visitorId) {
+        try {
+          const visRes = await endpoints.visitor.getById(visitorId);
+          let visData: any = visRes?.data;
+          if (visData && typeof visData === "object") {
+            if (Array.isArray(visData.data)) visData = visData.data;
+            else if (Array.isArray(visData.$values)) visData = visData.$values;
+            else if (visData.visitor) visData = visData.visitor;
+          }
+
+          if (visData) {
+            visitorName =
+              visData.visitor_Name ||
+              visData.visitor_name ||
+              visData.Visitor_Name ||
+              visData.visitorName ||
+              visData.name ||
+              visData.fullName ||
+              (visData.firstName &&
+                visData.firstName +
+                  (visData.lastName ? ` ${visData.lastName}` : "")) ||
+              "";
+          }
+        } catch (err) {
+          console.debug("[Barcode Scan] visitor.getById failed:", err);
+        }
+      }
+
+      // Fallback to entry fields if visitor API did not return a name
+      if (!visitorName) {
+        visitorName =
+          entry.visitorEntry_visitorName ||
+          entry.VisitorEntry_visitorName ||
+          entry.visitor_Name ||
+          entry.visitor_name ||
+          entry.Visitor_Name ||
+          entry.visitorName ||
+          entry.VisitorName ||
+          entry.name ||
+          entry.Name ||
+          (entry.visitor &&
+            (entry.visitor.name ||
+              entry.visitor.fullName ||
+              entry.visitor.visitorName ||
+              entry.visitor.visitor_Name)) ||
+          "";
+
+        if (!visitorName) {
+          const first =
+            entry.visitorFirstName ||
+            entry.visitorFirstname ||
+            entry.firstName ||
+            entry.first_name ||
+            "";
+          const last =
+            entry.visitorLastName ||
+            entry.visitorLastname ||
+            entry.lastName ||
+            entry.last_name ||
+            "";
+          visitorName = `${first} ${last}`.trim();
+        }
+      }
+
+      if (!visitorName) visitorName = "Unknown Visitor";
 
       toast.success(
         `${actionType} Time set for ${visitorName} (${gatepassNo}) at ${new Date().toLocaleTimeString()}`

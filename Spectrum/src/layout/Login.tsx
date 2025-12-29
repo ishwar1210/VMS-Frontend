@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./Login.css";
 import bg from "../assets/login img.png";
 import logo from "../assets/vms logo.png";
-import auth from "../api/endpoint";
+import endpoint from "../api/endpoint";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 
@@ -21,7 +21,7 @@ function Login() {
       try {
         setError("");
         setLoading(true);
-        const res = await auth.login({ username, password });
+        const res = await endpoint.auth.login({ username, password });
         console.log("Login success", res.data);
         // determine token and role from response (support multiple shapes)
         const token =

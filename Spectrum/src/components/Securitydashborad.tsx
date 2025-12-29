@@ -609,7 +609,12 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
               {!loading &&
                 filteredEntries.slice(0, 10).map((en: any, idx: number) => {
                   const isRejected = !!en.visitorEntry_userReject;
-                  const isActive = !en.visitorEntry_Outtime && !isRejected;
+                  const hasInTime = !!(
+                    en.visitorEntry_Intime &&
+                    String(en.visitorEntry_Intime).trim() !== ""
+                  );
+                  const isActive =
+                    hasInTime && !en.visitorEntry_Outtime && !isRejected;
                   const formatTime = (ts: string) => {
                     if (!ts) return "-";
                     try {
@@ -637,6 +642,13 @@ export default function Admindashbord({ setCurrentView }: AdmindashbordProps) {
                   if (isRejected) {
                     statusText = "Rejected";
                     statusClass = "status-rejected";
+                  } else if (
+                    !hasInTime &&
+                    !isRejected &&
+                    !en.visitorEntry_Outtime
+                  ) {
+                    statusText = "Pending";
+                    statusClass = "status-pending";
                   } else if (isActive) {
                     statusText = "On-Site";
                     statusClass = "status-active";

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./Rolemaster.css";
 import "./Securityapprovalview.css";
 import { endpoints } from "../api/endpoint";
+import api from "../api/axiosInstance";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../context/AuthContext";
@@ -554,10 +555,19 @@ function Securityapprovalview() {
 
     // Get full image URL
     const rawPhotoPath = visitor?.visitor_image || null;
+    const apiBase =
+      (api && (api.defaults?.baseURL || "")) || window.location.origin;
+    const joinUrl = (base: string, path: string) => {
+      if (!base) return path;
+      const b = base.replace(/\/+$/, "");
+      const p = path.replace(/^\/+/, "");
+      return `${b}/${p}`;
+    };
+
     const visitorPhoto = rawPhotoPath
       ? rawPhotoPath.startsWith("http")
         ? rawPhotoPath
-        : `https://192.168.1.63:6515${rawPhotoPath}`
+        : joinUrl(apiBase, rawPhotoPath)
       : null;
 
     console.log("Debug - Photo check:", {
