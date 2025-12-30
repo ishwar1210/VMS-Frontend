@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./Usermaster.css";
 import { endpoints } from "../api/endpoint";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import * as XLSX from "xlsx";
+import axiosInstance from "../api/axiosInstance";
 
 interface User {
   userId: number;
@@ -40,6 +42,7 @@ function Usermaster() {
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -357,6 +360,54 @@ function Usermaster() {
     setError("");
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".xlsx")) {
+      toast.error("Please upload a valid .xlsx file");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Use native fetch so the browser sets the multipart boundary automatically
+      const token = localStorage.getItem("token");
+      const uploadUrl = `${
+        (axiosInstance.defaults && axiosInstance.defaults.baseURL) || ""
+      }/api/UserImport/upload`;
+
+      const resp = await fetch(uploadUrl, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`Upload failed: ${resp.status} ${text}`);
+      }
+
+      toast.success("Users imported successfully!");
+      await fetchUsers();
+      resetForm();
+    } catch (err: any) {
+      console.error("Error uploading file:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          "Failed to upload file. Please check the format."
+      );
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.u_Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -391,12 +442,98 @@ function Usermaster() {
       <div className="usermaster-container">
         <div className="usermaster-header">
           <h1 className="usermaster-title">Users</h1>
-          <button
-            className="add-user-btn"
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? "View All Users" : "+ Add User"}
-          </button>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button
+              className="download-xlsx-btn"
+              onClick={() => {
+                try {
+                  const wb = XLSX.utils.book_new();
+
+                  const rows = users.map((u) => {
+                    const role =
+                      u.roleName ||
+                      roles.find((r) => r.roleId === u.u_RoleId)?.roleName ||
+                      "";
+                    const dept =
+                      u.departmentName ||
+                      departments.find(
+                        (d) => d.departmentId === u.u_DepartmentID
+                      )?.departmentName ||
+                      "";
+                    const reportingTo =
+                      users.find((x) => x.userId === u.u_ReportingToId)
+                        ?.u_Name || "";
+
+                    return {
+                      "Full Name": u.u_Name || "",
+                      Mobile: u.u_Mobile || "",
+                      "Email Address": u.u_Email || "",
+                      Role: role,
+                      Department: dept,
+                      "Reporting To": reportingTo,
+                    };
+                  });
+
+                  const ws = XLSX.utils.json_to_sheet(rows, {
+                    header: [
+                      "Full Name",
+                      "Mobile",
+                      "Email Address",
+                      "Role",
+                      "Department",
+                      "Reporting To",
+                    ],
+                  });
+                  XLSX.utils.book_append_sheet(wb, ws, "Users");
+                  const fileName = `Users_${new Date()
+                    .toISOString()
+                    .slice(0, 10)}.xlsx`;
+                  XLSX.writeFile(wb, fileName);
+                } catch (err) {
+                  console.error("Export XLSX error:", err);
+                  toast.error("Failed to generate XLSX file");
+                }
+              }}
+            >
+              Download XLSX
+            </button>
+
+            <button
+              className="download-xlsx-template-btn"
+              onClick={() => {
+                try {
+                  const wb = XLSX.utils.book_new();
+                  const headers = [
+                    "FullName",
+                    "Mobile",
+                    "Email",
+                    "RoleName",
+                    "DepartmentName",
+                    "ReportingToName",
+                    "Address",
+                  ];
+                  // create an empty sheet with only header row
+                  const ws = XLSX.utils.aoa_to_sheet([headers]);
+                  XLSX.utils.book_append_sheet(wb, ws, "Users_Template");
+                  const fileName = `Users_Template_${new Date()
+                    .toISOString()
+                    .slice(0, 10)}.xlsx`;
+                  XLSX.writeFile(wb, fileName);
+                } catch (err) {
+                  console.error("Export Template XLSX error:", err);
+                  toast.error("Failed to generate XLSX template");
+                }
+              }}
+            >
+              Download Template
+            </button>
+            <button
+              className="add-user-btn"
+              onClick={() => setShowForm(!showForm)}
+            >
+              {showForm ? "View All Users" : " Add Employee"}
+            </button>
+          </div>
         </div>
 
         {showForm && (
@@ -404,21 +541,44 @@ function Usermaster() {
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2 className="modal-title">
-                  {editingId ? "Edit User" : "Add New User"}
+                  {editingId ? "Edit Employee" : "Add New Employee"}
                 </h2>
-                <button className="modal-close" onClick={resetForm}>
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                <div
+                  style={{ display: "flex", gap: "12px", alignItems: "center" }}
+                >
+                  {!editingId && (
+                    <>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx"
+                        style={{ display: "none" }}
+                        onChange={handleFileUpload}
+                      />
+                      <button
+                        type="button"
+                        className="upload-excel-btn"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={loading}
+                      >
+                        📤 Upload Excel
+                      </button>
+                    </>
+                  )}
+                  <button className="modal-close" onClick={resetForm}>
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
               <form className="modal-form" onSubmit={handleSubmit}>
                 <div className="form-row">

@@ -36,6 +36,57 @@
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
+/* Download buttons (XLSX / Template) - match the + Add User button */
+.download-xlsx-btn,
+.download-xlsx-template-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.download-xlsx-btn:hover,
+.download-xlsx-template-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* keep template variant subtle if needed (still matches primary look) */
+.download-xlsx-template-btn {
+  opacity: 0.95;
+}
+
+/* Upload Excel button in modal */
+.upload-excel-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
+}
+
+.upload-excel-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.upload-excel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;

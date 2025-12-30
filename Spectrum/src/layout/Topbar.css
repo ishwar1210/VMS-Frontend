@@ -30,6 +30,142 @@
   color: white;
   font-weight: 700;
   background: linear-gradient(135deg, #06879d 0%, #89c7c8 100%);
+  position: relative;
+}
+
+/* Avatar dropdown menu */
+.avatar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  overflow: hidden;
+  z-index: 1000;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.avatar-dropdown-item {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #333;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.avatar-dropdown-item:hover {
+  background: #f3f4f6;
+}
+
+/* Edit Profile Modal */
+.edit-profile-modal {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  width: 500px;
+  max-width: calc(100% - 40px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.edit-profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.edit-profile-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #333;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: #333;
+}
+
+.edit-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group-topbar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group-topbar label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group-topbar input,
+.form-group-topbar textarea {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  background: #ffffff;
+  transition: border-color 0.2s;
+}
+
+.form-group-topbar input:focus,
+.form-group-topbar textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group-topbar input:disabled,
+.form-group-topbar textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-group-topbar textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.edit-profile-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.edit-profile-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .topbar-texts {

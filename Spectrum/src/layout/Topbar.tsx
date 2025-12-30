@@ -2,6 +2,8 @@ import React from "react";
 import "./Topbar.css";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { endpoints } from "../api/endpoint";
+import { toast } from "react-toastify";
 
 function getNameFromToken(token: string | null) {
   if (!token) return null;
@@ -44,17 +46,135 @@ const Topbar: React.FC = () => {
   const { token, clearAuth } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const [showEditModal, setShowEditModal] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [editForm, setEditForm] = React.useState({
+    username: "",
+    u_Name: "",
+    u_Mobile: "",
+    u_Email: "",
+    u_Address: "",
+    password: "",
+  });
+  const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
   const name =
     getNameFromToken(token) || localStorage.getItem("userName") || "admin";
   const dept = getDeptFromToken(token) || localStorage.getItem("userDept");
 
   const initials = initialsFromName(name);
 
+  React.useEffect(() => {
+    if (showEditModal) {
+      loadCurrentUserData();
+    }
+  }, [showEditModal]);
+
+  const loadCurrentUserData = async () => {
+    try {
+      const res = await endpoints.user.getAll();
+      let users = res.data;
+      if (users && typeof users === "object") {
+        if (Array.isArray(users.users)) users = users.users;
+        else if (Array.isArray(users.data)) users = users.data;
+        else if (Array.isArray(users.$values)) users = users.$values;
+        else if (!Array.isArray(users)) users = [];
+      }
+      const currentUser = (Array.isArray(users) ? users : []).find(
+        (u: any) => u.username === name || u.u_Name === name
+      );
+      if (currentUser) {
+        setCurrentUserId(
+          currentUser.userId || currentUser.id || currentUser.UserId
+        );
+        setEditForm({
+          username: currentUser.username || currentUser.Username || "",
+          u_Name: currentUser.u_Name || currentUser.name || "",
+          u_Mobile: currentUser.u_Mobile || currentUser.mobile || "",
+          u_Email: currentUser.u_Email || currentUser.email || "",
+          u_Address: currentUser.u_Address || currentUser.address || "",
+          password: "",
+        });
+      }
+    } catch (err) {
+      console.error("Error loading user data:", err);
+      toast.error("Failed to load user data");
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUserId) {
+      toast.error("User ID not found");
+      return;
+    }
+    try {
+      setLoading(true);
+      const payload: any = {
+        username: editForm.username.trim(),
+        u_Name: editForm.u_Name.trim(),
+        u_Mobile: editForm.u_Mobile.trim(),
+        u_Email: editForm.u_Email.trim(),
+        u_Address: editForm.u_Address.trim(),
+      };
+      if (editForm.password.trim()) {
+        payload.password = editForm.password.trim();
+      }
+      await endpoints.user.update(currentUserId, payload);
+      toast.success("Profile updated successfully!");
+      setShowEditModal(false);
+      // Update localStorage name if changed
+      if (editForm.u_Name.trim()) {
+        localStorage.setItem("userName", editForm.u_Name.trim());
+      }
+      setTimeout(() => window.location.reload(), 500);
+    } catch (err: any) {
+      console.error("Error updating profile:", err);
+      toast.error(err?.response?.data?.message || "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="topbar-wrapper">
       <div className="topbar-card">
         <div className="topbar-left">
-          <div className="avatar-circle">{initials}</div>
+          <div
+            className="avatar-circle"
+            onClick={() => setShowDropdown(!showDropdown)}
+            style={{ cursor: "pointer", position: "relative" }}
+          >
+            {initials}
+            {showDropdown && (
+              <div
+                className="avatar-dropdown"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="avatar-dropdown-item"
+                  onClick={() => {
+                    setShowDropdown(false);
+                    setShowEditModal(true);
+                  }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ marginRight: 8 }}
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Edit Profile
+                </button>
+              </div>
+            )}
+          </div>
           <div className="topbar-texts">
             <div className="topbar-username">{name}</div>
             <div className="topbar-dept">{dept}</div>
@@ -162,6 +282,136 @@ const Topbar: React.FC = () => {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {showEditModal && (
+        <div
+          className="logout-modal-overlay"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            className="edit-profile-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="edit-profile-header">
+              <h2>Edit Profile</h2>
+              <button
+                className="modal-close-btn"
+                onClick={() => setShowEditModal(false)}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <form className="edit-profile-form" onSubmit={handleEditSubmit}>
+              <div className="form-group-topbar">
+                <label htmlFor="edit-username">Username *</label>
+                <input
+                  id="edit-username"
+                  type="text"
+                  value={editForm.username}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, username: e.target.value })
+                  }
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="form-group-topbar">
+                <label htmlFor="edit-name">Full Name *</label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  value={editForm.u_Name}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, u_Name: e.target.value })
+                  }
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="form-group-topbar">
+                <label htmlFor="edit-mobile">Mobile</label>
+                <input
+                  id="edit-mobile"
+                  type="tel"
+                  maxLength={10}
+                  value={editForm.u_Mobile}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      u_Mobile: e.target.value.replace(/\D/g, ""),
+                    })
+                  }
+                  disabled={loading}
+                />
+              </div>
+              <div className="form-group-topbar">
+                <label htmlFor="edit-email">Email</label>
+                <input
+                  id="edit-email"
+                  type="email"
+                  value={editForm.u_Email}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, u_Email: e.target.value })
+                  }
+                  disabled={loading}
+                />
+              </div>
+              <div className="form-group-topbar">
+                <label htmlFor="edit-address">Address</label>
+                <textarea
+                  id="edit-address"
+                  rows={2}
+                  value={editForm.u_Address}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, u_Address: e.target.value })
+                  }
+                  disabled={loading}
+                />
+              </div>
+              <div className="form-group-topbar">
+                <label htmlFor="edit-password">
+                  New Password (leave blank to keep current)
+                </label>
+                <input
+                  id="edit-password"
+                  type="password"
+                  value={editForm.password}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, password: e.target.value })
+                  }
+                  disabled={loading}
+                />
+              </div>
+              <div className="edit-profile-actions">
+                <button
+                  type="button"
+                  className="cancel-logout-btn"
+                  onClick={() => setShowEditModal(false)}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="confirm-logout-btn"
+                  disabled={loading}
+                >
+                  {loading ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
