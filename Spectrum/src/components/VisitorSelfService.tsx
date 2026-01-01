@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { endpoints } from "../api/endpoint";
-import "./Preappointment.css";
+import "./VisitorSelfService.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Webcam from "react-webcam";
@@ -28,13 +28,13 @@ type VisitorEntryFormData = {
   visitorEntry_isStay: boolean;
 };
 
-interface SecurityappointmentProps {
+interface VisitorSelfServiceProps {
   onAppointmentAdded?: () => void;
 }
 
-export default function Securityappointment({
+const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
   onAppointmentAdded,
-}: SecurityappointmentProps = {}) {
+} = {}) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [createdVisitorId, setCreatedVisitorId] = useState<number | null>(null);
   const [visitors, setVisitors] = useState<any[]>([]);
@@ -59,7 +59,6 @@ export default function Securityappointment({
     visitor_MeetingDate: "",
   });
 
-  // For security, approval/canteen/stay options are not presented (security cannot grant them)
   const [entryForm, setEntryForm] = useState<VisitorEntryFormData>({
     visitorEntry_visitorId: 0,
     visitorEntry_Gatepass: "",
@@ -323,7 +322,6 @@ export default function Securityappointment({
     e.preventDefault();
     setLoading(true);
     try {
-      // Ensure security cannot set approval/canteen/stay - enforce on client as well
       const payload = {
         ...entryForm,
         visitorEntry_isApproval: false,
@@ -340,7 +338,7 @@ export default function Securityappointment({
       }
 
       await endpoints.visitorEntry.create(payload);
-      toast.success("Preappointment created successfully (via Security)!");
+      toast.success("Appointment created successfully!");
 
       // Trigger notification refresh
       if (onAppointmentAdded) {
@@ -385,7 +383,7 @@ export default function Securityappointment({
   };
 
   return (
-    <div className="preappointment-container">
+    <div className="visitor-self-service-container">
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -397,13 +395,13 @@ export default function Securityappointment({
         draggable
         pauseOnHover
       />
-      <div className="preappointment-header">
-        <h2 className="preappointment-title">Security appointment</h2>
+      <div className="visitor-self-service-header">
+        <h2 className="visitor-self-service-title">Visitor Self Service</h2>
         <div className="step-indicator">Step {step} of 2</div>
       </div>
 
       {step === 1 && (
-        <section className="preappointment-form-section">
+        <section className="visitor-self-service-form-section">
           <h3 className="form-section-title">Visitor Registration</h3>
           <div
             style={{
@@ -479,7 +477,6 @@ export default function Securityappointment({
                         ""
                       ).toString();
                       const search = visitorSearchTerm.trim();
-                      // Only show if mobile number contains the search term
                       return mobile.includes(search);
                     })
                     .map((v) => {
@@ -568,9 +565,12 @@ export default function Securityappointment({
               )}
             </div>
           </div>
-          <form onSubmit={handleVisitorSubmit} className="preappointment-form">
+          <form
+            onSubmit={handleVisitorSubmit}
+            className="visitor-self-service-form"
+          >
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Name *</label>
                 <input
                   type="text"
@@ -581,7 +581,7 @@ export default function Securityappointment({
                   className="form-input"
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Mobile *</label>
                 <input
                   type="text"
@@ -613,7 +613,7 @@ export default function Securityappointment({
             </div>
 
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Company Name *</label>
                 <input
                   type="text"
@@ -626,7 +626,7 @@ export default function Securityappointment({
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="form-group-visitor">
               <label>Address *</label>
               <textarea
                 name="visitor_Address"
@@ -639,7 +639,7 @@ export default function Securityappointment({
             </div>
 
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>ID Proof Type *</label>
                 <select
                   name="visitor_Idprooftype"
@@ -654,7 +654,7 @@ export default function Securityappointment({
                   <option value="Passport">Passport</option>
                 </select>
               </div>
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>ID Proof No *</label>
                 <input
                   type="text"
@@ -667,7 +667,7 @@ export default function Securityappointment({
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="form-group-visitor">
               <label>Meeting Date *</label>
               <input
                 type="datetime-local"
@@ -679,7 +679,7 @@ export default function Securityappointment({
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-visitor">
               <label>Visitor Photo</label>
               <div
                 style={{
@@ -818,7 +818,6 @@ export default function Securityappointment({
                         onClick={() => {
                           setCapturedImage(null);
                           setCapturedBlob(null);
-                          // reopen camera for retake
                           startCamera();
                         }}
                         aria-label="Retake"
@@ -851,12 +850,15 @@ export default function Securityappointment({
       )}
 
       {step === 2 && (
-        <section className="preappointment-form-section">
+        <section className="visitor-self-service-form-section">
           <h3 className="form-section-title">Visitor Entry Details</h3>
           <p className="info-text">Visitor ID: {createdVisitorId}</p>
-          <form onSubmit={handleEntrySubmit} className="preappointment-form">
+          <form
+            onSubmit={handleEntrySubmit}
+            className="visitor-self-service-form"
+          >
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Gate Pass *</label>
                 <input
                   type="text"
@@ -869,7 +871,7 @@ export default function Securityappointment({
                   style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Vehicle Type</label>
                 <input
                   type="text"
@@ -882,7 +884,7 @@ export default function Securityappointment({
             </div>
 
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Vehicle No</label>
                 <input
                   type="text"
@@ -892,7 +894,7 @@ export default function Securityappointment({
                   className="form-input"
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Employee *</label>
                 <select
                   name="visitorEntry_Userid"
@@ -933,7 +935,7 @@ export default function Securityappointment({
             </div>
 
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Purpose of Visit *</label>
                 <input
                   type="text"
@@ -944,7 +946,7 @@ export default function Securityappointment({
                   className="form-input"
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group-visitor">
                 <label>Date *</label>
                 <input
                   type="datetime-local"
@@ -967,7 +969,7 @@ export default function Securityappointment({
                 Back
               </button>
               <button type="submit" disabled={loading} className="submit-btn">
-                {loading ? "Submitting..." : "Submit Preappointment"}
+                {loading ? "Submitting..." : "Submit Appointment"}
               </button>
             </div>
           </form>
@@ -975,4 +977,6 @@ export default function Securityappointment({
       )}
     </div>
   );
-}
+};
+
+export default VisitorSelfService;

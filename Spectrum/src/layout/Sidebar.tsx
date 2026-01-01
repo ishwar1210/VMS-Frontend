@@ -338,6 +338,30 @@ function Sidebar({
                   </div>
                   <div
                     className={`dropdown-item ${
+                      selectedItem === "visitorqr" ? "active" : ""
+                    }`}
+                    onClick={() => handleNavigate("visitorqr")}
+                  >
+                    {/* QR Code icon */}
+                    <svg
+                      className="item-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      style={{ marginRight: 8 }}
+                    >
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Visitor QR Code
+                  </div>
+                  <div
+                    className={`dropdown-item ${
                       selectedItem === "preappointment" ? "active" : ""
                     }`}
                     onClick={() => handleNavigate("preappointment")}
@@ -624,7 +648,14 @@ function Sidebar({
                     strokeWidth="2"
                     style={{ marginRight: 8 }}
                   >
-                    <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="16"
+                      rx="2"
+                      ry="2"
+                    ></rect>
                     <line x1="5" y1="8" x2="5" y2="16"></line>
                     <line x1="8" y1="8" x2="8" y2="16"></line>
                     <line x1="11" y1="8" x2="11" y2="16"></line>
