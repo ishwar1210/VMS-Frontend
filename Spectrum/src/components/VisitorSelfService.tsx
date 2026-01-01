@@ -48,6 +48,9 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
   const webcamRef = useRef<any>(null);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [showUserDropdownLocal, setShowUserDropdownLocal] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
@@ -318,8 +321,46 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowUserDropdownLocal(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (entryForm.visitorEntry_Userid) {
+      const user = users.find((u) => {
+        const id = Number(u.userId || u.id || u.user_Id || u.UserId || 0);
+        return id === entryForm.visitorEntry_Userid;
+      });
+      if (user) {
+        const name =
+          user.userName ||
+          user.name ||
+          user.fullName ||
+          user.username ||
+          user.user_Name ||
+          "Unnamed";
+        setUserSearchTerm(name);
+      }
+    }
+  }, [entryForm.visitorEntry_Userid, users]);
+
   const handleEntrySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!entryForm.visitorEntry_Userid || entryForm.visitorEntry_Userid === 0) {
+      toast.error("Please select an employee");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -370,6 +411,7 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
       setCreatedVisitorId(null);
       setSelectedVisitorId(0);
       setVisitorSearchTerm("");
+      setUserSearchTerm("");
       fetchVisitors();
     } catch (err: any) {
       toast.error(
@@ -894,43 +936,133 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
                   className="form-input"
                 />
               </div>
-              <div className="form-group-visitor">
+              <div className="form-group-visitor" ref={userDropdownRef}>
                 <label>Employee *</label>
-                <select
-                  name="visitorEntry_Userid"
-                  value={entryForm.visitorEntry_Userid || 0}
+                <input
+                  type="text"
+                  placeholder="Search employee..."
+                  value={userSearchTerm}
                   onChange={(e) => {
-                    const val = Number(e.target.value || 0);
-                    setEntryForm((prev) => ({
-                      ...prev,
-                      visitorEntry_Userid: val,
-                    }));
+                    setUserSearchTerm(e.target.value);
+                    setShowUserDropdownLocal(true);
                   }}
-                  required
+                  onFocus={() => setShowUserDropdownLocal(true)}
                   className="form-input"
-                >
-                  <option value={0}>-- Select User --</option>
-                  {users.length === 0 && (
-                    <option value={0}>No users found</option>
-                  )}
-                  {users.map((u) => {
-                    const id = Number(
-                      u.userId || u.id || u.user_Id || u.UserId || 0
-                    );
-                    const name =
-                      u.userName ||
-                      u.name ||
-                      u.fullName ||
-                      u.username ||
-                      u.user_Name ||
-                      "Unnamed";
-                    return (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    );
-                  })}
-                </select>
+                  autoComplete="off"
+                />
+                {showUserDropdownLocal && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      maxHeight: 300,
+                      overflowY: "auto",
+                      backgroundColor: "white",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      marginTop: 4,
+                      zIndex: 1000,
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    {users.length === 0 ? (
+                      <div
+                        style={{
+                          padding: "12px",
+                          textAlign: "center",
+                          color: "#666",
+                        }}
+                      >
+                        No users found
+                      </div>
+                    ) : (
+                      users
+                        .filter((u) => {
+                          const name =
+                            u.userName ||
+                            u.name ||
+                            u.fullName ||
+                            u.username ||
+                            u.user_Name ||
+                            "";
+                          return name
+                            .toLowerCase()
+                            .includes(userSearchTerm.toLowerCase());
+                        })
+                        .map((u) => {
+                          const id = Number(
+                            u.userId || u.id || u.user_Id || u.UserId || 0
+                          );
+                          const name =
+                            u.userName ||
+                            u.name ||
+                            u.fullName ||
+                            u.username ||
+                            u.user_Name ||
+                            "Unnamed";
+                          return (
+                            <div
+                              key={id}
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                borderBottom: "1px solid #eee",
+                                backgroundColor:
+                                  entryForm.visitorEntry_Userid === id
+                                    ? "#f0f9ff"
+                                    : "white",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#f9fafb";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  entryForm.visitorEntry_Userid === id
+                                    ? "#f0f9ff"
+                                    : "white";
+                              }}
+                              onClick={() => {
+                                setEntryForm((prev) => ({
+                                  ...prev,
+                                  visitorEntry_Userid: id,
+                                }));
+                                setUserSearchTerm(name);
+                                setShowUserDropdownLocal(false);
+                              }}
+                            >
+                              {name}
+                            </div>
+                          );
+                        })
+                    )}
+                    {users.filter((u) => {
+                      const name =
+                        u.userName ||
+                        u.name ||
+                        u.fullName ||
+                        u.username ||
+                        u.user_Name ||
+                        "";
+                      return name
+                        .toLowerCase()
+                        .includes(userSearchTerm.toLowerCase());
+                    }).length === 0 &&
+                      userSearchTerm && (
+                        <div
+                          style={{
+                            padding: "12px",
+                            textAlign: "center",
+                            color: "#666",
+                          }}
+                        >
+                          No matching employees found
+                        </div>
+                      )}
+                  </div>
+                )}
               </div>
             </div>
 

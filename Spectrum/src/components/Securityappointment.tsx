@@ -40,6 +40,9 @@ export default function Securityappointment({
   const [visitors, setVisitors] = useState<any[]>([]);
   const [selectedVisitorId, setSelectedVisitorId] = useState<number>(0); // 0 => create new
   const [users, setUsers] = useState<any[]>([]);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [showUserDropdownLocal, setShowUserDropdownLocal] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
   const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
@@ -319,10 +322,60 @@ export default function Securityappointment({
     fetchUsers();
   }, []);
 
+  // click outside to close user dropdown
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowUserDropdownLocal(false);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  // keep search input in sync when a user id is set
+  useEffect(() => {
+    if (entryForm.visitorEntry_Userid) {
+      const u = users.find(
+        (x) =>
+          Number(x.userId || x.id || x.user_Id || x.UserId) ===
+          Number(entryForm.visitorEntry_Userid)
+      );
+      if (u) {
+        const name =
+          u.userName || u.name || u.fullName || u.username || u.user_Name || "";
+        setUserSearchTerm(name);
+      }
+    }
+  }, [entryForm.visitorEntry_Userid, users]);
+
+  const filteredUsers = users.filter((u) => {
+    const name = (
+      u.userName ||
+      u.name ||
+      u.fullName ||
+      u.username ||
+      u.user_Name ||
+      ""
+    ).toString();
+    return name.toLowerCase().includes(userSearchTerm.toLowerCase());
+  });
+
   const handleEntrySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      if (
+        !entryForm.visitorEntry_Userid ||
+        entryForm.visitorEntry_Userid === 0
+      ) {
+        toast.error("Please select an employee");
+        setLoading(false);
+        return;
+      }
       // Ensure security cannot set approval/canteen/stay - enforce on client as well
       const payload = {
         ...entryForm,
@@ -894,41 +947,81 @@ export default function Securityappointment({
               </div>
               <div className="form-group">
                 <label>Employee *</label>
-                <select
-                  name="visitorEntry_Userid"
-                  value={entryForm.visitorEntry_Userid || 0}
-                  onChange={(e) => {
-                    const val = Number(e.target.value || 0);
-                    setEntryForm((prev) => ({
-                      ...prev,
-                      visitorEntry_Userid: val,
-                    }));
-                  }}
-                  required
-                  className="form-input"
+                <div
+                  style={{ position: "relative" }}
+                  ref={userDropdownRef as any}
                 >
-                  <option value={0}>-- Select User --</option>
-                  {users.length === 0 && (
-                    <option value={0}>No users found</option>
+                  <input
+                    type="text"
+                    name="visitorEntry_UserSearch"
+                    value={userSearchTerm}
+                    onChange={(e) => {
+                      setUserSearchTerm(e.target.value);
+                      setShowUserDropdownLocal(true);
+                      // clear selected id until user picks from list
+                      setEntryForm((prev) => ({
+                        ...prev,
+                        visitorEntry_Userid: 0,
+                      }));
+                    }}
+                    onFocus={() => setShowUserDropdownLocal(true)}
+                    placeholder="Search user..."
+                    className="form-input"
+                    required
+                  />
+
+                  {showUserDropdownLocal && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        zIndex: 1200,
+                        background: "#fff",
+                        border: "1px solid #ddd",
+                        maxHeight: 200,
+                        overflowY: "auto",
+                      }}
+                    >
+                      {filteredUsers.length === 0 ? (
+                        <div style={{ padding: 8 }}>No users found</div>
+                      ) : (
+                        filteredUsers.map((u) => {
+                          const id = Number(
+                            u.userId || u.id || u.user_Id || u.UserId || 0
+                          );
+                          const name =
+                            u.userName ||
+                            u.name ||
+                            u.fullName ||
+                            u.username ||
+                            u.user_Name ||
+                            "Unnamed";
+                          return (
+                            <div
+                              key={id}
+                              onClick={() => {
+                                setEntryForm((prev) => ({
+                                  ...prev,
+                                  visitorEntry_Userid: id,
+                                }));
+                                setUserSearchTerm(name);
+                                setShowUserDropdownLocal(false);
+                              }}
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                borderBottom: "1px solid #f1f1f1",
+                              }}
+                            >
+                              {name}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   )}
-                  {users.map((u) => {
-                    const id = Number(
-                      u.userId || u.id || u.user_Id || u.UserId || 0
-                    );
-                    const name =
-                      u.userName ||
-                      u.name ||
-                      u.fullName ||
-                      u.username ||
-                      u.user_Name ||
-                      "Unnamed";
-                    return (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    );
-                  })}
-                </select>
+                </div>
               </div>
             </div>
 

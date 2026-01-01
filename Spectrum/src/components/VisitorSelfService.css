@@ -84,6 +84,7 @@
   flex-direction: column;
   gap: 4px;
   margin-bottom: 6px;
+  position: relative;
 }
 
 .form-group-visitor label {
