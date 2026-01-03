@@ -38,6 +38,9 @@ export default function Preappointment() {
   const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
   const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
   const [mobileError, setMobileError] = useState("");
+  const [appointmentEmail, setAppointmentEmail] = useState("");
+  const [appointmentName, setAppointmentName] = useState("");
+  const [sendingLink, setSendingLink] = useState(false);
 
   const generateGatePass = (persist: boolean = false) => {
     try {
@@ -70,7 +73,10 @@ export default function Preappointment() {
       // only persist when explicitly asked (on actual save)
       if (persist) {
         try {
-          localStorage.setItem(storageKey, JSON.stringify({ date: todayKey, seq }));
+          localStorage.setItem(
+            storageKey,
+            JSON.stringify({ date: todayKey, seq })
+          );
         } catch (e) {
           // ignore storage errors
         }
@@ -260,6 +266,39 @@ export default function Preappointment() {
     return () => {};
   }, []);
 
+  const handleSendAppointmentLink = async () => {
+    if (!appointmentEmail || !appointmentName) {
+      toast.error("Please enter both email and name");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(appointmentEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setSendingLink(true);
+    try {
+      await endpoints.visitor.sendAppointmentLink({
+        email: appointmentEmail,
+        name: appointmentName,
+      });
+      toast.success("Appointment link sent successfully!");
+      setAppointmentEmail("");
+      setAppointmentName("");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to send appointment link"
+      );
+    } finally {
+      setSendingLink(false);
+    }
+  };
+
   const handleEntrySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -280,7 +319,8 @@ export default function Preappointment() {
         payload.visitorEntry_Gatepass = generateGatePass(true);
       } catch (e) {
         // fallback to existing value
-        payload.visitorEntry_Gatepass = payload.visitorEntry_Gatepass || generateGatePass(false);
+        payload.visitorEntry_Gatepass =
+          payload.visitorEntry_Gatepass || generateGatePass(false);
       }
       if (!payload.visitorEntry_Intime) payload.visitorEntry_Intime = null;
       await endpoints.visitorEntry.create(payload);
@@ -344,76 +384,195 @@ export default function Preappointment() {
         </div>
 
         {step === 1 && (
-          <section className="preappointment-form-section">
-            <h3 className="form-section-title">Visitor Registration</h3>
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                alignItems: "center",
-                marginBottom: 12,
-                position: "relative",
-              }}
+          <>
+            <section
+              className="preappointment-form-section"
+              style={{ marginBottom: 24 }}
             >
-              <label
+              <h3 className="form-section-title">Send Appointment Link</h3>
+              <div className="preappointment-form">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Visitor Name *</label>
+                    <input
+                      type="text"
+                      value={appointmentName}
+                      onChange={(e) => setAppointmentName(e.target.value)}
+                      placeholder="Enter visitor name"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Email *</label>
+                    <input
+                      type="email"
+                      value={appointmentEmail}
+                      onChange={(e) => setAppointmentEmail(e.target.value)}
+                      placeholder="visitor@example.com"
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSendAppointmentLink}
+                  disabled={sendingLink}
+                  className="submit-btn"
+                  style={{ maxWidth: 250 }}
+                >
+                  {sendingLink ? "Sending..." : "Send Appointment Link"}
+                </button>
+              </div>
+            </section>
+
+            <section className="preappointment-form-section">
+              <h3 className="form-section-title">Visitor Registration</h3>
+              <div
                 style={{
-                  fontSize: 13,
-                  color: "var(--text-secondary)",
-                  marginRight: 6,
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "center",
+                  marginBottom: 12,
+                  position: "relative",
                 }}
               >
-                Select Visitor
-              </label>
-              <div style={{ position: "relative", flex: 1, maxWidth: 400 }}>
-                <input
-                  type="text"
-                  placeholder="Search by name or mobile number..."
-                  value={visitorSearchTerm}
-                  onChange={(e) => {
-                    setVisitorSearchTerm(e.target.value);
-                    setShowVisitorDropdown(true);
+                <label
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                    marginRight: 6,
                   }}
-                  onFocus={() => setShowVisitorDropdown(true)}
-                  className="form-input"
-                  style={{ width: "100%" }}
-                />
-                {showVisitorDropdown && visitorSearchTerm && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      right: 0,
-                      maxHeight: 300,
-                      overflowY: "auto",
-                      backgroundColor: "white",
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                      marginTop: 4,
-                      zIndex: 1000,
-                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                >
+                  Select Visitor
+                </label>
+                <div style={{ position: "relative", flex: 1, maxWidth: 400 }}>
+                  <input
+                    type="text"
+                    placeholder="Search by name or mobile number..."
+                    value={visitorSearchTerm}
+                    onChange={(e) => {
+                      setVisitorSearchTerm(e.target.value);
+                      setShowVisitorDropdown(true);
                     }}
-                  >
+                    onFocus={() => setShowVisitorDropdown(true)}
+                    className="form-input"
+                    style={{ width: "100%" }}
+                  />
+                  {showVisitorDropdown && visitorSearchTerm && (
                     <div
                       style={{
-                        padding: "8px 12px",
-                        cursor: "pointer",
-                        borderBottom: "1px solid #eee",
-                        backgroundColor:
-                          selectedVisitorId === 0 ? "#f0f9ff" : "white",
-                      }}
-                      onClick={() => {
-                        setSelectedVisitorId(0);
-                        setVisitorSearchTerm("");
-                        setShowVisitorDropdown(false);
-                        setCreatedVisitorId(null);
-                        setStep(1);
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        maxHeight: 300,
+                        overflowY: "auto",
+                        backgroundColor: "white",
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                        marginTop: 4,
+                        zIndex: 1000,
+                        boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
                       }}
                     >
-                      + Create New Visitor
-                    </div>
-                    {visitors
-                      .filter((v) => {
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          cursor: "pointer",
+                          borderBottom: "1px solid #eee",
+                          backgroundColor:
+                            selectedVisitorId === 0 ? "#f0f9ff" : "white",
+                        }}
+                        onClick={() => {
+                          setSelectedVisitorId(0);
+                          setVisitorSearchTerm("");
+                          setShowVisitorDropdown(false);
+                          setCreatedVisitorId(null);
+                          setStep(1);
+                        }}
+                      >
+                        + Create New Visitor
+                      </div>
+                      {visitors
+                        .filter((v) => {
+                          const mobile = (
+                            v.visitor_mobile ||
+                            v.mobile ||
+                            ""
+                          ).toString();
+                          const search = visitorSearchTerm.trim();
+                          return mobile.includes(search);
+                        })
+                        .map((v) => {
+                          const id = Number(
+                            v.visitorId || v.id || v.visitor_Id || v.visitorId
+                          );
+                          const name = v.visitor_Name || v.name || "Unknown";
+                          const mobile = v.visitor_mobile || v.mobile || "-";
+                          return (
+                            <div
+                              key={id}
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                borderBottom: "1px solid #eee",
+                                backgroundColor:
+                                  selectedVisitorId === id
+                                    ? "#f0f9ff"
+                                    : "white",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#f9fafb";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  selectedVisitorId === id
+                                    ? "#f0f9ff"
+                                    : "white";
+                              }}
+                              onClick={() => {
+                                const gatePass = generateGatePass();
+                                setSelectedVisitorId(id);
+                                setVisitorSearchTerm(`${name} - ${mobile}`);
+                                setShowVisitorDropdown(false);
+                                setVisitorForm((prev) => ({
+                                  ...prev,
+                                  visitor_Name: v.visitor_Name || v.name || "",
+                                  visitor_mobile:
+                                    v.visitor_mobile || v.mobile || "",
+                                  visitor_Address:
+                                    v.visitor_Address || v.address || "",
+                                  visitor_CompanyName:
+                                    v.visitor_CompanyName || v.company || "",
+                                  visitor_Idprooftype:
+                                    v.visitor_Idprooftype ||
+                                    v.idProofType ||
+                                    "Aadhar",
+                                  visitor_idproofno:
+                                    v.visitor_idproofno || v.idProofNo || "",
+                                  visitor_MeetingDate:
+                                    v.visitor_MeetingDate ||
+                                    v.meetingDate ||
+                                    "",
+                                }));
+                                setEntryForm((prev) => ({
+                                  ...prev,
+                                  visitorEntry_visitorId: id,
+                                  visitorEntry_Gatepass: gatePass,
+                                }));
+                                setCreatedVisitorId(id);
+                                setStep(2);
+                              }}
+                            >
+                              <div style={{ fontWeight: 500 }}>{name}</div>
+                              <div style={{ fontSize: 12, color: "#666" }}>
+                                Mobile: {mobile}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {visitors.filter((v) => {
                         const mobile = (
                           v.visitor_mobile ||
                           v.mobile ||
@@ -421,215 +580,133 @@ export default function Preappointment() {
                         ).toString();
                         const search = visitorSearchTerm.trim();
                         return mobile.includes(search);
-                      })
-                      .map((v) => {
-                        const id = Number(
-                          v.visitorId || v.id || v.visitor_Id || v.visitorId
-                        );
-                        const name = v.visitor_Name || v.name || "Unknown";
-                        const mobile = v.visitor_mobile || v.mobile || "-";
-                        return (
+                      }).length === 0 &&
+                        visitorSearchTerm && (
                           <div
-                            key={id}
                             style={{
-                              padding: "8px 12px",
-                              cursor: "pointer",
-                              borderBottom: "1px solid #eee",
-                              backgroundColor:
-                                selectedVisitorId === id ? "#f0f9ff" : "white",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f9fafb";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                selectedVisitorId === id ? "#f0f9ff" : "white";
-                            }}
-                            onClick={() => {
-                              const gatePass = generateGatePass();
-                              setSelectedVisitorId(id);
-                              setVisitorSearchTerm(`${name} - ${mobile}`);
-                              setShowVisitorDropdown(false);
-                              setVisitorForm((prev) => ({
-                                ...prev,
-                                visitor_Name: v.visitor_Name || v.name || "",
-                                visitor_mobile:
-                                  v.visitor_mobile || v.mobile || "",
-                                visitor_Address:
-                                  v.visitor_Address || v.address || "",
-                                visitor_CompanyName:
-                                  v.visitor_CompanyName || v.company || "",
-                                visitor_Idprooftype:
-                                  v.visitor_Idprooftype ||
-                                  v.idProofType ||
-                                  "Aadhar",
-                                visitor_idproofno:
-                                  v.visitor_idproofno || v.idProofNo || "",
-                                visitor_MeetingDate:
-                                  v.visitor_MeetingDate || v.meetingDate || "",
-                              }));
-                              setEntryForm((prev) => ({
-                                ...prev,
-                                visitorEntry_visitorId: id,
-                                visitorEntry_Gatepass: gatePass,
-                              }));
-                              setCreatedVisitorId(id);
-                              setStep(2);
+                              padding: "12px",
+                              textAlign: "center",
+                              color: "#666",
                             }}
                           >
-                            <div style={{ fontWeight: 500 }}>{name}</div>
-                            <div style={{ fontSize: 12, color: "#666" }}>
-                              Mobile: {mobile}
-                            </div>
+                            No visitors found matching this mobile number
                           </div>
-                        );
-                      })}
-                    {visitors.filter((v) => {
-                      const mobile = (
-                        v.visitor_mobile ||
-                        v.mobile ||
-                        ""
-                      ).toString();
-                      const search = visitorSearchTerm.trim();
-                      return mobile.includes(search);
-                    }).length === 0 &&
-                      visitorSearchTerm && (
-                        <div
-                          style={{
-                            padding: "12px",
-                            textAlign: "center",
-                            color: "#666",
-                          }}
-                        >
-                          No visitors found matching this mobile number
-                        </div>
-                      )}
-                  </div>
-                )}
-              </div>
-            </div>
-            <form
-              onSubmit={handleVisitorSubmit}
-              className="preappointment-form"
-            >
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Name *</label>
-                  <input
-                    type="text"
-                    name="visitor_Name"
-                    value={visitorForm.visitor_Name}
-                    onChange={handleVisitorChange}
-                    required
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Mobile *</label>
-                  <input
-                    type="text"
-                    name="visitor_mobile"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={10}
-                    value={visitorForm.visitor_mobile}
-                    onChange={handleVisitorChange}
-                    onBlur={() => {
-                      if (
-                        visitorForm.visitor_mobile &&
-                        visitorForm.visitor_mobile.length !== 10
-                      ) {
-                        setMobileError("Mobile number must be 10 digits");
-                      } else {
-                        setMobileError("");
-                      }
-                    }}
-                    required
-                    className="form-input"
-                  />
-                  {mobileError && (
-                    <div
-                      style={{ color: "#d32f2f", fontSize: 12, marginTop: 6 }}
-                    >
-                      {mobileError}
+                        )}
                     </div>
                   )}
                 </div>
               </div>
+              <form
+                onSubmit={handleVisitorSubmit}
+                className="preappointment-form"
+              >
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Name *</label>
+                    <input
+                      type="text"
+                      name="visitor_Name"
+                      value={visitorForm.visitor_Name}
+                      onChange={handleVisitorChange}
+                      required
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Mobile *</label>
+                    <input
+                      type="text"
+                      name="visitor_mobile"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={10}
+                      value={visitorForm.visitor_mobile}
+                      onChange={handleVisitorChange}
+                      onBlur={() => {
+                        if (
+                          visitorForm.visitor_mobile &&
+                          visitorForm.visitor_mobile.length !== 10
+                        ) {
+                          setMobileError("Mobile number must be 10 digits");
+                        } else {
+                          setMobileError("");
+                        }
+                      }}
+                      required
+                      className="form-input"
+                    />
+                    {mobileError && (
+                      <div
+                        style={{ color: "#d32f2f", fontSize: 12, marginTop: 6 }}
+                      >
+                        {mobileError}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              <div className="form-row">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Company Name *</label>
+                    <input
+                      type="text"
+                      name="visitor_CompanyName"
+                      value={visitorForm.visitor_CompanyName}
+                      onChange={handleVisitorChange}
+                      required
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+
                 <div className="form-group">
-                  <label>Company Name *</label>
-                  <input
-                    type="text"
-                    name="visitor_CompanyName"
-                    value={visitorForm.visitor_CompanyName}
+                  <label>Address *</label>
+                  <textarea
+                    name="visitor_Address"
+                    value={visitorForm.visitor_Address}
                     onChange={handleVisitorChange}
                     required
                     className="form-input"
+                    rows={2}
                   />
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Address *</label>
-                <textarea
-                  name="visitor_Address"
-                  value={visitorForm.visitor_Address}
-                  onChange={handleVisitorChange}
-                  required
-                  className="form-input"
-                  rows={2}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>ID Proof Type *</label>
-                  <select
-                    name="visitor_Idprooftype"
-                    value={visitorForm.visitor_Idprooftype}
-                    onChange={handleVisitorChange}
-                    required
-                    className="form-input"
-                  >
-                    <option value="Aadhar">Aadhar</option>
-                    <option value="PAN">PAN</option>
-                    <option value="Driving License">Driving License</option>
-                    <option value="Passport">Passport</option>
-                  </select>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>ID Proof Type *</label>
+                    <select
+                      name="visitor_Idprooftype"
+                      value={visitorForm.visitor_Idprooftype}
+                      onChange={handleVisitorChange}
+                      required
+                      className="form-input"
+                    >
+                      <option value="Aadhar">Aadhar</option>
+                      <option value="PAN">PAN</option>
+                      <option value="Driving License">Driving License</option>
+                      <option value="Passport">Passport</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>ID Proof No *</label>
+                    <input
+                      type="text"
+                      name="visitor_idproofno"
+                      value={visitorForm.visitor_idproofno}
+                      onChange={handleVisitorChange}
+                      required
+                      className="form-input"
+                    />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>ID Proof No *</label>
-                  <input
-                    type="text"
-                    name="visitor_idproofno"
-                    value={visitorForm.visitor_idproofno}
-                    onChange={handleVisitorChange}
-                    required
-                    className="form-input"
-                  />
-                </div>
-              </div>
 
-              <div className="form-group">
-                <label>Registered Date *</label>
-                <input
-                  type="datetime-local"
-                  name="visitor_MeetingDate"
-                  value={visitorForm.visitor_MeetingDate}
-                  onChange={handleVisitorChange}
-                  min={getLocalDateTimeForInput()}
-                  required
-                  className="form-input"
-                />
-              </div>
 
-              <button type="submit" disabled={loading} className="submit-btn">
-                {loading ? "Saving..." : "Next: Visitor Entry"}
-              </button>
-            </form>
-          </section>
+                <button type="submit" disabled={loading} className="submit-btn">
+                  {loading ? "Saving..." : "Next: Visitor Entry"}
+                </button>
+              </form>
+            </section>
+          </>
         )}
 
         {step === 2 && (

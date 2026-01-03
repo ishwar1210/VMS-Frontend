@@ -619,7 +619,7 @@ function Securityapprovalview() {
       <html>
       <head>
         <title>Visitor Gate Pass</title>
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
           @media print {
             body { margin: 0; }
@@ -655,14 +655,22 @@ function Securityapprovalview() {
           .content {
             display: flex;
             padding: 20px;
+            align-items: flex-start;
           }
           .left-section {
             flex: 1;
             padding-right: 20px;
           }
+          .center-section {
+            display: none;
+          }
           .right-section {
-            width: 150px;
+            width: 180px;
             text-align: center;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-left: 12px;
           }
           .photo-box {
             width: 130px;
@@ -693,14 +701,31 @@ function Securityapprovalview() {
           .info-value {
             color: #000;
           }
-          .barcode-section {
+          .qrcode-container {
             text-align: center;
-            padding: 20px;
-            border-top: 2px solid #000;
           }
-          .barcode-section svg {
-            max-width: 100%;
-            height: auto;
+          #qrcode {
+            display: inline-block;
+          }
+          #qrcode img {
+            display: block;
+            margin: 0 auto;
+          }
+          .qrcode-label {
+            margin-top: 5px;
+            font-size: 10px;
+            font-weight: bold;
+          }
+          .qr-signature-box {
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: -28px;
+          }
+          #qrcode-sign {
+            display: inline-block;
           }
           .footer {
             margin-top: 10px;
@@ -711,6 +736,7 @@ function Securityapprovalview() {
             display: flex;
             justify-content: space-between;
             margin-top: 40px;
+            align-items: flex-start;
           }
           .signature-box {
             text-align: center;
@@ -768,6 +794,7 @@ function Securityapprovalview() {
                 )} ${formatTimeOnly(entry.visitorEntry_Intime)}</div>
               </div>
             </div>
+            <div class="center-section"></div>
             <div class="right-section">
               <div class="photo-box">
                 ${
@@ -778,12 +805,6 @@ function Securityapprovalview() {
               </div>
             </div>
           </div>
-          <div class="barcode-section">
-            <svg id="barcode"></svg>
-            <div style="margin-top: 5px; font-size: 12px; font-weight: bold;">${
-              entry.visitorEntry_Gatepass || "N/A"
-            }</div>
-          </div>
           <div class="footer" style="padding: 20px;">
             <div class="signature-section">
               <div class="signature-box">
@@ -791,21 +812,27 @@ function Securityapprovalview() {
                 <div>Operator Signature</div>
                 <div style="margin-top: 5px; font-size: 12px;">Security</div>
               </div>
+              <div class="qr-signature-box">
+                <div id="qrcode-sign"></div>
+                <div class="qrcode-label">Scan QR</div>
+              </div>
             </div>
           </div>
         </div>
         <script>
           window.onload = function() {
             try {
-              JsBarcode("#barcode", "${entry.visitorEntry_Gatepass || "N/A"}", {
-                format: "CODE128",
-                width: 2,
-                height: 60,
-                displayValue: false,
-                margin: 10
+              // generate QR into signature area
+              var qrcode = new QRCode(document.getElementById("qrcode-sign"), {
+                text: "${entry.visitorEntry_Gatepass || "N/A"}",
+                width: 80,
+                height: 80,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
               });
             } catch(e) {
-              console.error("Barcode generation error:", e);
+              console.error("QR Code generation error:", e);
             }
             setTimeout(() => window.print(), 500);
           };

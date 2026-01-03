@@ -51,6 +51,10 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
   const [userSearchTerm, setUserSearchTerm] = useState("");
   const [showUserDropdownLocal, setShowUserDropdownLocal] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const [submissionMessage, setSubmissionMessage] = useState<string | null>(
+    null
+  );
+  const [gatepassMessage, setGatepassMessage] = useState<string | null>(null);
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
@@ -379,7 +383,17 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
       }
 
       await endpoints.visitorEntry.create(payload);
-      toast.success("Appointment created successfully!");
+      // Show inline messages instead of toast popups
+      setSubmissionMessage("Appointment created successfully!");
+      try {
+        const gp =
+          payload.visitorEntry_Gatepass ||
+          entryForm.visitorEntry_Gatepass ||
+          generateGatePass(false);
+        setGatepassMessage(`Contact security to collect gate pass: ${gp}`);
+      } catch (e) {
+        setGatepassMessage("Contact security to collect gate pass.");
+      }
 
       // Trigger notification refresh
       if (onAppointmentAdded) {
@@ -441,6 +455,68 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
         <h2 className="visitor-self-service-title">Visitor Self Service</h2>
         <div className="step-indicator">Step {step} of 2</div>
       </div>
+
+      {submissionMessage && (
+        <div
+          style={{
+            background: "#e6f4ea",
+            border: "1px solid #c6e8d0",
+            color: "#155724",
+            padding: "10px 14px",
+            borderRadius: 8,
+            margin: "12px 0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>{submissionMessage}</div>
+          <button
+            onClick={() => setSubmissionMessage(null)}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 16,
+              color: "#155724",
+            }}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {gatepassMessage && (
+        <div
+          style={{
+            background: "#fff3cd",
+            border: "1px solid #ffeeba",
+            color: "#856404",
+            padding: "10px 14px",
+            borderRadius: 8,
+            margin: "6px 0 16px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>{gatepassMessage}</div>
+          <button
+            onClick={() => setGatepassMessage(null)}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 16,
+              color: "#856404",
+            }}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {step === 1 && (
         <section className="visitor-self-service-form-section">

@@ -66,6 +66,8 @@ const visitor = {
     api.post("/api/visitor/upload-image", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+  sendAppointmentLink: (payload: { email: string; name: string }) =>
+    api.post("/api/visitor/send-appointment-link", payload),
 };
 
 // vendor appointment endpoints
