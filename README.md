@@ -23,6 +23,13 @@ cd Spectrum
 npm install react-webcam
 ```
 
+Install (PowerShell)
+
+```powershell
+cd Spectrum
+npm install @lottiefiles/dotlottie-react
+```
+
 Run dev server (PowerShell)
 
 ```powershell

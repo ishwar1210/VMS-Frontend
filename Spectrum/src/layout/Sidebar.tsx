@@ -15,21 +15,11 @@ function Sidebar({
   unreadCount,
 }: SidebarProps) {
   const { userRole } = useAuth();
-  const [mastersOpen, setMastersOpen] = useState(false);
-  const [applicationOpen, setApplicationOpen] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<string>("dashboard");
 
-  const handleMastersClick = () => {
-    setMastersOpen(!mastersOpen);
-  };
-
-  const handleApplicationClick = () => {
-    setApplicationOpen(!applicationOpen);
-  };
-
-  const handleReportClick = () => {
-    setReportOpen(!reportOpen);
+  const toggleSection = (section: string) => {
+    setOpenSection((prev) => (prev === section ? null : section));
   };
 
   const handleNavigate = (component: string) => {
@@ -103,7 +93,7 @@ function Sidebar({
             <div>
               <div
                 className="nav-item nav-item-dropdown"
-                onClick={handleMastersClick}
+                onClick={() => toggleSection("masters")}
               >
                 <svg
                   className="nav-icon"
@@ -128,14 +118,17 @@ function Sidebar({
                   strokeWidth="2"
                   style={{
                     marginLeft: "auto",
-                    transform: mastersOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transform:
+                      openSection === "masters"
+                        ? "rotate(180deg)"
+                        : "rotate(0deg)",
                     transition: "transform 0.3s ease",
                   }}
                 >
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </div>
-              {mastersOpen && (
+              {openSection === "masters" && (
                 <div className="dropdown-menu">
                   <div
                     className={`dropdown-item ${
@@ -253,7 +246,7 @@ function Sidebar({
             <div>
               <div
                 className="nav-item nav-item-dropdown"
-                onClick={handleApplicationClick}
+                onClick={() => toggleSection("application")}
               >
                 <svg
                   className="nav-icon"
@@ -281,16 +274,17 @@ function Sidebar({
                   strokeWidth="2"
                   style={{
                     marginLeft: "auto",
-                    transform: applicationOpen
-                      ? "rotate(180deg)"
-                      : "rotate(0deg)",
+                    transform:
+                      openSection === "application"
+                        ? "rotate(180deg)"
+                        : "rotate(0deg)",
                     transition: "transform 0.3s ease",
                   }}
                 >
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </div>
-              {applicationOpen && (
+              {openSection === "application" && (
                 <div className="dropdown-menu">
                   <div
                     className={`dropdown-item ${
@@ -400,7 +394,7 @@ function Sidebar({
             <div>
               <div
                 className="nav-item nav-item-dropdown"
-                onClick={handleReportClick}
+                onClick={() => toggleSection("report")}
               >
                 <svg
                   className="nav-icon"
@@ -427,14 +421,17 @@ function Sidebar({
                   strokeWidth="2"
                   style={{
                     marginLeft: "auto",
-                    transform: reportOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transform:
+                      openSection === "report"
+                        ? "rotate(180deg)"
+                        : "rotate(0deg)",
                     transition: "transform 0.3s ease",
                   }}
                 >
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </div>
-              {reportOpen && (
+              {openSection === "report" && (
                 <div className="dropdown-menu">
                   <div
                     className={`dropdown-item ${
@@ -492,7 +489,7 @@ function Sidebar({
             {/* Security role - Application dropdown with Appointment */}
             <div
               className="nav-item nav-item-dropdown"
-              onClick={handleApplicationClick}
+              onClick={() => toggleSection("application")}
             >
               <svg
                 className="nav-icon"
@@ -520,9 +517,10 @@ function Sidebar({
                 strokeWidth="2"
                 style={{
                   marginLeft: "auto",
-                  transform: applicationOpen
-                    ? "rotate(180deg)"
-                    : "rotate(0deg)",
+                  transform:
+                    openSection === "application"
+                      ? "rotate(180deg)"
+                      : "rotate(0deg)",
                   transition: "transform 0.3s ease",
                 }}
               >
@@ -530,7 +528,7 @@ function Sidebar({
               </svg>
             </div>
 
-            {applicationOpen && (
+            {openSection === "application" && (
               <div className="dropdown-menu">
                 <div
                   className={`dropdown-item ${
@@ -675,7 +673,7 @@ function Sidebar({
             {/* Employee role - Application dropdown */}
             <div
               className="nav-item nav-item-dropdown"
-              onClick={handleApplicationClick}
+              onClick={() => toggleSection("application")}
             >
               <svg
                 className="nav-icon"
@@ -703,9 +701,10 @@ function Sidebar({
                 strokeWidth="2"
                 style={{
                   marginLeft: "auto",
-                  transform: applicationOpen
-                    ? "rotate(180deg)"
-                    : "rotate(0deg)",
+                  transform:
+                    openSection === "application"
+                      ? "rotate(180deg)"
+                      : "rotate(0deg)",
                   transition: "transform 0.3s ease",
                 }}
               >
@@ -713,7 +712,7 @@ function Sidebar({
               </svg>
             </div>
 
-            {applicationOpen && (
+            {openSection === "application" && (
               <div className="dropdown-menu">
                 <div
                   className={`dropdown-item ${

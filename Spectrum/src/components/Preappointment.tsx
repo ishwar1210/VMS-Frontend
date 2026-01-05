@@ -37,6 +37,8 @@ export default function Preappointment() {
   const [loading, setLoading] = useState(false);
   const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
   const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [mobileError, setMobileError] = useState("");
   const [appointmentEmail, setAppointmentEmail] = useState("");
   const [appointmentName, setAppointmentName] = useState("");
@@ -351,6 +353,7 @@ export default function Preappointment() {
       setCreatedVisitorId(null);
       setSelectedVisitorId(0);
       setVisitorSearchTerm("");
+      setUserSearchTerm("");
       fetchVisitors();
     } catch (err: any) {
       toast.error(
@@ -700,7 +703,6 @@ export default function Preappointment() {
                   </div>
                 </div>
 
-
                 <button type="submit" disabled={loading} className="submit-btn">
                   {loading ? "Saving..." : "Next: Visitor Entry"}
                 </button>
@@ -755,41 +757,131 @@ export default function Preappointment() {
                 </div>
                 <div className="form-group">
                   <label>User *</label>
-                  <select
-                    name="visitorEntry_Userid"
-                    value={entryForm.visitorEntry_Userid || 0}
-                    onChange={(e) => {
-                      const val = Number(e.target.value || 0);
-                      setEntryForm((prev) => ({
-                        ...prev,
-                        visitorEntry_Userid: val,
-                      }));
-                    }}
-                    required
-                    className="form-input"
-                  >
-                    <option value={0}>-- Select User --</option>
-                    {users.length === 0 && (
-                      <option value={0}>No users found</option>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      placeholder="Search user by name..."
+                      value={userSearchTerm}
+                      onChange={(e) => {
+                        setUserSearchTerm(e.target.value);
+                        setShowUserDropdown(true);
+                      }}
+                      onFocus={() => setShowUserDropdown(true)}
+                      required
+                      className="form-input"
+                      style={{ width: "100%" }}
+                    />
+                    {showUserDropdown && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "100%",
+                          left: 0,
+                          right: 0,
+                          maxHeight: 300,
+                          overflowY: "auto",
+                          backgroundColor: "white",
+                          border: "1px solid #ddd",
+                          borderRadius: 4,
+                          marginTop: 4,
+                          zIndex: 1000,
+                          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                        }}
+                      >
+                        {users
+                          .filter((u) => {
+                            const name = (
+                              u.userName ||
+                              u.name ||
+                              u.fullName ||
+                              u.username ||
+                              u.user_Name ||
+                              ""
+                            )
+                              .toLowerCase()
+                              .trim();
+                            const search = userSearchTerm.toLowerCase().trim();
+                            return !search || name.includes(search);
+                          })
+                          .map((u) => {
+                            const id = Number(
+                              u.userId || u.id || u.user_Id || u.UserId || 0
+                            );
+                            const name =
+                              u.userName ||
+                              u.name ||
+                              u.fullName ||
+                              u.username ||
+                              u.user_Name ||
+                              "Unnamed";
+                            const email = u.email || u.userEmail || "";
+                            return (
+                              <div
+                                key={id}
+                                style={{
+                                  padding: "8px 12px",
+                                  cursor: "pointer",
+                                  borderBottom: "1px solid #eee",
+                                  backgroundColor:
+                                    entryForm.visitorEntry_Userid === id
+                                      ? "#f0f9ff"
+                                      : "white",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#f9fafb";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    entryForm.visitorEntry_Userid === id
+                                      ? "#f0f9ff"
+                                      : "white";
+                                }}
+                                onClick={() => {
+                                  setEntryForm((prev) => ({
+                                    ...prev,
+                                    visitorEntry_Userid: id,
+                                  }));
+                                  setUserSearchTerm(name);
+                                  setShowUserDropdown(false);
+                                }}
+                              >
+                                <div style={{ fontWeight: 500 }}>{name}</div>
+                                {email && (
+                                  <div style={{ fontSize: 12, color: "#666" }}>
+                                    {email}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        {users.filter((u) => {
+                          const name = (
+                            u.userName ||
+                            u.name ||
+                            u.fullName ||
+                            u.username ||
+                            u.user_Name ||
+                            ""
+                          )
+                            .toLowerCase()
+                            .trim();
+                          const search = userSearchTerm.toLowerCase().trim();
+                          return !search || name.includes(search);
+                        }).length === 0 && (
+                          <div
+                            style={{
+                              padding: "12px",
+                              textAlign: "center",
+                              color: "#666",
+                            }}
+                          >
+                            No users found
+                          </div>
+                        )}
+                      </div>
                     )}
-                    {users.map((u) => {
-                      const id = Number(
-                        u.userId || u.id || u.user_Id || u.UserId || 0
-                      );
-                      const name =
-                        u.userName ||
-                        u.name ||
-                        u.fullName ||
-                        u.username ||
-                        u.user_Name ||
-                        "Unnamed";
-                      return (
-                        <option key={id} value={id}>
-                          {name}
-                        </option>
-                      );
-                    })}
-                  </select>
+                  </div>
                 </div>
               </div>
 

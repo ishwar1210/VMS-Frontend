@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import * as XLSX from "xlsx";
 import axiosInstance from "../api/axiosInstance";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 interface User {
   userId: number;
@@ -35,6 +36,7 @@ function Usermaster() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const [mobileError, setMobileError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -370,7 +372,7 @@ function Usermaster() {
     }
 
     try {
-      setLoading(true);
+      setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
 
@@ -401,7 +403,7 @@ function Usermaster() {
           "Failed to upload file. Please check the format."
       );
     } finally {
-      setLoading(false);
+      setIsUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -439,6 +441,34 @@ function Usermaster() {
         pauseOnHover
         theme="light"
       />
+      {isUploading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div style={{ width: "200px", height: "200px" }}>
+            <DotLottieReact
+              src="https://lottie.host/f4b8dc61-5c94-41a9-b32e-62fa0bfb0741/GVlwHQQCwy.lottie"
+              loop
+              autoplay
+            />
+          </div>
+          <p style={{ color: "white", marginTop: "16px", fontSize: "16px" }}>
+            Uploading Excel file...
+          </p>
+        </div>
+      )}
       <div className="usermaster-container">
         <div className="usermaster-header">
           <h1 className="usermaster-title">Users</h1>
@@ -495,7 +525,7 @@ function Usermaster() {
                 }
               }}
             >
-              Download XLSX
+              Download Employee List
             </button>
 
             <button
@@ -561,7 +591,7 @@ function Usermaster() {
                         onClick={() => fileInputRef.current?.click()}
                         disabled={loading}
                       >
-                        📤 Upload Excel
+                         Upload Excel
                       </button>
                     </>
                   )}
