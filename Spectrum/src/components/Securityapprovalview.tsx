@@ -6,6 +6,7 @@ import api from "../api/axiosInstance";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 interface VisitorEntry {
   visitorEntry_Id: number;
@@ -38,6 +39,7 @@ interface Visitor {
 
 function Securityapprovalview() {
   const { token } = useAuth();
+  const { theme } = useTheme();
 
   const getLoggedInUserId = (): number => {
     if (!token) return 0;
@@ -1233,7 +1235,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1241,7 +1243,7 @@ function Securityapprovalview() {
                     </label>
                     <div
                       style={{
-                        color: "#1f2937",
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
                         textAlign: "right",
                         fontWeight: "500",
                       }}
@@ -1261,7 +1263,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1269,7 +1271,7 @@ function Securityapprovalview() {
                     </label>
                     <div
                       style={{
-                        color: "#1f2937",
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
                         textAlign: "right",
                         fontWeight: "500",
                       }}
@@ -1289,7 +1291,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1297,7 +1299,7 @@ function Securityapprovalview() {
                     </label>
                     <div
                       style={{
-                        color: "#1f2937",
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
                         textAlign: "right",
                         fontWeight: "500",
                       }}
@@ -1317,7 +1319,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1325,7 +1327,7 @@ function Securityapprovalview() {
                     </label>
                     <div
                       style={{
-                        color: "#1f2937",
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
                         textAlign: "right",
                         fontWeight: "500",
                       }}
@@ -1345,7 +1347,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1353,7 +1355,7 @@ function Securityapprovalview() {
                     </label>
                     <div
                       style={{
-                        color: "#1f2937",
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
                         textAlign: "right",
                         fontWeight: "500",
                       }}
@@ -1373,7 +1375,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1381,7 +1383,7 @@ function Securityapprovalview() {
                     </label>
                     <div
                       style={{
-                        color: "#1f2937",
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
                         textAlign: "right",
                         fontWeight: "500",
                       }}
@@ -1401,7 +1403,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1409,7 +1411,7 @@ function Securityapprovalview() {
                     </label>
                     <div
                       style={{
-                        color: "#1f2937",
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
                         textAlign: "right",
                         fontWeight: "500",
                       }}
@@ -1429,7 +1431,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1437,7 +1439,7 @@ function Securityapprovalview() {
                     </label>
                     <div
                       style={{
-                        color: "#1f2937",
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
                         textAlign: "right",
                         fontWeight: "500",
                       }}
@@ -1458,7 +1460,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1488,7 +1490,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1518,7 +1520,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1548,7 +1550,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >
@@ -1578,7 +1580,7 @@ function Securityapprovalview() {
                     <label
                       style={{
                         fontWeight: "600",
-                        color: "#374151",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
                         minWidth: "140px",
                       }}
                     >

@@ -470,21 +470,23 @@ export default function Preappointment() {
                         right: 0,
                         maxHeight: 300,
                         overflowY: "auto",
-                        backgroundColor: "white",
-                        border: "1px solid #ddd",
+                        backgroundColor: "#0b1220",
+                        border: "1px solid rgba(255,255,255,0.06)",
                         borderRadius: 4,
                         marginTop: 4,
                         zIndex: 1000,
-                        boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                        boxShadow: "0 6px 18px rgba(2,6,23,0.6)",
+                        color: "#fff",
                       }}
                     >
                       <div
                         style={{
                           padding: "8px 12px",
                           cursor: "pointer",
-                          borderBottom: "1px solid #eee",
+                          borderBottom: "1px solid rgba(255,255,255,0.04)",
                           backgroundColor:
-                            selectedVisitorId === 0 ? "#f0f9ff" : "white",
+                            selectedVisitorId === 0 ? "#0f1724" : "#0b1220",
+                          color: "#fff",
                         }}
                         onClick={() => {
                           setSelectedVisitorId(0);
@@ -518,21 +520,23 @@ export default function Preappointment() {
                               style={{
                                 padding: "8px 12px",
                                 cursor: "pointer",
-                                borderBottom: "1px solid #eee",
+                                borderBottom:
+                                  "1px solid rgba(255,255,255,0.04)",
                                 backgroundColor:
                                   selectedVisitorId === id
-                                    ? "#f0f9ff"
-                                    : "white",
+                                    ? "#0f1724"
+                                    : "#0b1220",
+                                color: "#fff",
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.backgroundColor =
-                                  "#f9fafb";
+                                  "#142033";
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.backgroundColor =
                                   selectedVisitorId === id
-                                    ? "#f0f9ff"
-                                    : "white";
+                                    ? "#0f1724"
+                                    : "#0b1220";
                               }}
                               onClick={() => {
                                 const gatePass = generateGatePass();
@@ -569,7 +573,7 @@ export default function Preappointment() {
                               }}
                             >
                               <div style={{ fontWeight: 500 }}>{name}</div>
-                              <div style={{ fontSize: 12, color: "#666" }}>
+                              <div style={{ fontSize: 12, color: "#cbd5e1" }}>
                                 Mobile: {mobile}
                               </div>
                             </div>
@@ -589,7 +593,7 @@ export default function Preappointment() {
                             style={{
                               padding: "12px",
                               textAlign: "center",
-                              color: "#666",
+                              color: "#cbd5e1",
                             }}
                           >
                             No visitors found matching this mobile number
@@ -780,12 +784,13 @@ export default function Preappointment() {
                           right: 0,
                           maxHeight: 300,
                           overflowY: "auto",
-                          backgroundColor: "white",
-                          border: "1px solid #ddd",
+                          backgroundColor: "#0b1220",
+                          border: "1px solid rgba(255,255,255,0.06)",
                           borderRadius: 4,
                           marginTop: 4,
                           zIndex: 1000,
-                          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                          boxShadow: "0 6px 18px rgba(2,6,23,0.6)",
+                          color: "#fff",
                         }}
                       >
                         {users
@@ -821,21 +826,23 @@ export default function Preappointment() {
                                 style={{
                                   padding: "8px 12px",
                                   cursor: "pointer",
-                                  borderBottom: "1px solid #eee",
+                                  borderBottom:
+                                    "1px solid rgba(255,255,255,0.04)",
                                   backgroundColor:
                                     entryForm.visitorEntry_Userid === id
-                                      ? "#f0f9ff"
-                                      : "white",
+                                      ? "#0f1724"
+                                      : "#0b1220",
+                                  color: "#fff",
                                 }}
                                 onMouseEnter={(e) => {
                                   e.currentTarget.style.backgroundColor =
-                                    "#f9fafb";
+                                    "#142033";
                                 }}
                                 onMouseLeave={(e) => {
                                   e.currentTarget.style.backgroundColor =
                                     entryForm.visitorEntry_Userid === id
-                                      ? "#f0f9ff"
-                                      : "white";
+                                      ? "#0f1724"
+                                      : "#0b1220";
                                 }}
                                 onClick={() => {
                                   setEntryForm((prev) => ({
@@ -848,7 +855,9 @@ export default function Preappointment() {
                               >
                                 <div style={{ fontWeight: 500 }}>{name}</div>
                                 {email && (
-                                  <div style={{ fontSize: 12, color: "#666" }}>
+                                  <div
+                                    style={{ fontSize: 12, color: "#cbd5e1" }}
+                                  >
                                     {email}
                                   </div>
                                 )}
@@ -873,7 +882,7 @@ export default function Preappointment() {
                             style={{
                               padding: "12px",
                               textAlign: "center",
-                              color: "#666",
+                              color: "#cbd5e1",
                             }}
                           >
                             No users found
