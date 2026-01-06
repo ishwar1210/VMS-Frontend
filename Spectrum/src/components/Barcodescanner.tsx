@@ -211,10 +211,6 @@ function Barcodescanner() {
           visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
           visitorEntry_isStay: !!entry.visitorEntry_isStay,
           visitorEntry_isApproval: !!entry.visitorEntry_isApproval,
-          visitorEntryAdmin_isApproval: !!(
-            entry.visitorEntryAdmin_isApproval ||
-            entry.visitorEntry_adminApproval
-          ),
           visitorEntryuser_isApproval: !!(
             entry.visitorEntryuser_isApproval || entry.visitorEntry_userApproval
           ),
@@ -244,10 +240,6 @@ function Barcodescanner() {
           visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
           visitorEntry_isStay: !!entry.visitorEntry_isStay,
           visitorEntry_isApproval: !!entry.visitorEntry_isApproval,
-          visitorEntryAdmin_isApproval: !!(
-            entry.visitorEntryAdmin_isApproval ||
-            entry.visitorEntry_adminApproval
-          ),
           visitorEntryuser_isApproval: !!(
             entry.visitorEntryuser_isApproval || entry.visitorEntry_userApproval
           ),

@@ -8,11 +8,11 @@ import Webcam from "react-webcam";
 type VisitorFormData = {
   visitor_Name: string;
   visitor_mobile: string;
+  visitor_Email: string;
   visitor_Address: string;
   visitor_CompanyName: string;
   visitor_Idprooftype: string;
   visitor_idproofno: string;
-  visitor_MeetingDate: string;
 };
 
 type VisitorEntryFormData = {
@@ -26,6 +26,8 @@ type VisitorEntryFormData = {
   visitorEntry_isApproval: boolean;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
+  meetingTimeFrom: string;
+  meetingTimeTo: string;
 };
 
 interface VisitorSelfServiceProps {
@@ -59,11 +61,11 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
     visitor_mobile: "",
+    visitor_Email: "",
     visitor_Address: "",
     visitor_CompanyName: "",
     visitor_Idprooftype: "Aadhar",
     visitor_idproofno: "",
-    visitor_MeetingDate: "",
   });
 
   const [entryForm, setEntryForm] = useState<VisitorEntryFormData>({
@@ -77,6 +79,8 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
     visitorEntry_isApproval: false,
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
+    meetingTimeFrom: "",
+    meetingTimeTo: "",
   });
 
   const handleVisitorChange = (
@@ -405,9 +409,9 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
         visitor_mobile: "",
         visitor_Address: "",
         visitor_CompanyName: "",
+        visitor_Email: "",
         visitor_Idprooftype: "Aadhar",
         visitor_idproofno: "",
-        visitor_MeetingDate: "",
       });
       setEntryForm({
         visitorEntry_visitorId: 0,
@@ -420,6 +424,8 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
         visitorEntry_isApproval: false,
         visitorEntry_isCanteen: false,
         visitorEntry_isStay: false,
+        meetingTimeFrom: "",
+        meetingTimeTo: "",
       });
       setStep(1);
       setCreatedVisitorId(null);
@@ -640,8 +646,6 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
                                 "Aadhar",
                               visitor_idproofno:
                                 v.visitor_idproofno || v.idProofNo || "",
-                              visitor_MeetingDate:
-                                v.visitor_MeetingDate || v.meetingDate || "",
                             }));
                             setEntryForm((prev) => ({
                               ...prev,
@@ -742,6 +746,17 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
                   className="form-input"
                 />
               </div>
+              <div className="form-group-visitor">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  name="visitor_Email"
+                  value={visitorForm.visitor_Email}
+                  onChange={handleVisitorChange}
+                  required
+                  className="form-input"
+                />
+              </div>
             </div>
 
             <div className="form-group-visitor">
@@ -783,18 +798,6 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
                   className="form-input"
                 />
               </div>
-            </div>
-
-            <div className="form-group-visitor">
-              <label>Meeting Date *</label>
-              <input
-                type="datetime-local"
-                name="visitor_MeetingDate"
-                value={visitorForm.visitor_MeetingDate}
-                onChange={handleVisitorChange}
-                required
-                className="form-input"
-              />
             </div>
 
             <div className="form-group-visitor">
@@ -1162,6 +1165,29 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
                   value={entryForm.visitorEntry_Date}
                   onChange={handleEntryChange}
                   required
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group-visitor">
+                <label>Meeting Time From</label>
+                <input
+                  type="time"
+                  name="meetingTimeFrom"
+                  value={entryForm.meetingTimeFrom}
+                  onChange={handleEntryChange}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group-visitor">
+                <label>Meeting Time To</label>
+                <input
+                  type="time"
+                  name="meetingTimeTo"
+                  value={entryForm.meetingTimeTo}
+                  onChange={handleEntryChange}
                   className="form-input"
                 />
               </div>

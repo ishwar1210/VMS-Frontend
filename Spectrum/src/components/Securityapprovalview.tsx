@@ -339,7 +339,6 @@ function Securityapprovalview() {
               it.IsApproval ??
               false,
             visitorEntry_adminApproval:
-              it.visitorEntryAdmin_isApproval ??
               it.visitorEntry_Admin_isApproval ??
               it.visitorEntryAdminIsApproval ??
               it.visitorEntry_AdminIsApproval ??
@@ -463,10 +462,6 @@ function Securityapprovalview() {
         visitorEntry_isCanteen: original_isCanteen,
         visitorEntry_isStay: original_isStay,
         visitorEntry_isApproval: original_isApproval,
-        visitorEntryAdmin_isApproval: !!(
-          original?.visitorEntry_adminApproval ??
-          entry.visitorEntry_adminApproval
-        ),
         visitorEntryuser_isApproval: !!(
           original?.visitorEntry_userApproval ?? entry.visitorEntry_userApproval
         ),
@@ -543,10 +538,6 @@ function Securityapprovalview() {
         visitorEntry_isCanteen: original_isCanteen,
         visitorEntry_isStay: original_isStay,
         visitorEntry_isApproval: original_isApproval,
-        visitorEntryAdmin_isApproval: !!(
-          original?.visitorEntry_adminApproval ??
-          entry.visitorEntry_adminApproval
-        ),
         visitorEntryuser_isApproval: !!(
           original?.visitorEntry_userApproval ?? entry.visitorEntry_userApproval
         ),
@@ -916,7 +907,6 @@ function Securityapprovalview() {
         visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
         visitorEntry_isStay: !!entry.visitorEntry_isStay,
         visitorEntry_isApproval: true,
-        visitorEntryAdmin_isApproval: true,
         visitorEntryuser_isApproval: !!entry.visitorEntry_userApproval,
         VisitorEntryUser_isReject: false,
       };
@@ -968,7 +958,6 @@ function Securityapprovalview() {
         visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
         visitorEntry_isStay: !!entry.visitorEntry_isStay,
         visitorEntry_isApproval: false,
-        visitorEntryAdmin_isApproval: false,
         visitorEntryuser_isApproval: false,
         VisitorEntryUser_isReject: true,
       };
@@ -1019,9 +1008,6 @@ function Securityapprovalview() {
       const original_isApproval = original
         ? !!original.visitorEntry_isApproval
         : !!formData.visitorEntry_isApproval;
-      const original_adminApproval = original
-        ? !!original.visitorEntry_adminApproval
-        : !!formData.visitorEntry_adminApproval;
       const original_userApproval = original
         ? !!original.visitorEntry_userApproval
         : !!formData.visitorEntry_userApproval;
@@ -1048,7 +1034,6 @@ function Securityapprovalview() {
         visitorEntry_isCanteen: original_isCanteen,
         visitorEntry_isStay: original_isStay,
         visitorEntry_isApproval: original_isApproval,
-        visitorEntryAdmin_isApproval: original_adminApproval,
         visitorEntryuser_isApproval: original_userApproval,
       };
 
@@ -1514,36 +1499,7 @@ function Securityapprovalview() {
                         "Not Set"}
                     </div>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "12px 0",
-                      borderBottom: "1px solid #e5e5e5",
-                    }}
-                  >
-                    <label
-                      style={{
-                        fontWeight: "600",
-                        color: theme === "dark" ? "#fff" : "#1f2937",
-                        minWidth: "140px",
-                      }}
-                    >
-                      Admin Approved:
-                    </label>
-                    <div style={{ textAlign: "right" }}>
-                      <span
-                        className={`status-badge ${
-                          viewingEntry.visitorEntry_adminApproval
-                            ? "active"
-                            : "inactive"
-                        }`}
-                      >
-                        {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
-                      </span>
-                    </div>
-                  </div>
+                  {/* Admin Approved removed per API change */}
                   <div
                     style={{
                       display: "flex",
@@ -2026,7 +1982,7 @@ function Securityapprovalview() {
                                 <circle cx="12" cy="12" r="3"></circle>
                               </svg>
                             </button>
-                            {entry.visitorEntry_adminApproval && (
+                            {entry.visitorEntry_userApproval && (
                               <button
                                 className="action-btn print-btn"
                                 onClick={() => printGatepass(entry)}
@@ -2055,7 +2011,7 @@ function Securityapprovalview() {
                                 </svg>
                               </button>
                             )}
-                            {!entry.visitorEntry_adminApproval &&
+                            {!entry.visitorEntry_isApproval &&
                               loggedInUserId > 0 &&
                               entry.visitorEntry_Userid === loggedInUserId && (
                                 <>

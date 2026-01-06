@@ -290,7 +290,6 @@ function Visitorentryapproval() {
               false,
             // explicit admin/user approval flags (new fields)
             visitorEntry_adminApproval:
-              it.visitorEntryAdmin_isApproval ??
               it.visitorEntry_Admin_isApproval ??
               it.visitorEntryAdminIsApproval ??
               it.visitorEntry_AdminIsApproval ??
@@ -418,9 +417,9 @@ function Visitorentryapproval() {
         visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
         visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
         visitorEntry_isStay: !!entry.visitorEntry_isStay,
-        visitorEntry_isApproval: true,
-        visitorEntryAdmin_isApproval: true, // Set admin approval to true
-        visitorEntryuser_isApproval: !!entry.visitorEntry_userApproval,
+        // mark user approval when this button is clicked
+        visitorEntry_isApproval: entry.visitorEntry_isApproval ?? false,
+        visitorEntryuser_isApproval: true,
         VisitorEntryUser_isReject: false, // Set user reject to false
       };
 
@@ -477,7 +476,6 @@ function Visitorentryapproval() {
         visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
         visitorEntry_isStay: !!entry.visitorEntry_isStay,
         visitorEntry_isApproval: false,
-        visitorEntryAdmin_isApproval: false,
         visitorEntryuser_isApproval: false,
         VisitorEntryUser_isReject: true, // Set user reject to true
       };
@@ -557,7 +555,6 @@ function Visitorentryapproval() {
         visitorEntry_isStay: !!formData.visitorEntry_isStay,
         // include both admin and user approval flags per new API
         visitorEntry_isApproval: !!formData.visitorEntry_isApproval,
-        visitorEntryAdmin_isApproval: !!formData.visitorEntry_adminApproval,
         visitorEntryuser_isApproval: !!formData.visitorEntry_userApproval,
       };
 
@@ -1027,36 +1024,7 @@ function Visitorentryapproval() {
                         "Not Set"}
                     </div>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "12px 0",
-                      borderBottom: "1px solid #e5e5e5",
-                    }}
-                  >
-                    <label
-                      style={{
-                        fontWeight: "600",
-                        color: theme === "dark" ? "#fff" : "#1f2937",
-                        minWidth: "140px",
-                      }}
-                    >
-                      Admin Approved:
-                    </label>
-                    <div style={{ textAlign: "right" }}>
-                      <span
-                        className={`status-badge ${
-                          viewingEntry.visitorEntry_adminApproval
-                            ? "active"
-                            : "inactive"
-                        }`}
-                      >
-                        {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
-                      </span>
-                    </div>
-                  </div>
+                  {/* Admin Approved removed per API change */}
                   <div
                     style={{
                       display: "flex",
@@ -1315,17 +1283,7 @@ function Visitorentryapproval() {
                     <span>Canteen Access</span>
                   </label>
                 </div>
-                <div className="form-group">
-                  <label className="checkbox-label">
-                    <input
-                      name="visitorEntry_adminApproval"
-                      type="checkbox"
-                      checked={!!formData.visitorEntry_adminApproval}
-                      onChange={handleInputChange}
-                    />{" "}
-                    <span>Admin Approved</span>
-                  </label>
-                </div>
+                {/* Admin approval checkbox removed (API change) */}
                 <div className="form-group">
                   <label className="checkbox-label">
                     <input
@@ -1466,7 +1424,7 @@ function Visitorentryapproval() {
                                 <circle cx="12" cy="12" r="3"></circle>
                               </svg>
                             </button>
-                            {!entry.visitorEntry_adminApproval &&
+                            {!entry.visitorEntry_userApproval &&
                               Number(entry.visitorEntry_Userid) ===
                                 loggedInUserId && (
                                 <>

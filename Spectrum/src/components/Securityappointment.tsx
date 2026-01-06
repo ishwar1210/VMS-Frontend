@@ -10,9 +10,9 @@ type VisitorFormData = {
   visitor_mobile: string;
   visitor_Address: string;
   visitor_CompanyName: string;
+  visitor_Email: string;
   visitor_Idprooftype: string;
   visitor_idproofno: string;
-  visitor_MeetingDate: string;
 };
 
 type VisitorEntryFormData = {
@@ -26,6 +26,8 @@ type VisitorEntryFormData = {
   visitorEntry_isApproval: boolean;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
+  meetingTimeFrom: string;
+  meetingTimeTo: string;
 };
 
 interface SecurityappointmentProps {
@@ -57,9 +59,9 @@ export default function Securityappointment({
     visitor_mobile: "",
     visitor_Address: "",
     visitor_CompanyName: "",
+    visitor_Email: "",
     visitor_Idprooftype: "Aadhar",
     visitor_idproofno: "",
-    visitor_MeetingDate: "",
   });
 
   // For security, approval/canteen/stay options are not presented (security cannot grant them)
@@ -74,6 +76,8 @@ export default function Securityappointment({
     visitorEntry_isApproval: false,
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
+    meetingTimeFrom: "",
+    meetingTimeTo: "",
   });
 
   const handleVisitorChange = (
@@ -405,9 +409,9 @@ export default function Securityappointment({
         visitor_mobile: "",
         visitor_Address: "",
         visitor_CompanyName: "",
+        visitor_Email: "",
         visitor_Idprooftype: "Aadhar",
         visitor_idproofno: "",
-        visitor_MeetingDate: "",
       });
       setEntryForm({
         visitorEntry_visitorId: 0,
@@ -420,6 +424,8 @@ export default function Securityappointment({
         visitorEntry_isApproval: false,
         visitorEntry_isCanteen: false,
         visitorEntry_isStay: false,
+        meetingTimeFrom: "",
+        meetingTimeTo: "",
       });
       setStep(1);
       setCreatedVisitorId(null);
@@ -578,8 +584,6 @@ export default function Securityappointment({
                                 "Aadhar",
                               visitor_idproofno:
                                 v.visitor_idproofno || v.idProofNo || "",
-                              visitor_MeetingDate:
-                                v.visitor_MeetingDate || v.meetingDate || "",
                             }));
                             setEntryForm((prev) => ({
                               ...prev,
@@ -677,6 +681,17 @@ export default function Securityappointment({
                   className="form-input"
                 />
               </div>
+              <div className="form-group">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  name="visitor_Email"
+                  value={visitorForm.visitor_Email}
+                  onChange={handleVisitorChange}
+                  required
+                  className="form-input"
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -718,18 +733,6 @@ export default function Securityappointment({
                   className="form-input"
                 />
               </div>
-            </div>
-
-            <div className="form-group">
-              <label>Meeting Date *</label>
-              <input
-                type="datetime-local"
-                name="visitor_MeetingDate"
-                value={visitorForm.visitor_MeetingDate}
-                onChange={handleVisitorChange}
-                required
-                className="form-input"
-              />
             </div>
 
             <div className="form-group">
@@ -1045,6 +1048,29 @@ export default function Securityappointment({
                   value={entryForm.visitorEntry_Date}
                   onChange={handleEntryChange}
                   required
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Meeting Time From</label>
+                <input
+                  type="time"
+                  name="meetingTimeFrom"
+                  value={entryForm.meetingTimeFrom}
+                  onChange={handleEntryChange}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label>Meeting Time To</label>
+                <input
+                  type="time"
+                  name="meetingTimeTo"
+                  value={entryForm.meetingTimeTo}
+                  onChange={handleEntryChange}
                   className="form-input"
                 />
               </div>

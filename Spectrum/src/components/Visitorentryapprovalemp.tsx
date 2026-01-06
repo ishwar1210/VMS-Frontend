@@ -289,7 +289,6 @@ function Visitorentryapprovalemp() {
               false,
             // explicit admin/user approval flags (new fields)
             visitorEntry_adminApproval:
-              it.visitorEntryAdmin_isApproval ??
               it.visitorEntry_Admin_isApproval ??
               it.visitorEntryAdminIsApproval ??
               it.visitorEntry_AdminIsApproval ??
@@ -379,7 +378,6 @@ function Visitorentryapprovalemp() {
         visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
         visitorEntry_isStay: !!entry.visitorEntry_isStay,
         visitorEntry_isApproval: true,
-        visitorEntryAdmin_isApproval: !!entry.visitorEntry_adminApproval,
         visitorEntryuser_isApproval: true, // Set user approval to true
         VisitorEntryUser_isReject: false, // Set user reject to false
       };
@@ -437,7 +435,6 @@ function Visitorentryapprovalemp() {
         visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
         visitorEntry_isStay: !!entry.visitorEntry_isStay,
         visitorEntry_isApproval: false,
-        visitorEntryAdmin_isApproval: !!entry.visitorEntry_adminApproval,
         visitorEntryuser_isApproval: false,
         VisitorEntryUser_isReject: true, // Set user reject to true
       };
@@ -534,7 +531,6 @@ function Visitorentryapprovalemp() {
         visitorEntry_isStay: !!formData.visitorEntry_isStay,
         // include both admin and user approval flags per new API
         visitorEntry_isApproval: !!formData.visitorEntry_isApproval,
-        visitorEntryAdmin_isApproval: !!formData.visitorEntry_adminApproval,
         visitorEntryuser_isApproval: !!formData.visitorEntry_userApproval,
       };
 
@@ -991,19 +987,8 @@ function Visitorentryapprovalemp() {
                         minWidth: "140px",
                       }}
                     >
-                      Admin Approved:
+                      {/* Admin Approved removed per API change */}
                     </label>
-                    <div style={{ textAlign: "right" }}>
-                      <span
-                        className={`status-badge ${
-                          viewingEntry.visitorEntry_adminApproval
-                            ? "active"
-                            : "inactive"
-                        }`}
-                      >
-                        {viewingEntry.visitorEntry_adminApproval ? "YES" : "NO"}
-                      </span>
-                    </div>
                   </div>
                   <div
                     style={{
