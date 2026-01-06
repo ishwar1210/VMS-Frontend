@@ -4,6 +4,7 @@ import { endpoints } from "../api/endpoint";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 
 interface VisitorEntry {
   visitorEntry_Id: number;
@@ -35,6 +36,7 @@ interface Visitor {
 }
 
 function Visitorentryapproval() {
+  const { token } = useAuth();
   const { theme } = useTheme();
   const [entries, setEntries] = useState<VisitorEntry[]>([]);
   const [, setVisitors] = useState<Visitor[]>([]);
@@ -43,6 +45,33 @@ function Visitorentryapproval() {
   const [showForm, setShowForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingEntry, setViewingEntry] = useState<VisitorEntry | null>(null);
+
+  // map of userId -> username (for "Meet To Person")
+  const [usersMap, setUsersMap] = useState<Record<number, string>>({});
+  // Get logged-in user's ID from token
+  const getLoggedInUserId = (): number => {
+    if (!token) return 0;
+    try {
+      if (token.split(".").length === 3) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId =
+          payload?.userId ||
+          payload?.UserId ||
+          payload?.userid ||
+          payload?.sub ||
+          payload?.[
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+          ] ||
+          0;
+        return Number(userId);
+      }
+    } catch (e) {
+      console.error("Error decoding token for userId:", e);
+    }
+    return 0;
+  };
+
+  const loggedInUserId = getLoggedInUserId();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
@@ -288,6 +317,7 @@ function Visitorentryapproval() {
       // debug log: check resolved ids
       console.log("Raw entries from API:", entryData);
       console.log("Normalized entries (with resolved ids):", normalizedEntries);
+      console.log("Logged-in user ID:", loggedInUserId);
 
       // sort newest first by id (higher id first)
       normalizedEntries.sort(
@@ -295,6 +325,50 @@ function Visitorentryapproval() {
       );
 
       setEntries(normalizedEntries);
+
+      // --- Fetch users so we can display "Meet To Person" names ---
+      try {
+        const usersRes = await endpoints.user.getAll();
+        let userData: any = usersRes?.data;
+        if (userData && typeof userData === "object") {
+          if (Array.isArray(userData.data)) userData = userData.data;
+          else if (Array.isArray(userData.$values)) userData = userData.$values;
+          else if (Array.isArray(userData.users)) userData = userData.users;
+        }
+        const normalizedUsers = (Array.isArray(userData) ? userData : []).map(
+          (u: any) => {
+            const id =
+              u.user_Id ??
+              u.User_Id ??
+              u.id ??
+              u.Id ??
+              u.userId ??
+              u.UserId ??
+              0;
+            const name =
+              (u.u_name ??
+                u.u_Name ??
+                u.U_name ??
+                u.U_Name ??
+                u.user_Name ??
+                u.User_Name ??
+                u.name ??
+                u.fullName ??
+                u.username ??
+                u.userName ??
+                `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()) ||
+              String(id);
+            return { id: Number(id), name: String(name) };
+          }
+        );
+        const map: Record<number, string> = {};
+        normalizedUsers.forEach((u: any) => {
+          if (u && u.id) map[Number(u.id)] = u.name;
+        });
+        setUsersMap(map);
+      } catch (e) {
+        console.warn("Failed to fetch users for Meet To Person names", e);
+      }
     } catch (err: any) {
       console.error("fetchData error:", err);
       setError("Failed to fetch data");
@@ -317,6 +391,12 @@ function Visitorentryapproval() {
     try {
       setLoading(true);
       setError("");
+
+      // Verify entry belongs to logged-in user
+      if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
+        toast.error("You can only approve your own visitor entries");
+        return;
+      }
 
       const entryId = Number(entry.visitorEntry_Id);
       const payload: any = {
@@ -362,6 +442,12 @@ function Visitorentryapproval() {
   // handleReject - sets user reject to true
   const handleReject = async (entry: VisitorEntry) => {
     try {
+      // Verify entry belongs to logged-in user
+      if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
+        toast.error("You can only reject your own visitor entries");
+        return;
+      }
+
       const confirmReject = window.confirm(
         "Are you sure you want to reject this entry?"
       );
@@ -823,6 +909,37 @@ function Visitorentryapproval() {
                       }}
                     >
                       {viewingEntry.visitorEntry_Purposeofvisit || "-"}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Meet To Person:
+                    </label>
+                    <div
+                      style={{
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {usersMap[Number(viewingEntry.visitorEntry_Userid)] ??
+                        (viewingEntry.visitorEntry_Userid
+                          ? String(viewingEntry.visitorEntry_Userid)
+                          : "-")}
                     </div>
                   </div>
                   <div
@@ -1349,46 +1466,48 @@ function Visitorentryapproval() {
                                 <circle cx="12" cy="12" r="3"></circle>
                               </svg>
                             </button>
-                            {!entry.visitorEntry_adminApproval && (
-                              <>
-                                <button
-                                  className="action-btn approve-btn"
-                                  onClick={() => handleApprove(entry)}
-                                  title="Approve"
-                                  aria-label="Approve"
-                                  style={{
-                                    padding: "6px 12px",
-                                    background: "#10b981",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    fontWeight: "600",
-                                    fontSize: "16px",
-                                  }}
-                                >
-                                  ✓
-                                </button>
-                                <button
-                                  className="action-btn reject-btn"
-                                  onClick={() => handleReject(entry)}
-                                  title="Reject"
-                                  aria-label="Reject"
-                                  style={{
-                                    padding: "6px 12px",
-                                    background: "#ef4444",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    fontWeight: "600",
-                                    fontSize: "16px",
-                                  }}
-                                >
-                                  ✕
-                                </button>
-                              </>
-                            )}
+                            {!entry.visitorEntry_adminApproval &&
+                              Number(entry.visitorEntry_Userid) ===
+                                loggedInUserId && (
+                                <>
+                                  <button
+                                    className="action-btn approve-btn"
+                                    onClick={() => handleApprove(entry)}
+                                    title="Approve"
+                                    aria-label="Approve"
+                                    style={{
+                                      padding: "6px 12px",
+                                      background: "#10b981",
+                                      color: "white",
+                                      border: "none",
+                                      borderRadius: "6px",
+                                      cursor: "pointer",
+                                      fontWeight: "600",
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    ✓
+                                  </button>
+                                  <button
+                                    className="action-btn reject-btn"
+                                    onClick={() => handleReject(entry)}
+                                    title="Reject"
+                                    aria-label="Reject"
+                                    style={{
+                                      padding: "6px 12px",
+                                      background: "#ef4444",
+                                      color: "white",
+                                      border: "none",
+                                      borderRadius: "6px",
+                                      cursor: "pointer",
+                                      fontWeight: "600",
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    ✕
+                                  </button>
+                                </>
+                              )}
                           </div>
                         </td>
                       </tr>
