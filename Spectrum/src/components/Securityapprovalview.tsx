@@ -102,6 +102,42 @@ function Securityapprovalview() {
     visitorEntry_visitorName: "",
   });
 
+  // Helper: resolve a user display name from `users` list for Meet To Person
+  const getUserDisplayName = (userId: number) => {
+    if (!userId || !Array.isArray(users) || users.length === 0) return "";
+    const u = users.find((x: any) => {
+      const idCandidates = [
+        x.user_Id,
+        x.User_Id,
+        x.id,
+        x.Id,
+        x.userId,
+        x.UserId,
+        x.u_id,
+        x.U_id,
+      ];
+      for (const c of idCandidates) {
+        if (c !== undefined && c !== null && Number(c) === Number(userId))
+          return true;
+      }
+      return false;
+    });
+    if (!u) return String(userId);
+    return (
+      u.u_name ??
+      u.u_Name ??
+      u.U_name ??
+      u.U_Name ??
+      u.user_Name ??
+      u.User_Name ??
+      u.userName ??
+      u.username ??
+      u.name ??
+      u.fullName ??
+      String(userId)
+    );
+  };
+
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1361,6 +1397,36 @@ function Securityapprovalview() {
                       }}
                     >
                       {viewingEntry.visitorEntry_Purposeofvisit || "-"}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid #e5e5e5",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: "600",
+                        color: theme === "dark" ? "#fff" : "#1f2937",
+                        minWidth: "140px",
+                      }}
+                    >
+                      Meet To Person:
+                    </label>
+                    <div
+                      style={{
+                        color: theme === "dark" ? "#cbd5e1" : "#374151",
+                        textAlign: "right",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {getUserDisplayName(
+                        Number(viewingEntry.visitorEntry_Userid)
+                      ) || "-"}
                     </div>
                   </div>
                   <div
