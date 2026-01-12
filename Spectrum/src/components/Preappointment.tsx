@@ -3,6 +3,10 @@ import { endpoints } from "../api/endpoint";
 import "./Preappointment.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {
+  validateIdProof,
+  formatIdProofNumber,
+} from "../utils/idProofValidation";
 
 type VisitorFormData = {
   visitor_Name: string;
@@ -26,6 +30,7 @@ type VisitorEntryFormData = {
   visitorEntry_isApproval: boolean;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
+  visitorEntry_ispreappointment: boolean;
 };
 
 export default function Preappointment() {
@@ -40,6 +45,7 @@ export default function Preappointment() {
   const [userSearchTerm, setUserSearchTerm] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [mobileError, setMobileError] = useState("");
+  const [idProofError, setIdProofError] = useState("");
   const [appointmentEmail, setAppointmentEmail] = useState("");
   const [appointmentName, setAppointmentName] = useState("");
   const [sendingLink, setSendingLink] = useState(false);
@@ -125,6 +131,7 @@ export default function Preappointment() {
     visitorEntry_isApproval: true,
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
+    visitorEntry_ispreappointment: true,
   });
 
   const handleVisitorChange = (
@@ -139,6 +146,40 @@ export default function Preappointment() {
       if (digits.length === 10) setMobileError("");
       else if (digits.length === 0) setMobileError("");
       else setMobileError("Mobile number must be 10 digits");
+      return;
+    }
+
+    if (name === "visitor_idproofno") {
+      const formatted = formatIdProofNumber(
+        visitorForm.visitor_Idprooftype,
+        value
+      );
+      setVisitorForm((prev) => ({ ...prev, [name]: formatted }));
+
+      // Validate if both type and number are provided
+      if (visitorForm.visitor_Idprooftype && formatted) {
+        const validation = validateIdProof(
+          visitorForm.visitor_Idprooftype,
+          formatted
+        );
+        setIdProofError(validation.isValid ? "" : validation.errorMessage);
+      } else {
+        setIdProofError("");
+      }
+      return;
+    }
+
+    if (name === "visitor_Idprooftype") {
+      setVisitorForm((prev) => ({ ...prev, [name]: value }));
+
+      // Re-validate existing ID proof number if present
+      if (visitorForm.visitor_idproofno) {
+        const validation = validateIdProof(
+          value,
+          visitorForm.visitor_idproofno
+        );
+        setIdProofError(validation.isValid ? "" : validation.errorMessage);
+      }
       return;
     }
 
@@ -178,6 +219,20 @@ export default function Preappointment() {
         if (!/^\d{10}$/.test(visitorForm.visitor_mobile || "")) {
           toast.error("Mobile number must be 10 digits");
           setMobileError("Mobile number must be 10 digits");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Validate ID proof if provided
+      if (visitorForm.visitor_Idprooftype && visitorForm.visitor_idproofno) {
+        const validation = validateIdProof(
+          visitorForm.visitor_Idprooftype,
+          visitorForm.visitor_idproofno
+        );
+        if (!validation.isValid) {
+          toast.error(validation.errorMessage);
+          setIdProofError(validation.errorMessage);
           setLoading(false);
           return;
         }
@@ -348,6 +403,7 @@ export default function Preappointment() {
         visitorEntry_isApproval: true,
         visitorEntry_isCanteen: false,
         visitorEntry_isStay: false,
+        visitorEntry_ispreappointment: true,
       });
       setStep(1);
       setCreatedVisitorId(null);
@@ -704,6 +760,18 @@ export default function Preappointment() {
                       required
                       className="form-input"
                     />
+                    {idProofError && (
+                      <div
+                        className="error-message"
+                        style={{
+                          color: "red",
+                          fontSize: "0.875rem",
+                          marginTop: "4px",
+                        }}
+                      >
+                        {idProofError}
+                      </div>
+                    )}
                   </div>
                 </div>
 

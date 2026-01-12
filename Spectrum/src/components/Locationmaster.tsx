@@ -3,6 +3,7 @@ import "./Rolemaster.css";
 import { endpoints } from "../api/endpoint";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Location {
   locationId: number;
@@ -20,6 +21,8 @@ function Locationmaster() {
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [locationToDelete, setLocationToDelete] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     locationName: "",
@@ -105,18 +108,28 @@ function Locationmaster() {
     setError("");
   };
 
-  const handleDelete = async (locationId: number) => {
-    if (!window.confirm("Delete this location?")) return;
+  const handleDelete = (locationId: number) => {
+    setLocationToDelete(locationId);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!locationToDelete) return;
+
     try {
       setLoading(true);
-      await endpoints.location.delete(locationId);
+      setShowConfirmDialog(false);
+      await endpoints.location.delete(locationToDelete);
       await fetchLocations();
-      toast.success("Location deleted");
+      toast.success("Location deleted successfully!");
     } catch (err: any) {
       console.error(err);
-      setError("Failed to delete location");
+      const errorMsg = "Failed to delete location";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
+      setLocationToDelete(null);
     }
   };
 
@@ -376,6 +389,16 @@ function Locationmaster() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this location?"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowConfirmDialog(false);
+          setLocationToDelete(null);
+        }}
+      />
     </>
   );
 }

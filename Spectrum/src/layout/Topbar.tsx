@@ -392,6 +392,7 @@ const Topbar: React.FC = () => {
                     setEditForm({ ...editForm, password: e.target.value })
                   }
                   disabled={loading}
+                  style={{ WebkitTextSecurity: "disc" } as React.CSSProperties}
                 />
               </div>
               <div className="edit-profile-actions">

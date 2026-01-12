@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import * as XLSX from "xlsx";
 import axiosInstance from "../api/axiosInstance";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface User {
   userId: number;
@@ -45,6 +46,8 @@ function Usermaster() {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -310,20 +313,29 @@ function Usermaster() {
     setError("");
   };
 
-  const handleDelete = async (userId: number) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
+  const handleDelete = (userId: number) => {
+    setUserToDelete(userId);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
 
     try {
       setError("");
       setLoading(true);
-      await endpoints.user.delete(userId);
+      setShowConfirmDialog(false);
+      await endpoints.user.delete(userToDelete);
       await fetchUsers();
       toast.success("User deleted successfully!");
     } catch (err: any) {
       console.error("Error deleting user:", err);
-      setError(err?.response?.data?.message || "Failed to delete user");
+      const errorMsg = err?.response?.data?.message || "Failed to delete user";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
+      setUserToDelete(null);
     }
   };
 
@@ -591,7 +603,7 @@ function Usermaster() {
                         onClick={() => fileInputRef.current?.click()}
                         disabled={loading}
                       >
-                         Upload Excel
+                        Upload Excel
                       </button>
                     </>
                   )}
@@ -643,6 +655,9 @@ function Usermaster() {
                       value={formData.password}
                       onChange={handleInputChange}
                       required={!editingId}
+                      style={
+                        { WebkitTextSecurity: "disc" } as React.CSSProperties
+                      }
                     />
                   </div>
                 </div>
@@ -963,6 +978,16 @@ function Usermaster() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this user?"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowConfirmDialog(false);
+          setUserToDelete(null);
+        }}
+      />
     </>
   );
 }

@@ -5,6 +5,11 @@ import "./Vendormaster.css";
 import { endpoints } from "../api/endpoint";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ConfirmDialog from "./ConfirmDialog";
+import {
+  validateIdProof,
+  formatIdProofNumber,
+} from "../utils/idProofValidation";
 
 interface Vendor {
   vendorId: number;
@@ -27,6 +32,8 @@ function Vendormaster() {
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [deleteVendorId, setDeleteVendorId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     vendorCode: "",
@@ -40,6 +47,7 @@ function Vendormaster() {
   });
 
   const [mobileError, setMobileError] = useState("");
+  const [idProofError, setIdProofError] = useState("");
 
   // Generate next vendor code like VC12233 based on existing vendor codes
   const generateVendorCode = () => {
@@ -172,6 +180,19 @@ function Vendormaster() {
       return;
     }
 
+    // Validate ID proof if provided
+    if (formData.idProof && formData.idProofType) {
+      const validation = validateIdProof(
+        formData.idProofType,
+        formData.idProof
+      );
+      if (!validation.isValid) {
+        setIdProofError(validation.errorMessage);
+        setError(validation.errorMessage);
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       setError("");
@@ -234,19 +255,29 @@ function Vendormaster() {
   };
 
   const handleDelete = async (vendorId: number) => {
-    if (!window.confirm("Are you sure you want to delete this vendor?")) return;
+    setDeleteVendorId(vendorId);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteVendorId === null) return;
 
     try {
       setError("");
       setLoading(true);
-      await endpoints.vendor.delete(vendorId);
+      await endpoints.vendor.delete(deleteVendorId);
       await fetchVendors();
       toast.success("Vendor deleted successfully!");
     } catch (err: any) {
       console.error("Error deleting vendor:", err);
-      setError(err?.response?.data?.message || "Failed to delete vendor");
+      const errorMsg =
+        err?.response?.data?.message || "Failed to delete vendor";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
+      setShowConfirmDialog(false);
+      setDeleteVendorId(null);
     }
   };
 
@@ -282,6 +313,37 @@ function Vendormaster() {
       if (digits.length === 10) setMobileError("");
       else if (digits.length === 0) setMobileError("");
       else setMobileError("Mobile number must be 10 digits");
+      return;
+    }
+
+    if (name === "idProof") {
+      const formatted = formatIdProofNumber(formData.idProofType, value);
+      setFormData({
+        ...formData,
+        [name]: formatted,
+      });
+      // Validate on change
+      if (formatted && formData.idProofType) {
+        const validation = validateIdProof(formData.idProofType, formatted);
+        setIdProofError(validation.isValid ? "" : validation.errorMessage);
+      } else {
+        setIdProofError("");
+      }
+      return;
+    }
+
+    if (name === "idProofType") {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+      // Re-validate existing ID proof number if type changes
+      if (formData.idProof && value) {
+        const validation = validateIdProof(value, formData.idProof);
+        setIdProofError(validation.isValid ? "" : validation.errorMessage);
+      } else {
+        setIdProofError("");
+      }
       return;
     }
 
@@ -453,6 +515,9 @@ function Vendormaster() {
                       value={formData.idProof}
                       onChange={handleInputChange}
                     />
+                    {idProofError && (
+                      <div className="error-message">{idProofError}</div>
+                    )}
                   </div>
                 </div>
 
@@ -653,6 +718,17 @@ function Vendormaster() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Delete Vendor"
+        message="Are you sure you want to delete this vendor?"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowConfirmDialog(false);
+          setDeleteVendorId(null);
+        }}
+      />
     </>
   );
 }

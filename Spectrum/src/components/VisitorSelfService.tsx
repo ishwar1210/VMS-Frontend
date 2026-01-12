@@ -4,6 +4,10 @@ import "./VisitorSelfService.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Webcam from "react-webcam";
+import {
+  validateIdProof,
+  formatIdProofNumber,
+} from "../utils/idProofValidation";
 
 type VisitorFormData = {
   visitor_Name: string;
@@ -26,6 +30,7 @@ type VisitorEntryFormData = {
   visitorEntry_isApproval: boolean;
   visitorEntry_isCanteen: boolean;
   visitorEntry_isStay: boolean;
+  visitorEntry_ispreappointment: boolean;
   meetingTimeFrom: string;
   meetingTimeTo: string;
 };
@@ -46,6 +51,7 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
   const [visitorSearchTerm, setVisitorSearchTerm] = useState("");
   const [showVisitorDropdown, setShowVisitorDropdown] = useState(false);
   const [mobileError, setMobileError] = useState("");
+  const [idProofError, setIdProofError] = useState("");
   const [cameraActive, setCameraActive] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
@@ -57,6 +63,7 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
     null
   );
   const [gatepassMessage, setGatepassMessage] = useState<string | null>(null);
+  const [isFromEmailLink, setIsFromEmailLink] = useState(false);
 
   const [visitorForm, setVisitorForm] = useState<VisitorFormData>({
     visitor_Name: "",
@@ -79,9 +86,21 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
     visitorEntry_isApproval: false,
     visitorEntry_isCanteen: false,
     visitorEntry_isStay: false,
+    visitorEntry_ispreappointment: false,
     meetingTimeFrom: "",
     meetingTimeTo: "",
   });
+
+  // Update ispreappointment when isFromEmailLink changes
+  useEffect(() => {
+    if (isFromEmailLink) {
+      console.log("Setting visitorEntry_ispreappointment to true");
+      setEntryForm((prev) => ({
+        ...prev,
+        visitorEntry_ispreappointment: true,
+      }));
+    }
+  }, [isFromEmailLink]);
 
   const handleVisitorChange = (
     e: React.ChangeEvent<
@@ -97,6 +116,40 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
       if (digits.length === 10) setMobileError("");
       else if (digits.length === 0) setMobileError("");
       else setMobileError("Mobile number must be 10 digits");
+      return;
+    }
+
+    if (name === "visitor_idproofno") {
+      const formatted = formatIdProofNumber(
+        visitorForm.visitor_Idprooftype,
+        value
+      );
+      setVisitorForm((prev) => ({ ...prev, [name]: formatted }));
+
+      // Validate if both type and number are provided
+      if (visitorForm.visitor_Idprooftype && formatted) {
+        const validation = validateIdProof(
+          visitorForm.visitor_Idprooftype,
+          formatted
+        );
+        setIdProofError(validation.isValid ? "" : validation.errorMessage);
+      } else {
+        setIdProofError("");
+      }
+      return;
+    }
+
+    if (name === "visitor_Idprooftype") {
+      setVisitorForm((prev) => ({ ...prev, [name]: value }));
+
+      // Re-validate existing ID proof number if present
+      if (visitorForm.visitor_idproofno) {
+        const validation = validateIdProof(
+          value,
+          visitorForm.visitor_idproofno
+        );
+        setIdProofError(validation.isValid ? "" : validation.errorMessage);
+      }
       return;
     }
 
@@ -253,6 +306,20 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
         }
       }
 
+      // Validate ID proof if provided
+      if (visitorForm.visitor_Idprooftype && visitorForm.visitor_idproofno) {
+        const validation = validateIdProof(
+          visitorForm.visitor_Idprooftype,
+          visitorForm.visitor_idproofno
+        );
+        if (!validation.isValid) {
+          toast.error(validation.errorMessage);
+          setIdProofError(validation.errorMessage);
+          setLoading(false);
+          return;
+        }
+      }
+
       // Step 1: Upload image if captured
       let imagePath = null;
       if (capturedBlob) {
@@ -325,6 +392,16 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
   };
 
   useEffect(() => {
+    // Check if visitor came from email link (preappointment)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPreappointment = urlParams.get("preappointment") === "true";
+    console.log(
+      "URL Parameter 'preappointment':",
+      urlParams.get("preappointment")
+    );
+    console.log("isPreappointment:", isPreappointment);
+    setIsFromEmailLink(isPreappointment);
+
     fetchVisitors();
     fetchUsers();
   }, []);
@@ -376,7 +453,13 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
         visitorEntry_isApproval: false,
         visitorEntry_isCanteen: false,
         visitorEntry_isStay: false,
+        visitorEntry_ispreappointment: entryForm.visitorEntry_ispreappointment,
       };
+      console.log("Submitting payload:", payload);
+      console.log(
+        "visitorEntry_ispreappointment value:",
+        payload.visitorEntry_ispreappointment
+      );
 
       // Reserve and persist gatepass only when actually saving to DB
       try {
@@ -424,6 +507,7 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
         visitorEntry_isApproval: false,
         visitorEntry_isCanteen: false,
         visitorEntry_isStay: false,
+        visitorEntry_ispreappointment: isFromEmailLink,
         meetingTimeFrom: "",
         meetingTimeTo: "",
       });
@@ -797,6 +881,18 @@ const VisitorSelfService: React.FC<VisitorSelfServiceProps> = ({
                   required
                   className="form-input"
                 />
+                {idProofError && (
+                  <div
+                    className="error-message"
+                    style={{
+                      color: "red",
+                      fontSize: "0.875rem",
+                      marginTop: "4px",
+                    }}
+                  >
+                    {idProofError}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -3,6 +3,7 @@ import { endpoints } from "../api/endpoint";
 import "./Rolemaster.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Parcel {
   parcelId?: number;
@@ -37,6 +38,8 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [parcelToDelete, setParcelToDelete] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     parcelBarcode: "",
@@ -186,12 +189,18 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this parcel?")) return;
+  const handleDelete = (id: number) => {
+    setParcelToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!parcelToDelete) return;
 
     try {
       setLoading(true);
-      await endpoints.parcel.delete(id);
+      setShowConfirmDialog(false);
+      await endpoints.parcel.delete(parcelToDelete);
       toast.success("Parcel deleted successfully!");
       await fetchParcels();
     } catch (err: any) {
@@ -203,6 +212,7 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
       );
     } finally {
       setLoading(false);
+      setParcelToDelete(null);
     }
   };
 
@@ -470,7 +480,7 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
                           {parcel.parcelHandover ? "Yes" : "No"}
                         </span>
                       </td>
-                      
+
                       <td>
                         <div className="action-buttons">
                           <button
@@ -541,6 +551,16 @@ function Securityparcelentry({ onParcelAdded }: SecurityparcelentryProps) {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this parcel?"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowConfirmDialog(false);
+          setParcelToDelete(null);
+        }}
+      />
     </>
   );
 }

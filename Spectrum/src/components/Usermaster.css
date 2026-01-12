@@ -441,3 +441,9 @@ textarea.user-input {
     padding: 10px 8px;
   }
 }
+
+/* Hide Edge's built-in password reveal button */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

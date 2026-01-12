@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { endpoints } from "../api/endpoint";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -7,6 +8,8 @@ interface AuthContextType {
   setToken: (t: string | null) => void;
   userRole: string | null;
   setUserRole: (role: string | null) => void;
+  userComponents: string[];
+  fetchUserComponents: (userId: number) => Promise<void>;
   clearAuth: () => void;
 }
 
@@ -30,6 +33,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userRole, setUserRoleState] = useState<string | null>(() => {
     return localStorage.getItem("userRole");
   });
+
+  const [userComponents, setUserComponents] = useState<string[]>(() => {
+    const stored = localStorage.getItem("userComponents");
+    return stored ? JSON.parse(stored) : [];
+  });
+
+  // Fetch user's assigned components
+  const fetchUserComponents = async (userId: number) => {
+    try {
+      const res = await endpoints.component.getUserComponents(userId);
+      const data = res?.data || [];
+      const comps = data?.$values || data?.data || data;
+      if (Array.isArray(comps)) {
+        const keys = comps.map((c: any) => c.componentKey || c.ComponentKey);
+        setUserComponents(keys);
+        localStorage.setItem("userComponents", JSON.stringify(keys));
+      }
+    } catch (err) {
+      console.error("Failed to fetch user components:", err);
+      setUserComponents([]);
+      localStorage.setItem("userComponents", JSON.stringify([]));
+    }
+  };
 
   // If token exists but userRole isn't in localStorage, try to decode role from token
   useEffect(() => {
@@ -98,6 +124,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setAuthenticated(false);
     setToken(null);
     setUserRole(null);
+    setUserComponents([]);
+    localStorage.removeItem("userComponents");
   };
 
   // Auto-logout effect: schedule logout after 24 hours from stored timestamp
@@ -131,6 +159,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setToken,
         userRole,
         setUserRole,
+        userComponents,
+        fetchUserComponents,
         clearAuth,
       }}
     >

@@ -13,7 +13,8 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { setAuthenticated, setToken, setUserRole } = useAuth();
+  const { setAuthenticated, setToken, setUserRole, fetchUserComponents } =
+    useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +78,29 @@ function Login() {
 
         if (token) setToken(token);
         if (role) setUserRole(role);
+
+        // Fetch user's assigned components (skip for admin)
+        if (role !== "admin") {
+          try {
+            // Extract userId from token
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            const userId =
+              payload?.userId ||
+              payload?.UserId ||
+              payload?.user_id ||
+              payload?.sub ||
+              payload?.nameid ||
+              payload?.nameidentifier ||
+              payload?.[
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+              ];
+            if (userId) {
+              await fetchUserComponents(Number(userId));
+            }
+          } catch (e) {
+            console.error("Failed to fetch user components:", e);
+          }
+        }
 
         // on successful response set auth state so sidebar is visible
         if (res?.status === 200) {

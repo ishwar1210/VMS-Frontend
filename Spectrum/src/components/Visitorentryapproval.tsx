@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface VisitorEntry {
   visitorEntry_Id: number;
@@ -80,6 +81,8 @@ function Visitorentryapproval() {
   const [historySearchTerm, setHistorySearchTerm] = useState("");
   const [historyEntriesPerPage, setHistoryEntriesPerPage] = useState(10);
   const [historyCurrentPage, setHistoryCurrentPage] = useState(1);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [entryToReject, setEntryToReject] = useState<VisitorEntry | null>(null);
 
   const [formData, setFormData] = useState<any>({
     visitorEntry_visitorId: 0,
@@ -439,42 +442,49 @@ function Visitorentryapproval() {
   };
 
   // handleReject - sets user reject to true
-  const handleReject = async (entry: VisitorEntry) => {
+  const handleReject = (entry: VisitorEntry) => {
+    // Verify entry belongs to logged-in user
+    if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
+      toast.error("You can only reject your own visitor entries");
+      return;
+    }
+    setEntryToReject(entry);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmReject = async () => {
+    if (!entryToReject) return;
+
     try {
-      // Verify entry belongs to logged-in user
-      if (Number(entry.visitorEntry_Userid) !== loggedInUserId) {
-        toast.error("You can only reject your own visitor entries");
-        return;
-      }
-
-      const confirmReject = window.confirm(
-        "Are you sure you want to reject this entry?"
-      );
-      if (!confirmReject) return;
-
       setLoading(true);
       setError("");
+      setShowConfirmDialog(false);
 
-      const entryId = Number(entry.visitorEntry_Id);
+      const entryId = Number(entryToReject.visitorEntry_Id);
       const payload: any = {
         visitorEntry_Id: entryId,
-        visitorEntry_visitorId: Number(entry.visitorEntry_visitorId ?? 0),
-        visitorEntry_Gatepass: String(entry.visitorEntry_Gatepass ?? "").trim(),
+        visitorEntry_visitorId: Number(
+          entryToReject.visitorEntry_visitorId ?? 0
+        ),
+        visitorEntry_Gatepass: String(
+          entryToReject.visitorEntry_Gatepass ?? ""
+        ).trim(),
         visitorEntry_Vehicletype: String(
-          entry.visitorEntry_Vehicletype ?? ""
+          entryToReject.visitorEntry_Vehicletype ?? ""
         ).trim(),
         visitorEntry_Vehicleno: String(
-          entry.visitorEntry_Vehicleno ?? ""
+          entryToReject.visitorEntry_Vehicleno ?? ""
         ).trim(),
-        visitorEntry_Date: entry.visitorEntry_Date ?? "",
+        visitorEntry_Date: entryToReject.visitorEntry_Date ?? "",
         visitorEntry_Intime:
-          (entry.visitorEntry_Intime &&
-            String(entry.visitorEntry_Intime).trim()) ||
+          (entryToReject.visitorEntry_Intime &&
+            String(entryToReject.visitorEntry_Intime).trim()) ||
           null,
-        visitorEntry_Outtime: entry.visitorEntry_Outtime?.trim() || null,
-        visitorEntry_Userid: Number(entry.visitorEntry_Userid ?? 0),
-        visitorEntry_isCanteen: !!entry.visitorEntry_isCanteen,
-        visitorEntry_isStay: !!entry.visitorEntry_isStay,
+        visitorEntry_Outtime:
+          entryToReject.visitorEntry_Outtime?.trim() || null,
+        visitorEntry_Userid: Number(entryToReject.visitorEntry_Userid ?? 0),
+        visitorEntry_isCanteen: !!entryToReject.visitorEntry_isCanteen,
+        visitorEntry_isStay: !!entryToReject.visitorEntry_isStay,
         visitorEntry_isApproval: false,
         visitorEntryuser_isApproval: false,
         VisitorEntryUser_isReject: true, // Set user reject to true
@@ -497,6 +507,7 @@ function Visitorentryapproval() {
       toast.error(`Error: ${backendMsg}`);
     } finally {
       setLoading(false);
+      setEntryToReject(null);
     }
   };
 
@@ -1657,6 +1668,16 @@ function Visitorentryapproval() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Confirm Reject"
+        message="Are you sure you want to reject this entry?"
+        onConfirm={confirmReject}
+        onCancel={() => {
+          setShowConfirmDialog(false);
+          setEntryToReject(null);
+        }}
+      />
     </>
   );
 }

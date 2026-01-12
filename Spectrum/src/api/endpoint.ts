@@ -96,6 +96,24 @@ const parcel = {
   delete: (id: number) => api.delete(`/api/parcel/${id}`),
 };
 
+// component endpoints
+const component = {
+  getAll: () => api.get("/api/component"),
+  getUserComponents: (userId: number) =>
+    api.get(`/api/component/user/${userId}`),
+  assignComponents: (payload: {
+    userId: number;
+    accesses: Array<{
+      componentId: number;
+      canView: boolean;
+      canEdit: boolean;
+      canDelete: boolean;
+    }>;
+  }) => api.post("/api/component/assign", payload),
+  checkAccess: (userId: number, componentKey: string) =>
+    api.get(`/api/component/check-access/${userId}/${componentKey}`),
+};
+
 const endpoints = {
   auth,
   role,
@@ -108,6 +126,7 @@ const endpoints = {
   vendorAppointment,
   vendorEmployee,
   parcel,
+  component,
 };
 
 export default endpoints;

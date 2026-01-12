@@ -23,15 +23,28 @@ import Inoutreport from "./components/Inoutreport";
 import Parcelreport from "./components/Parcelreport";
 import VisitorSelfService from "./components/VisitorSelfService";
 import VisitorQRDisplay from "./components/VisitorQRDisplay";
+import ComponentAccessManagement from "./components/ComponentAccessManagement";
 import { endpoints } from "./api/endpoint";
 import { useAuth } from "./context/AuthContext";
 import { useState, useEffect, useRef } from "react";
 
 function App() {
-  const { isAuthenticated, token, userRole } = useAuth();
+  const { isAuthenticated, token, userRole, userComponents } = useAuth();
   const [currentView, setCurrentView] = useState("dashboard");
   const [unreadCount, setUnreadCount] = useState(0);
   const notificationSidebarRef = useRef<any>(null);
+
+  // Check if user has access to a component
+  const hasAccess = (componentKey: string): boolean => {
+    if (userRole === "admin") return true;
+    return userComponents.includes(componentKey);
+  };
+
+  // Check if user has any component access
+  const hasAnyAccess = (): boolean => {
+    if (userRole === "admin") return true;
+    return userComponents && userComponents.length > 0;
+  };
 
   // Check if this is the public visitor self-service page
   const isVisitorSelfServicePage =
@@ -241,11 +254,53 @@ function App() {
         );
       case "visitorqr":
         return <VisitorQRDisplay />;
+      case "componentaccess":
+        return <ComponentAccessManagement />;
       case "dashboard":
-        // show admin dashboard for admin role, otherwise a simple welcome
-        if (userRole === "admin")
+        // Check if user has access to dashboard
+        if (!hasAnyAccess()) {
+          return (
+            <div
+              style={{
+                padding: 24,
+                color: "var(--text-primary)",
+                textAlign: "center",
+                marginTop: "100px",
+              }}
+            >
+              <h2>No Access Assigned</h2>
+              <p>
+                You don't have access to any modules. Please contact your
+                administrator.
+              </p>
+            </div>
+          );
+        }
+
+        // Check dashboard access
+        if (!hasAccess("ADMIN_DASHBOARD") && !hasAccess("SECURITY_DASHBOARD")) {
+          return (
+            <div
+              style={{
+                padding: 24,
+                color: "var(--text-primary)",
+                textAlign: "center",
+                marginTop: "100px",
+              }}
+            >
+              <h2>No Dashboard Access</h2>
+              <p>
+                You don't have access to the dashboard. Please contact your
+                administrator.
+              </p>
+            </div>
+          );
+        }
+
+        // Show appropriate dashboard based on role and access
+        if (userRole === "admin" || hasAccess("ADMIN_DASHBOARD"))
           return <Admindashbord setCurrentView={setCurrentView} />;
-        if (userRole === "security")
+        if (userRole === "security" || hasAccess("SECURITY_DASHBOARD"))
           return <Securitydashborad setCurrentView={setCurrentView} />;
         if (userRole === "employee")
           return <Admindashbord setCurrentView={setCurrentView} />;

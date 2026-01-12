@@ -332,3 +332,9 @@
 .cancel-logout-btn:hover {
   transform: translateY(-2px);
 }
+
+/* Hide Edge's built-in password reveal button */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

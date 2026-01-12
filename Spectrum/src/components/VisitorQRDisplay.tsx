@@ -7,7 +7,7 @@ const VisitorQRDisplay = () => {
 
   // Use the actual server IP/domain for mobile access
   // Change this to your actual domain or IP address
-  const defaultUrl = "https://192.168.1.54:6517/visitor-appointment";
+  const defaultUrl = "https://192.168.1.44:6517/visitor-appointment";
   const [visitorUrl, setVisitorUrl] = useState(defaultUrl);
   const [isEditing, setIsEditing] = useState(false);
 
