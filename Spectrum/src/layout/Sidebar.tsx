@@ -841,7 +841,7 @@ function Sidebar({
                         Appointment
                       </div>
                     )}
-                    {hasAccess("SECURITY_APPROVAL") && (
+                    {hasAccess("VISITOR_APPROVAL_ADMIN") && (
                       <div
                         className={`dropdown-item ${
                           selectedItem === "visitorentryapproval"
@@ -866,7 +866,7 @@ function Sidebar({
                         Approval List
                       </div>
                     )}
-                    {hasAccess("VISITOR_APPROVAL_ADMIN") && (
+                    {hasAccess("SECURITY_APPROVAL") && (
                       <div
                         className={`dropdown-item ${
                           selectedItem === "securityapprovalview"
